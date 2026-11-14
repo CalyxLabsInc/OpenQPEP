@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "calyx-qpep"
+version = "1.0.0"
+description = "Calyx QPEP: Calyx Quantum Proof Encryption Protocol & .qpkrf Reference Implementation"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "Apache-2.0"}
+authors = [{name = "Tristen Martinez (Calyx Labs Inc.)", email = "tristen@calyxlabs.io"}]
+dependencies = ["cryptography>=38.0.0"]
+
+[project.scripts]
+calyx-qpep = "calyx_qpep.cli:main"
