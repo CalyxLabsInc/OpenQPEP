@@ -1,4 +1,4 @@
-name: Calyx QPEP CI
+name: OpenQPEP CI
 on: [push, pull_request]
 jobs:
   test:

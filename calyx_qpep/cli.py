@@ -11,7 +11,7 @@ from .passphrase import analyze_passphrase
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(
         prog="calyx-qpep",
-        description="Calyx QPEP v1.0 Quantum Proof Encryption Protocol CLI (Calyx Labs Inc.)",
+        description="Calyx QPEP v1.0.2 Quantum Proof Encryption Protocol CLI (Calyx Labs Inc.)",
     )
     sub = parser.add_subparsers(dest="cmd", required=True)
 
@@ -22,6 +22,7 @@ def main(argv=None) -> int:
     p_kg.add_argument("--name", required=True)
     p_kg.add_argument("--email", required=True)
     p_kg.add_argument("--passphrase", required=True)
+    p_kg.add_argument("--tier", default="QLX-1024", choices=["QLX-768", "QLX-1024", "QLX-2048"])
     p_kg.add_argument("--pub-out", required=True)
     p_kg.add_argument("--priv-out", required=True)
 
@@ -31,10 +32,10 @@ def main(argv=None) -> int:
         print(f"Valid: {res.is_valid}")
         return 0 if res.is_valid else 1
     if args.cmd == "keygen":
-        kr = CalyxQPEPProtocol.generate_keypair(args.name, args.email, args.passphrase)
-        CalyxQPEPProtocol.export_qpkrf(kr, args.passphrase, include_private=False, output_path=args.pub_out)
-        CalyxQPEPProtocol.export_qpkrf(kr, args.passphrase, include_private=True, output_path=args.priv_out)
-        print(f"Generated Calyx QPEP Key-ID: {kr.key_id}")
+        kr = CalyxQPEPProtocol.generate_keypair(args.name, args.email, args.passphrase, qlx_tier=args.tier)
+        CalyxQPEPProtocol.export_qpkrf(kr, include_private=False, output_path=args.pub_out)
+        CalyxQPEPProtocol.export_qpkrf(kr, passphrase=args.passphrase, include_private=True, output_path=args.priv_out)
+        print(f"Generated Calyx QPEP Key Hash: {kr.key_hash}")
         return 0
     return 0
 
