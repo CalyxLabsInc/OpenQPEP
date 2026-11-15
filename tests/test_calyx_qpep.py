@@ -23,7 +23,7 @@ class TestCalyxQPEPProtocol(unittest.TestCase):
     def test_key_hash_and_public_vs_private_qpkrf_rules(self):
         kr = CalyxQPEPProtocol.generate_keypair(
             name="Tristen Martinez",
-            email="tristen@calyxlabsinc.org",
+            email="support@calyxlabsinc.org",
             passphrase=self.VALID_PASSPHRASE,
             qlx_tier="QLX-1024",
         )
