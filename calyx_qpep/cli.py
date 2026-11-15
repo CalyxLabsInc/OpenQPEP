@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """
-Command-Line Interface (CLI) for the Calyx QPEP Protocol.
+OpenQPEP (CALYX-QPEP) – Calyx Quantum Proof Encryption Protocol
+Copyright © 2026 Calyx Labs Inc. Developed by Tristen Martinez. All rights reserved.
+(https://github.com/CalyxLabsInc/OpenQPEP/)
 """
 import argparse
 import sys
