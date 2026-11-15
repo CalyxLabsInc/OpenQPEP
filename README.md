@@ -1,7 +1,7 @@
 # OpenQPEP — Calyx Quantum Proof Encryption Protocol (`Calyx QPEP`)
 
 [![Official Repository](https://img.shields.io/badge/GitHub-CalyxLabsInc%2FOpenQPEP-00D4FF)](https://github.com/CalyxLabsInc/OpenQPEP/)
-[![Protocol Version](https://img.shields.io/badge/Calyx%20QPEP-Beta Version 0.1.1-2563EB)](https://github.com/CalyxLabsInc/OpenQPEP/)
+[![Protocol Version](https://img.shields.io/badge/Calyx%20QPEP-Beta%20Version%200.1.1-2563EB)](https://github.com/CalyxLabsInc/OpenQPEP/)
 [![Key Ring Format](https://img.shields.io/badge/Key%20Ring-.qpkrf-00D4FF)](https://github.com/CalyxLabsInc/OpenQPEP/)
 [![License](https://img.shields.io/badge/License-Calyx%20Public%20Open%20Source%20License%201.0-10B981)](LICENSE)
 
