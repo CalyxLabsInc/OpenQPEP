@@ -1,4 +1,8 @@
 """
+OpenQPEP (CALYX-QPEP) – Calyx Quantum Proof Encryption Protocol
+Copyright © 2026 Calyx Labs Inc. Developed by Tristen Martinez. All rights reserved.
+(https://github.com/CalyxLabsInc/OpenQPEP/)
+
 Calyx QPEP Hardcoded Cryptographic Passphrase Gate (QPKD-Argon).
 
 In Calyx QPEP, passphrases are NOT merely an optional UI check: the structural character-class
