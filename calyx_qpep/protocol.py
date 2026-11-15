@@ -43,10 +43,24 @@ def _b64d(text: str) -> bytes:
     return base64.b64decode(text.encode("ascii"))
 
 
+WIRE_MAGIC = b"\x89QPE\x01\x01"
+
+
 def _armor_wrap(header_label: str, metadata: Dict[str, str], payload_bytes: bytes) -> str:
-    b64_raw = _b64e(payload_bytes)
+    """
+    Encapsulates payload_bytes into a binary QPEP wire frame (WIRE_MAGIC + 16-byte nonce +
+    qSponge-XOF stream-whitened payload + 32-byte qSponge-512 frame MAC) before Base64 armoring
+    so raw Base64 decoding never exposes plaintext structure.
+    """
+    wire_nonce = os.urandom(16)
+    mask = qsponge_var(b"CALYX-WIRE-WHITEN-v1|" + wire_nonce + header_label.encode("utf-8"), len(payload_bytes))
+    whitened = bytes(a ^ b for a, b in zip(payload_bytes, mask))
+    wire_mac = qsponge_512(b"CALYX-WIRE-MAC-v1|" + wire_nonce + header_label.encode("utf-8") + whitened)[:32]
+    wire_frame = WIRE_MAGIC + wire_nonce + whitened + wire_mac
+
+    b64_raw = _b64e(wire_frame)
     lines = [b64_raw[i : i + 64] for i in range(0, len(b64_raw), 64)]
-    crc_digest = _b64e(hashlib.sha3_256(payload_bytes).digest()[:6])
+    crc_digest = _b64e(qsponge_var(b"CALYX-ARMOR-CRC-v1|" + wire_frame, 6))
     meta_lines = [f"{k}: {v}" for k, v in metadata.items()]
     body = "\n".join(
         [f"-----BEGIN {header_label}-----"]
@@ -87,11 +101,22 @@ def _armor_unwrap(armored_text: str, expected_label: Optional[str] = None) -> Tu
         elif line:
             b64_chunks.append(line)
 
-    payload_bytes = _b64d("".join(b64_chunks))
-    if checksum_line:
-        expected_crc = _b64e(hashlib.sha3_256(payload_bytes).digest()[:6])
-        if not hmac.compare_digest(checksum_line, expected_crc):
-            raise ValueError("Calyx QPEP qSponge checksum mismatch (corrupted packet).")
+    raw_frame = _b64d("".join(b64_chunks))
+    if raw_frame.startswith(WIRE_MAGIC):
+        if checksum_line:
+            expected_crc = _b64e(qsponge_var(b"CALYX-ARMOR-CRC-v1|" + raw_frame, 6))
+            if not hmac.compare_digest(checksum_line, expected_crc):
+                raise ValueError("Calyx QPEP qSponge checksum mismatch (corrupted packet).")
+        wire_nonce = raw_frame[6:22]
+        whitened = raw_frame[22:-32]
+        wire_mac = raw_frame[-32:]
+        expected_mac = qsponge_512(b"CALYX-WIRE-MAC-v1|" + wire_nonce + begin_label.encode("utf-8") + whitened)[:32]
+        if not hmac.compare_digest(wire_mac, expected_mac):
+            raise ValueError("Calyx QPEP binary wire frame MAC verification failed.")
+        mask = qsponge_var(b"CALYX-WIRE-WHITEN-v1|" + wire_nonce + begin_label.encode("utf-8"), len(whitened))
+        payload_bytes = bytes(a ^ b for a, b in zip(whitened, mask))
+    else:
+        payload_bytes = raw_frame
     return begin_label, metadata, payload_bytes
 
 
@@ -717,7 +742,6 @@ class CalyxQPEPProtocol:
             "signer_email": signer_private_keyring.email,
             "timestamp": timestamp,
             "attached_message_b64": _b64e(data),
-            "attached_message_utf8": utf8_preview,
             "message_qsponge_512": msg_digest,
             "hgc_signature_b64": _b64e(sig1),
             "qvs_signature_b64": _b64e(sig2),
