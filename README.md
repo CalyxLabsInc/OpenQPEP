@@ -1,9 +1,9 @@
 # OpenQPEP by Calyx Labs Inc. (`Beta Version 0.1.6`)
 
-**Official Repository:** [https://github.com/CalyxLabsInc/OpenQPEP/](https://github.com/CalyxLabsInc/OpenQPEP/)  
+**Official Repository:** [OpenQPEP Github Repository](https://github.com/CalyxLabsInc/OpenQPEP/)  
 **Official Public Key Directory:** [https://qpepkeys.calyxlabsinc.org](https://qpepkeys.calyxlabsinc.org)  
-**Android Application:** **Calyx QPEP Client** (`Beta Version 0.1.6`)  
-**Creator & Lead Architect:** **Tristen Martinez**, Founder & Lead Architect at **Calyx Labs Inc.** (`support@calyxlabsinc.org`)  
+**Android Application:** [Calyx QPEP Client Direct Download](https://github.com/CalyxLabsInc/CalyxQPEP-Client/releases/download/v0.1.6-beta/CalyxQPEPClient-Beta-v0.1.6.apk)                                             
+**Creator & Lead Architect:** **Tristen Martinez** at **Calyx Labs Inc.** (`support@calyxlabsinc.org`)  
 **License:** **Calyx Public Open Source License 1.0 (`CPOSL-1.0` — OpenQPEP Beta Version 0.1.6 Edition)**  
 
 ---
