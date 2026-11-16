@@ -1,4 +1,8 @@
 """
+OpenQPEP (CALYX-QPEP) – Calyx Quantum Proof Encryption Protocol
+Copyright © 2026 Calyx Labs Inc. Developed by Tristen Martinez. All rights reserved.
+(https://github.com/CalyxLabsInc/OpenQPEP/)
+
 Calyx QPEP Quantum Lattice Exchange (QLX-768 / QLX-1024 / QLX-2048) &
 Quantum Vector Signature (QVS-65 / QVS-87 / QVS-128) Mathematical Engine.
 
