@@ -1,26 +1,33 @@
-Calyx Public Open Source License 1.0 (CPOSL-1.0)
+Calyx Public Open Source License 1.0 (CPOSL-1.0) — OpenQPEP Beta Version 0.1.6
 ================================================================================
-Copyright (c) 2026 Calyx Labs Inc. (Creator: Tristen Martinez)
+Project: OpenQPEP by Calyx Labs Inc. (Android App: Calyx QPEP Client)
+Universal Version: Beta Version 0.1.6 (0.1.6)
+Copyright (c) 2026 Calyx Labs Inc. (Creator & Lead Architect: Tristen Martinez)
 Official Repository: https://github.com/CalyxLabsInc/OpenQPEP/
+Official Key Directory: https://qpepkeys.calyxlabsinc.org
 All Rights Reserved under the terms of the Calyx Public Open Source License 1.0.
 
 PREAMBLE
 --------
 The Calyx Public Open Source License 1.0 ("CPOSL-1.0" or "License") governs the
-use, reproduction, modification, and distribution of the Calyx Quantum Proof
-Encryption Protocol ("Calyx QPEP" / "OpenQPEP"), the Quantum Proof Key Ring File
-(".qpkrf") specification, and associated reference software created by Tristen
-Martinez at Calyx Labs Inc.
+use, reproduction, modification, and distribution of OpenQPEP by Calyx Labs Inc.
+(the Open Quantum-Proof Encryption Protocol, formerly Calyx QPEP), the Quantum
+Proof Key Ring File (".qpkrf") specification, the OpenQPEP Interactive CLI, the
+Calyx QPEP Client Android application, and associated reference software created
+by Tristen Martinez at Calyx Labs Inc.
 
 1. DEFINITIONS
 --------------
-1.1 "Protocol Standard" means the Calyx Quantum Proof Encryption Protocol
-    (Calyx QPEP), including its QLX-768, QLX-1024, and QLX-2048 lattice key
-    encapsulation tiers, HGC-448 birational curve combiner, QVS-65, QVS-87, and
-    QVS-128 vector signature schemes, qSponge-512 cryptographic transcript
-    sponge, Calyx-Cascade-512 (CC-512) dual-stream authenticated matrix cipher,
-    QPKD-Argon memory-hard passphrase derivation lock, and the .qpkrf key ring
-    file format.
+1.1 "Protocol Standard" means OpenQPEP by Calyx Labs Inc. (Beta Version 0.1.6
+    and subsequent versions), including its QLX-768, QLX-1024, and QLX-2048
+    7-layer NTT Module-LWE key encapsulation tiers over Z_3329[X]/(X^256+1),
+    HGC-448 448-bit Goldilocks curve combiner, QVS-65, QVS-87, and QVS-128
+    8-layer NTT Lattice Fiat-Shamir with Aborts signature schemes over
+    Z_8380417[X]/(X^256+1), qSponge-512 and qSponge-XOF 24-round Keccak-f[1600]
+    sponge primitives, Calyx-Cascade-512 (CC-512) dual-stream authenticated
+    cipher cascade (AES-256-GCM + ChaCha20-Poly1305), QPKD-Argon memory-hard
+    passphrase derivation lock, \x89QPE\x01\x01 binary wire framing, and the
+    .qpkrf key ring file format.
 1.2 "Licensor" means Calyx Labs Inc. and original creator Tristen Martinez.
 1.3 "Covered Work" means the Original Work of authorship or any Derivative Work
     thereof distributed under this License.
@@ -36,18 +43,21 @@ Source Code and Object Form.
 3. MANDATORY CRYPTOGRAPHIC INTEGRITY & PASSPHRASE ENFORCEMENT CONDITION
 -----------------------------------------------------------------------
 To prevent cryptographic downgrade attacks and protect end-user security across
-the Calyx QPEP ecosystem, any Covered Work or Derivative Work that reads,
-writes, generates, or claims interoperability with Calyx QPEP packets or .qpkrf
-(Quantum Proof Key Ring File) files MUST strictly preserve:
+the OpenQPEP ecosystem, any Covered Work or Derivative Work that reads, writes,
+generates, or claims interoperability with OpenQPEP packets or .qpkrf (Quantum
+Proof Key Ring File) files MUST strictly preserve:
   (a) The non-bypassable QPKD-Argon Passphrase Policy requiring every passphrase
       to be at least twelve (12) characters in length and contain at least two
       (2) numeric digits, four (4) special characters, two (2) uppercase
       letters, and four (4) lowercase letters;
-  (b) The atomic .qpkrf self-certification verification checks; and
-  (c) The dual-stream CC-512 authenticated frame integrity verification.
+  (b) The atomic .qpkrf conjunctive self-certification signature and
+      integrity_mac verification checks;
+  (c) Attached-only signature encapsulation (prohibiting detached signatures);
+  (d) Dual-stream CC-512 authenticated frame integrity and final-chunk
+      truncation verification.
 
 Derivative Works that strip or weaken these security guarantees MUST NOT use the
-names "Calyx QPEP", "OpenQPEP", or the ".qpkrf" file extension.
+names "OpenQPEP", "Calyx QPEP", "Calyx QPEP Client", or the ".qpkrf" extension.
 
 4. ATTRIBUTION & NOTICE PRESERVATION
 ------------------------------------
@@ -58,9 +68,10 @@ to https://github.com/CalyxLabsInc/OpenQPEP/, and a copy of this License.
 5. TRADEMARKS & BRANDING
 ------------------------
 This License does not grant permission to use the trade names, trademarks,
-service marks, or product names of Calyx Labs Inc. or "Calyx QPEP Client" for
-commercial endorsement without prior written permission from Calyx Labs Inc.,
-except as required for reasonable and customary attribution under Section 4.
+service marks, or product names of Calyx Labs Inc., "OpenQPEP by Calyx Labs
+Inc.", or "Calyx QPEP Client" for commercial endorsement without prior written
+permission from Calyx Labs Inc., except as required for reasonable and customary
+attribution under Section 4.
 
 6. DISCLAIMER OF WARRANTY & LIMITATION OF LIABILITY
 ---------------------------------------------------

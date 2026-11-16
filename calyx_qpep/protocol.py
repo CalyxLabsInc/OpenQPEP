@@ -1,13 +1,20 @@
 """
-Calyx Quantum Proof Encryption Protocol (Calyx QPEP v1.0) Reference Implementation.
+OpenQPEP (Open Quantum-Proof Encryption Protocol) by Calyx Labs Inc.
+Creator & Lead Architect: Tristen Martinez (https://github.com/CalyxLabsInc/OpenQPEP/)
+Universal Version: Beta Version 0.1.6
 
-Key Architectural Properties:
-- Uses "Key Hash" (key_hash, 64-character qSponge-512 hex identifier) instead of legacy Key IDs or Fingerprints.
-- Hardcodes the mandatory QPKD-Argon 12+ character passphrase policy witness directly into private key
-  generation, key-ring encryption, decapsulation, and signing so private keys cannot function without
-  a compliant passphrase.
-- Public key imports and exports (.qpkrf PUBLIC KEY RING) do NOT require a passphrase, whereas private
-  key exports, imports, decryptions, and signatures strictly require the owner's QPKD-Argon passphrase.
+Version Progression Log:
+- 0.1.1 -> 0.1.2: Official project & protocol rename to OpenQPEP by Calyx Labs Inc.
+                  (retaining Calyx QPEP Client for the Android application).
+- 0.1.2 -> 0.1.3: Security Audit Fix #1 — Strict .qpkrf integrity_mac recomputation
+                  and constant-time verification during key ring import (import_qpkrf).
+- 0.1.3 -> 0.1.4: Security Audit Fix #2 — Terminal frame truncation enforcement
+                  (final == 1 check on last CC-512 chunk), automatic embedded sender
+                  signature verification on decryption, and cross-platform compatibility.
+- 0.1.4 -> 0.1.5: Interactive Blue-Themed English-Command OpenQPEP CLI with persistent
+                  local keyring and step-by-step guided workflows.
+- 0.1.5 -> 0.1.6: Recreated and expanded docs/ specification suite (4 deep technical
+                  markdown manuals), expanded README.md, and updated CPOSL license.
 """
 import os
 import json
@@ -17,7 +24,7 @@ import hashlib
 import hmac
 from datetime import datetime, timezone
 from dataclasses import dataclass
-from typing import Optional, Dict, Any, Tuple
+from typing import Optional, Dict, Any, Tuple, List
 from pathlib import Path
 
 from cryptography.hazmat.primitives.asymmetric import x448, ed448
@@ -29,10 +36,15 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM, ChaCha20Poly1305
 from .passphrase import enforce_passphrase_policy, analyze_passphrase, QPEPPassphrasePolicyError
 from .qlx_lattice import QLXEngine, QVSEngine, QLX_TIERS, QVS_TIERS, qsponge_var, qsponge_512
 
-PROTOCOL_VERSION = "CALYX-QPEP/Beta-0.1.1"
+PROJECT_NAME = "OpenQPEP by Calyx Labs Inc."
+APP_NAME = "Calyx QPEP Client"
+UNIVERSAL_VERSION = "0.1.6"
+UNIVERSAL_VERSION_LABEL = "Beta Version 0.1.6"
+PROTOCOL_VERSION = "OpenQPEP/Beta-0.1.6"
 DEFAULT_SUITE = "QLX-1024 + QVS-87 Sovereign Hybrid"
 QPKRF_EXTENSION = ".qpkrf"
 CHUNK_SIZE = 65536
+WIRE_MAGIC = b"\x89QPE\x01\x01"
 
 
 def _b64e(data: bytes) -> str:
@@ -43,14 +55,32 @@ def _b64d(text: str) -> bytes:
     return base64.b64decode(text.encode("ascii"))
 
 
-WIRE_MAGIC = b"\x89QPE\x01\x01"
+def _compute_keyring_integrity_mac(
+    key_hash: str,
+    created_at: str,
+    name: str,
+    email: str,
+    public_bundle: Dict[str, str],
+) -> str:
+    mac_input = json.dumps(
+        {
+            "key_hash": key_hash,
+            "created_at": created_at,
+            "name": name,
+            "email": email,
+            "public_bundle": public_bundle,
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return qsponge_512(b"CALYX-QPKRF-INTEGRITY|" + mac_input).hex().upper()
 
 
 def _armor_wrap(header_label: str, metadata: Dict[str, str], payload_bytes: bytes) -> str:
     """
-    Encapsulates payload_bytes into a binary QPEP wire frame (WIRE_MAGIC + 16-byte nonce +
+    Encapsulates payload_bytes into a binary OpenQPEP wire frame (WIRE_MAGIC + 16-byte nonce +
     qSponge-XOF stream-whitened payload + 32-byte qSponge-512 frame MAC) before Base64 armoring
-    so raw Base64 decoding never exposes plaintext structure.
+    so raw Base64 decoding never exposes plaintext or JSON structure.
     """
     wire_nonce = os.urandom(16)
     mask = qsponge_var(b"CALYX-WIRE-WHITEN-v1|" + wire_nonce + header_label.encode("utf-8"), len(payload_bytes))
@@ -75,13 +105,17 @@ def _armor_wrap(header_label: str, metadata: Dict[str, str], payload_bytes: byte
 def _armor_unwrap(armored_text: str, expected_label: Optional[str] = None) -> Tuple[str, Dict[str, str], bytes]:
     lines = [line.strip() for line in armored_text.strip().splitlines()]
     if not lines or not lines[0].startswith("-----BEGIN ") or not lines[-1].startswith("-----END "):
-        raise ValueError("Invalid Calyx QPEP armor header/footer.")
+        raise ValueError("Invalid OpenQPEP armor header/footer.")
     begin_label = lines[0][len("-----BEGIN ") : -len("-----")]
     end_label = lines[-1][len("-----END ") : -len("-----")]
     if begin_label != end_label:
         raise ValueError(f"Mismatched armor labels: {begin_label} vs {end_label}")
     if expected_label and begin_label != expected_label:
-        raise ValueError(f"Expected armor label '{expected_label}', got '{begin_label}'")
+        # Allow seamless alias between OPENQPEP and CALYX QPEP armor labels
+        norm_begin = begin_label.replace("OPENQPEP", "CALYX QPEP").replace("CALYX QPEP QPKRF", "CALYX QPKRF")
+        norm_exp = expected_label.replace("OPENQPEP", "CALYX QPEP").replace("CALYX QPEP QPKRF", "CALYX QPKRF")
+        if norm_begin != norm_exp:
+            raise ValueError(f"Expected armor label '{expected_label}', got '{begin_label}'")
 
     metadata: Dict[str, str] = {}
     idx = 1
@@ -106,13 +140,13 @@ def _armor_unwrap(armored_text: str, expected_label: Optional[str] = None) -> Tu
         if checksum_line:
             expected_crc = _b64e(qsponge_var(b"CALYX-ARMOR-CRC-v1|" + raw_frame, 6))
             if not hmac.compare_digest(checksum_line, expected_crc):
-                raise ValueError("Calyx QPEP qSponge checksum mismatch (corrupted packet).")
+                raise ValueError("OpenQPEP qSponge checksum mismatch (corrupted packet).")
         wire_nonce = raw_frame[6:22]
         whitened = raw_frame[22:-32]
         wire_mac = raw_frame[-32:]
         expected_mac = qsponge_512(b"CALYX-WIRE-MAC-v1|" + wire_nonce + begin_label.encode("utf-8") + whitened)[:32]
         if not hmac.compare_digest(wire_mac, expected_mac):
-            raise ValueError("Calyx QPEP binary wire frame MAC verification failed.")
+            raise ValueError("OpenQPEP binary wire frame MAC verification failed.")
         mask = qsponge_var(b"CALYX-WIRE-WHITEN-v1|" + wire_nonce + begin_label.encode("utf-8"), len(whitened))
         payload_bytes = bytes(a ^ b for a, b in zip(whitened, mask))
     else:
@@ -122,7 +156,7 @@ def _armor_unwrap(armored_text: str, expected_label: Optional[str] = None) -> Tu
 
 def _qpkd_argon_derive(passphrase: str, salt: bytes) -> Tuple[bytes, bytes, bytes]:
     """
-    Enforces the hardcoded Calyx QPEP passphrase policy and absorbs the 64-byte policy witness
+    Enforces the hardcoded OpenQPEP passphrase policy and absorbs the 64-byte policy witness
     directly into the Scrypt + HKDF-qSponge-512 key derivation pipeline.
     """
     policy_witness = enforce_passphrase_policy(passphrase)
@@ -171,7 +205,7 @@ class QPEPKeyRing:
 
 class CalyxQPEPProtocol:
     """
-    Official Reference Implementation of the Calyx Quantum Proof Encryption Protocol (Calyx QPEP).
+    Official Reference Implementation of OpenQPEP by Calyx Labs Inc. (Beta Version 0.1.6).
     """
 
     @staticmethod
@@ -180,7 +214,7 @@ class CalyxQPEPProtocol:
         email: str,
         passphrase: str,
         qlx_tier: str = "QLX-1024",
-        comment: str = "Calyx QPEP Client",
+        comment: str = "OpenQPEP by Calyx Labs Inc.",
     ) -> QPEPKeyRing:
         policy_witness = enforce_passphrase_policy(passphrase)
         if qlx_tier not in QLX_TIERS:
@@ -214,7 +248,6 @@ class CalyxQPEPProtocol:
         qlx_pk, qlx_sk = QLXEngine.keygen(tier=qlx_tier, policy_witness=policy_witness)
         qvs_pk, qvs_sk = QVSEngine.keygen(tier=qvs_tier, policy_witness=policy_witness)
 
-        # Compute 64-hex-character Key Hash (replaces legacy Key-IDs and Fingerprints)
         full_hash = qsponge_512(
             b"CALYX-QPEP-KEY-HASH-v1|" + hgc_pk_bytes + qlx_pk + hgc_sig_pk_bytes + qvs_pk
         ).hex().upper()
@@ -245,7 +278,6 @@ class CalyxQPEPProtocol:
         kdf_salt = os.urandom(32)
         k_s1, k_s2, k_mac = _qpkd_argon_derive(passphrase, kdf_salt)
 
-        # Cryptographically XOR-mask the secret keys with k_mac so even raw JSON extraction cannot use keys without QPKD-Argon
         mask_stream = qsponge_var(b"CALYX-QPEP-SK-MASK|" + k_mac + key_hash.encode("ascii"), len(qlx_sk))
         masked_qlx_sk = bytes(a ^ b for a, b in zip(qlx_sk, mask_stream))
 
@@ -270,18 +302,7 @@ class CalyxQPEPProtocol:
             "ciphertext_b64": _b64e(ct_priv),
         }
 
-        mac_input = json.dumps(
-            {
-                "key_hash": key_hash,
-                "created_at": created_at,
-                "name": name,
-                "email": email,
-                "public_bundle": public_bundle,
-            },
-            sort_keys=True,
-            separators=(",", ":"),
-        ).encode("utf-8")
-        integrity_mac = qsponge_512(b"CALYX-QPKRF-INTEGRITY|" + mac_input).hex().upper()
+        integrity_mac = _compute_keyring_integrity_mac(key_hash, created_at, name, email, public_bundle)
 
         return QPEPKeyRing(
             key_hash=key_hash,
@@ -298,11 +319,28 @@ class CalyxQPEPProtocol:
 
     @staticmethod
     def verify_public_keyring_self_signature(keyring: QPEPKeyRing) -> bool:
+        expected_mac = _compute_keyring_integrity_mac(
+            keyring.key_hash,
+            keyring.created_at,
+            keyring.name,
+            keyring.email,
+            keyring.public_bundle,
+        )
+        if not hmac.compare_digest(keyring.integrity_mac, expected_mac):
+            return False
+
         hgc_pk_bytes = _b64d(keyring.public_bundle["hgc_448_public_b64"])
         qlx_pk = _b64d(keyring.public_bundle["qlx_public_b64"])
         hgc_sig_pk_bytes = _b64d(keyring.public_bundle["hgc_sig_public_b64"])
         qvs_pk = _b64d(keyring.public_bundle["qvs_public_b64"])
         self_sig_blob = _b64d(keyring.public_bundle["self_signature_b64"])
+
+        # Verify Key Hash binding to the actual public keys
+        expected_hash = qsponge_512(
+            b"CALYX-QPEP-KEY-HASH-v1|" + hgc_pk_bytes + qlx_pk + hgc_sig_pk_bytes + qvs_pk
+        ).hex().upper()[:64]
+        if not hmac.compare_digest(keyring.key_hash, expected_hash):
+            return False
 
         qvs_tier = keyring.qvs_tier
         expected_sig_len = 114 + QVS_TIERS[qvs_tier]["sig_bytes"]
@@ -381,7 +419,8 @@ class CalyxQPEPProtocol:
         ring_type = "PRIVATE_KEY_RING" if include_private else "PUBLIC_KEY_RING"
         envelope: Dict[str, Any] = {
             "magic": "QPKRF-v1",
-            "version": "0.1.1",
+            "protocol": PROJECT_NAME,
+            "version": UNIVERSAL_VERSION,
             "ring_type": ring_type,
             "suite": f"{keyring.qlx_tier}+HGC-448 / {keyring.qvs_tier}+qSponge-512 / CC-512",
             "key_hash": keyring.key_hash,
@@ -404,7 +443,8 @@ class CalyxQPEPProtocol:
             else "CALYX QPKRF PUBLIC KEY RING"
         )
         metadata = {
-            "Version": f"{PROTOCOL_VERSION} (Calyx Labs Inc.)",
+            "Protocol": PROJECT_NAME,
+            "Version": f"{PROTOCOL_VERSION} ({UNIVERSAL_VERSION_LABEL})",
             "Suite": f"{keyring.qlx_tier}+HGC-448 / {keyring.qvs_tier}+qSponge-512 / CC-512",
             "Key-Hash": keyring.key_hash,
             "Identity": f"{keyring.name} <{keyring.email}>",
@@ -439,7 +479,13 @@ class CalyxQPEPProtocol:
             armored_text = str(armored_or_path)
 
         label, _, payload_bytes = _armor_unwrap(armored_text)
-        if label not in ("CALYX QPKRF PUBLIC KEY RING", "CALYX QPKRF PRIVATE KEY RING"):
+        valid_labels = (
+            "CALYX QPKRF PUBLIC KEY RING",
+            "CALYX QPKRF PRIVATE KEY RING",
+            "OPENQPEP QPKRF PUBLIC KEY RING",
+            "OPENQPEP QPKRF PRIVATE KEY RING",
+        )
+        if label not in valid_labels:
             raise ValueError(f"Unexpected QPKRF armor header: {label}")
 
         envelope = json.loads(payload_bytes.decode("utf-8"))
@@ -459,7 +505,7 @@ class CalyxQPEPProtocol:
         )
 
         if not CalyxQPEPProtocol.verify_public_keyring_self_signature(keyring):
-            raise ValueError("QPKRF self-certification signature verification failed.")
+            raise ValueError("QPKRF self-certification signature or integrity_mac verification failed.")
 
         if keyring.has_private_key:
             if not passphrase:
@@ -485,7 +531,6 @@ class CalyxQPEPProtocol:
         if not CalyxQPEPProtocol.verify_public_keyring_self_signature(recipient_keyring):
             raise ValueError("Recipient public key ring self-signature is invalid.")
 
-        # Unlock the sender's encrypting key and sign the payload
         embedded_sig = CalyxQPEPProtocol.sign_bytes(plaintext, encrypting_keyring, passphrase)
 
         qlx_tier = recipient_keyring.qlx_tier
@@ -563,7 +608,8 @@ class CalyxQPEPProtocol:
 
         packet_obj = {
             "magic": "QPEP-v1",
-            "version": "0.1.1",
+            "protocol": PROJECT_NAME,
+            "version": UNIVERSAL_VERSION,
             "qlx_tier": qlx_tier,
             "recipient_key_hash": recipient_keyring.key_hash,
             "encrypting_key_hash": encrypting_keyring.key_hash,
@@ -575,7 +621,8 @@ class CalyxQPEPProtocol:
         }
 
         metadata = {
-            "Version": f"{PROTOCOL_VERSION} (Calyx Labs Inc.)",
+            "Protocol": PROJECT_NAME,
+            "Version": f"{PROTOCOL_VERSION} ({UNIVERSAL_VERSION_LABEL})",
             "Suite": f"{qlx_tier}+HGC-448 / CC-512",
             "Recipient-Key-Hash": recipient_keyring.key_hash,
             "Encrypting-Key-Hash": encrypting_keyring.key_hash,
@@ -631,7 +678,12 @@ class CalyxQPEPProtocol:
         okm = hkdf.derive(ss_hybrid)
         k_s1, k_s2, k_transcript_mac = okm[:32], okm[32:64], okm[64:128]
 
-        chunks = packet_obj["chunks"]
+        chunks = packet_obj.get("chunks", [])
+        if not chunks:
+            raise ValueError("Malformed OpenQPEP packet: empty chunk list.")
+        if chunks[-1].get("final") != 1 or any(ch.get("final") != 0 for ch in chunks[:-1]):
+            raise ValueError("Stream truncation or invalid final frame flag detected.")
+
         transcript_bytes = json.dumps(chunks, sort_keys=True, separators=(",", ":")).encode("utf-8")
         expected_tag = hmac.new(k_transcript_mac, b"CALYX-QPEP-TRANSCRIPT|" + transcript_bytes, hashlib.sha3_512).hexdigest().upper()
         if not hmac.compare_digest(expected_tag, packet_obj["transcript_qsponge_512"]):
@@ -661,10 +713,14 @@ class CalyxQPEPProtocol:
         if not hmac.compare_digest(actual_hash, inner_envelope["plaintext_qsponge_512"]):
             raise ValueError("Plaintext qSponge-512 integrity check failed.")
 
+        effective_sender = sender_public_keyring
+        if effective_sender is None and inner_envelope.get("encrypting_key_hash") == recipient_private_keyring.key_hash:
+            effective_sender = recipient_private_keyring
+
         sig_verified = None
-        if "embedded_signature" in inner_envelope and sender_public_keyring is not None:
+        if "embedded_signature" in inner_envelope and effective_sender is not None:
             sig_verified, _, _ = CalyxQPEPProtocol.verify_signature(
-                inner_envelope["embedded_signature"], signer_public_keyring=sender_public_keyring
+                inner_envelope["embedded_signature"], signer_public_keyring=effective_sender
             )
 
         meta_info = {
@@ -710,9 +766,9 @@ class CalyxQPEPProtocol:
     @staticmethod
     def sign_bytes(data: bytes, signer_private_keyring: QPEPKeyRing, passphrase: str) -> str:
         """
-        Creates an Attached Calyx QPEP Signature (CALYX QPEP ATTACHED SIGNATURE) where the signed
+        Creates an Attached OpenQPEP Signature (CALYX QPEP ATTACHED SIGNATURE) where the signed
         message payload is encapsulated directly inside the signature packet alongside the QVS
-        and HGC-448 signature vectors. Detached signatures are not used in Calyx QPEP.
+        and HGC-448 signature vectors. Detached signatures are prohibited in OpenQPEP.
         """
         enforce_passphrase_policy(passphrase)
         priv_keys = CalyxQPEPProtocol.unlock_private_keys(signer_private_keyring, passphrase)
@@ -727,14 +783,10 @@ class CalyxQPEPProtocol:
         sig1 = ed_sk.sign(transcript)
         sig2 = QVSEngine.sign(priv_keys["qvs_private"], qvs_pk, transcript, tier=qvs_tier)
 
-        try:
-            utf8_preview = data.decode("utf-8")
-        except Exception:
-            utf8_preview = None
-
         sig_obj = {
             "magic": "QPSIG-ATTACHED-v1",
-            "version": "0.1.1",
+            "protocol": PROJECT_NAME,
+            "version": UNIVERSAL_VERSION,
             "signature_mode": "ATTACHED_ENVELOPE",
             "suite": f"{qvs_tier}+qSponge-512",
             "signer_key_hash": signer_private_keyring.key_hash,
@@ -747,7 +799,8 @@ class CalyxQPEPProtocol:
             "qvs_signature_b64": _b64e(sig2),
         }
         metadata = {
-            "Version": f"{PROTOCOL_VERSION} (Calyx Labs Inc.)",
+            "Protocol": PROJECT_NAME,
+            "Version": f"{PROTOCOL_VERSION} ({UNIVERSAL_VERSION_LABEL})",
             "Mode": "ATTACHED-SIGNATURE",
             "Suite": f"{qvs_tier}+qSponge-512",
             "Signer-Key-Hash": signer_private_keyring.key_hash,
@@ -759,10 +812,10 @@ class CalyxQPEPProtocol:
     def verify_signature(
         armored_attached_signature: str,
         signer_public_keyring: Optional[QPEPKeyRing] = None,
-        keyring_pool: Optional[list[QPEPKeyRing]] = None,
+        keyring_pool: Optional[List[QPEPKeyRing]] = None,
     ) -> Tuple[bool, Optional[bytes], Optional[QPEPKeyRing]]:
         """
-        Verifies a Calyx QPEP Attached Signature packet (no separate detached message parameter).
+        Verifies an OpenQPEP Attached Signature packet (no separate detached message parameter).
         Extracts the embedded message from inside the signature packet, verifies the QVS + HGC-448
         signature against signer_public_keyring or across keyring_pool (Auto mode), and returns
         (is_valid, extracted_message_bytes, matched_keyring).
@@ -773,7 +826,7 @@ class CalyxQPEPProtocol:
             )
             sig_obj = json.loads(payload_bytes.decode("utf-8"))
             if "attached_message_b64" not in sig_obj:
-                raise ValueError("Detached signatures are prohibited in Calyx QPEP; message must be attached.")
+                raise ValueError("Detached signatures are prohibited in OpenQPEP; message must be attached.")
 
             extracted_data = _b64d(sig_obj["attached_message_b64"])
             actual_digest = qsponge_512(extracted_data).hex().upper()
@@ -812,7 +865,7 @@ class CalyxQPEPProtocol:
     def verify_text_signature(
         armored_attached_signature: str,
         signer_public_keyring: Optional[QPEPKeyRing] = None,
-        keyring_pool: Optional[list[QPEPKeyRing]] = None,
+        keyring_pool: Optional[List[QPEPKeyRing]] = None,
     ) -> Tuple[bool, Optional[str], Optional[QPEPKeyRing]]:
         ok, raw_bytes, kr = CalyxQPEPProtocol.verify_signature(
             armored_attached_signature,
@@ -820,3 +873,7 @@ class CalyxQPEPProtocol:
             keyring_pool=keyring_pool,
         )
         return ok, (raw_bytes.decode("utf-8") if (ok and raw_bytes is not None) else None), kr
+
+
+# Provide official alias OpenQPEPProtocol alongside CalyxQPEPProtocol
+OpenQPEPProtocol = CalyxQPEPProtocol
