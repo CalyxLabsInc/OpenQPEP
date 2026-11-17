@@ -1,7 +1,7 @@
-Calyx Public Open Source License 1.0 (CPOSL-1.0) — OpenQPEP Beta Version 0.1.6
+Calyx Public Open Source License 1.0 (CPOSL-1.0) — OpenQPEP Beta Version 0.1.7
 ================================================================================
 Project: OpenQPEP by Calyx Labs Inc. (Android App: Calyx QPEP Client)
-Universal Version: Beta Version 0.1.6 (0.1.6)
+Universal Version: Beta Version 0.1.7 (0.1.7)
 Copyright (c) 2026 Calyx Labs Inc. (Creator & Lead Architect: Tristen Martinez)
 Official Repository: https://github.com/CalyxLabsInc/OpenQPEP/
 Official Key Directory: https://qpepkeys.calyxlabsinc.org
@@ -18,7 +18,7 @@ by Tristen Martinez at Calyx Labs Inc.
 
 1. DEFINITIONS
 --------------
-1.1 "Protocol Standard" means OpenQPEP by Calyx Labs Inc. (Beta Version 0.1.6
+1.1 "Protocol Standard" means OpenQPEP by Calyx Labs Inc. (Beta Version 0.1.7
     and subsequent versions), including its QLX-768, QLX-1024, and QLX-2048
     7-layer NTT Module-LWE key encapsulation tiers over Z_3329[X]/(X^256+1),
     HGC-448 448-bit Goldilocks curve combiner, QVS-65, QVS-87, and QVS-128

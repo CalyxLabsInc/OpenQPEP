@@ -1,10 +1,6 @@
 """
-OpenQPEP (CALYX-QPEP) – Calyx Quantum Proof Encryption Protocol
-Copyright © 2026 Calyx Labs Inc. Developed by Tristen Martinez. All rights reserved.
-(https://github.com/CalyxLabsInc/OpenQPEP/)
-
-Calyx QPEP Quantum Lattice Exchange (QLX-768 / QLX-1024 / QLX-2048) &
-Quantum Vector Signature (QVS-65 / QVS-87 / QVS-128) Mathematical Engine.
+Calyx QPEP Quantum Lattice Exchange (QLX-768 / QLX-1024 / QLX-2048 / QLX-4096) &
+Quantum Vector Signature (QVS-65 / QVS-87 / QVS-128 / QVS-256) Mathematical Engine.
 
 Implements:
 1. qSponge-512 & qSponge-XOF: 1600-bit Keccak sponge (SHA3-512 / SHAKE-256) with
@@ -94,6 +90,15 @@ QLX_TIERS = {
         "sk_bytes": 384 * 8 + (384 * 8 + 32) + 64,  # 6240
         "ct_bytes": 352 * 8 + 160,             # 2976
         "qvs_tier": "QVS-128",
+    },
+    "QLX-4096": {
+        "k": 16,
+        "du": 11,
+        "dv": 5,
+        "pk_bytes": 384 * 16 + 32,             # 6176
+        "sk_bytes": 384 * 16 + (384 * 16 + 32) + 64,  # 12384
+        "ct_bytes": 352 * 16 + 160,            # 5792
+        "qvs_tier": "QVS-256",
     },
 }
 
@@ -409,6 +414,16 @@ QVS_TIERS = {
         "sk_bytes": 128 + (5 + 6) * 256 + 6 * 256 * 3, # 7552
         "sig_bytes": 64 + 5 * 256 * 3,                 # 3904
     },
+    "QVS-256": {
+        "k": 8,
+        "l": 7,
+        "eta": 2,
+        "tau": 60,
+        "beta": 120,
+        "pk_bytes": 32 + 8 * 256 * 3,                  # 6176
+        "sk_bytes": 128 + (7 + 8) * 256 + 8 * 256 * 3, # 10112
+        "sig_bytes": 64 + 7 * 256 * 3,                 # 5440
+    },
 }
 
 
@@ -664,7 +679,12 @@ class QVSEngine:
                 continue
 
             z_packed = b"".join(pack_poly24_qvs(p) for p in z_vec)
-            return c_tilde + z_packed
+            sig_out = c_tilde + z_packed
+            # Fault-Injection & Side-Channel Guard (Verify-Before-Emit):
+            # Prevents Rowhammer/glitch fault injection from leaking secret vectors (s1, s2).
+            if not QVSEngine.verify(pk, message, sig_out, tier=tier):
+                raise RuntimeError("QVS Fault-Injection Guard triggered: signature failed internal verification.")
+            return sig_out
 
     @staticmethod
     def verify(pk: bytes, message: bytes, signature: bytes, tier: str = "QVS-87") -> bool:

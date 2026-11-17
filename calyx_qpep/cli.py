@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-OpenQPEP Interactive Blue-Text English-Command CLI (Beta Version 0.1.6)
+OpenQPEP Interactive Blue-Text English-Command CLI (Beta Version 0.1.8)
 Project: OpenQPEP by Calyx Labs Inc. (Creator: Tristen Martinez)
 Repository: https://github.com/CalyxLabsInc/OpenQPEP/
 Directory: https://qpepkeys.calyxlabsinc.org
@@ -228,19 +228,22 @@ def _publish_entry_to_directory(entry: Dict[str, Any]) -> bool:
 def cmd_create_key(store: OpenQPEPKeyStore) -> None:
     bprint("\n--- OpenQPEP Guided Key Generation ---")
     bprint("Specify Key Type:")
-    bprint("  1. QLX-1024 + QVS-87 Sovereign Hybrid (Default — 1024-Dim Lattice + HGC-448 + CC-512)")
+    bprint("  1. Signature QLX-4096 + QVS-256 (Default — 4096-Dim Apex Quantum-Proof + HGC-448 + CC-512)")
     bprint("  2. QLX-2048 + QVS-128 Ultra-Grid (2048-Dim Hyper-Lattice + HGC-448 + CC-512)")
-    bprint("  3. QLX-768 + QVS-65 Velocity (768-Dim High-Speed Lattice + HGC-448 + CC-512)")
-    t_choice = binput("Enter option number (1-3, default 1):") or "1"
+    bprint("  3. QLX-1024 + QVS-87 Sovereign Hybrid (1024-Dim Lattice + HGC-448 + CC-512)")
+    bprint("  4. QLX-768 + QVS-65 Velocity (768-Dim High-Speed Lattice + HGC-448 + CC-512)")
+    t_choice = binput("Enter option number (1-4, default 1):") or "1"
     tier_map = {
-        "1": "QLX-1024",
+        "1": "QLX-4096",
         "2": "QLX-2048",
-        "3": "QLX-768",
-        "qlx-1024": "QLX-1024",
+        "3": "QLX-1024",
+        "4": "QLX-768",
+        "qlx-4096": "QLX-4096",
         "qlx-2048": "QLX-2048",
+        "qlx-1024": "QLX-1024",
         "qlx-768": "QLX-768",
     }
-    qlx_tier = tier_map.get(t_choice.lower(), "QLX-1024")
+    qlx_tier = tier_map.get(t_choice.lower(), "QLX-4096")
 
     name = ""
     while not name:
@@ -627,7 +630,7 @@ def main(argv=None) -> int:
     p_kg.add_argument("--name", required=True)
     p_kg.add_argument("--email", required=True)
     p_kg.add_argument("--passphrase", required=True)
-    p_kg.add_argument("--tier", default="QLX-1024", choices=["QLX-768", "QLX-1024", "QLX-2048"])
+    p_kg.add_argument("--tier", default="QLX-4096", choices=["QLX-768", "QLX-1024", "QLX-2048", "QLX-4096"])
     p_kg.add_argument("--pub-out", required=True)
     p_kg.add_argument("--priv-out", required=True)
 

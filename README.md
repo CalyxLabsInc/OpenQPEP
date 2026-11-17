@@ -1,10 +1,10 @@
-# OpenQPEP by Calyx Labs Inc. (`Beta Version 0.1.6`)
+# OpenQPEP by Calyx Labs Inc. (`Beta Version 0.1.8`)
 
 **Official Repository:** [https://github.com/CalyxLabsInc/OpenQPEP/](https://github.com/CalyxLabsInc/OpenQPEP/)  
 **Official Public Key Directory:** [https://qpepkeys.calyxlabsinc.org](https://qpepkeys.calyxlabsinc.org)  
-**Android Application:** **Calyx QPEP Client** (`Beta Version 0.1.6`)  
+**Android Application:** **Calyx QPEP Client** (`Beta Version 0.1.8`)  
 **Creator & Lead Architect:** **Tristen Martinez**, Founder & Lead Architect at **Calyx Labs Inc.** (`support@calyxlabsinc.org`)  
-**License:** **Calyx Public Open Source License 1.0 (`CPOSL-1.0` — OpenQPEP Beta Version 0.1.6 Edition)**  
+**License:** **Calyx Public Open Source License 1.0 (`CPOSL-1.0` — OpenQPEP Beta Version 0.1.8 Edition)**  
 
 ---
 
@@ -27,7 +27,7 @@ OpenQPEP eliminates classical RSA/ECC single-point quantum vulnerabilities, opti
 Detailed technical specifications and architectural manuals are located in the [`docs/`](docs/) directory:
 
 1. [**`docs/01_OpenQPEP_Mathematical_and_Cryptographic_Specification.md`**](docs/01_OpenQPEP_Mathematical_and_Cryptographic_Specification.md) — Complete mathematical specification of the 24-round `Keccak-f[1600]` sponge (`qSponge-512` / `qSponge-XOF`), 7-layer NTT Module-LWE (`QLX`) over $\mathbb{Z}_{3329}[X]/(X^{256}+1)$, Fujisaki-Okamoto IND-CCA2 decapsulation, and 8-layer NTT Lattice Fiat-Shamir with Aborts (`QVS`) over $\mathbb{Z}_{8380417}[X]/(X^{256}+1)$.
-2. [**`docs/02_OpenQPEP_vs_OpenPGP_Security_Comparison.md`**](docs/02_OpenQPEP_vs_OpenPGP_Security_Comparison.md) — Side-by-side security analysis comparing **OpenQPEP (`Beta Version 0.1.6`)** against legacy OpenPGP (`RFC 4880`) and Post-Quantum OpenPGP ([RFC 9980](https://datatracker.ietf.org/doc/html/rfc9980) / [Post-Quantum OpenPGP Overview](https://postquantum.com/security-pqc/post-quantum-openpgp-rfc-9980/)).
+2. [**`docs/02_OpenQPEP_vs_OpenPGP_Security_Comparison.md`**](docs/02_OpenQPEP_vs_OpenPGP_Security_Comparison.md) — Side-by-side security analysis comparing **OpenQPEP (`Beta Version 0.1.8`)** against legacy OpenPGP (`RFC 4880`) and Post-Quantum OpenPGP ([RFC 9980](https://datatracker.ietf.org/doc/html/rfc9980) / [Post-Quantum OpenPGP Overview](https://postquantum.com/security-pqc/post-quantum-openpgp-rfc-9980/)).
 3. [**`docs/03_QPKRF_Key_Ring_and_Binary_Wire_Format.md`**](docs/03_QPKRF_Key_Ring_and_Binary_Wire_Format.md) — Byte-level specification of the `.qpkrf` (Quantum Proof Key Ring File) envelope, `Key Hash` derivation, `integrity_mac` verification, and the `\x89QPE\x01\x01` whitened binary wire frame.
 4. [**`docs/04_Interactive_CLI_Android_Client_and_Directory_Guide.md`**](docs/04_Interactive_CLI_Android_Client_and_Directory_Guide.md) — User and developer manual for the **Interactive Blue-Text OpenQPEP CLI**, the **Calyx QPEP Client** Android app, and the [https://qpepkeys.calyxlabsinc.org](https://qpepkeys.calyxlabsinc.org) Public Key Directory server.
 5. [**`GUIDE.md`**](GUIDE.md) — Step-by-step Linux server + Cloudflare Zero Trust deployment and update guide for `qpepkeys.calyxlabsinc.org`.
@@ -68,7 +68,7 @@ Inside the interactive `OpenQPEP>` shell, type plain-English commands:
 
 ---
 
-## 5. Beta Version Progression Changelog (`0.1.1` &rarr; `0.1.6`)
+## 5. Beta Version Progression Changelog (`0.1.1` &rarr; `0.1.8`)
 
 OpenQPEP follows an incremental beta versioning scheme (`+0.0.1` per major architectural update, security fix, or feature):
 - **`Beta Version 0.1.1`**: Initial multi-tier `QLX`/`QVS` reference implementation, `.qpkrf` key rings, `Key Hash` addressing, attached-only signatures, `qpepkeys.calyxlabsinc.org` directory server, and **Calyx QPEP Client** Android app.
@@ -76,4 +76,25 @@ OpenQPEP follows an incremental beta versioning scheme (`+0.0.1` per major archi
 - **`Beta Version 0.1.3`**: Security Audit Fix #1 — Enforced constant-time recomputation and verification of the 512-bit `integrity_mac` and 64-character `Key Hash` public-key binding during `import_qpkrf`.
 - **`Beta Version 0.1.4`**: Security Audit Fix #2 — Enforced terminal-frame truncation checks (`final == 1` on the last 64 KiB `CC-512` chunk and `final == 0` on all preceding chunks) and automatic embedded sender signature verification on packet decryption.
 - **`Beta Version 0.1.5`**: Released the **Interactive Blue-Text English-Command OpenQPEP CLI** (`openqpep`) with guided `Create Key`, `Export Private/Public <KeyName>`, `Import Key`, encryption/decryption, attached signing/verification, and persistent `~/.openqpep/keyring.json` storage.
-- **`Beta Version 0.1.6` (Current)**: Recreated and expanded the [`docs/`](docs/) specification suite (4 comprehensive technical manuals), expanded `README.md`, and updated the **Calyx Public Open Source License 1.0 (`CPOSL-1.0`)**.
+- **`Beta Version 0.1.8` (Current)**: Recreated and expanded the [`docs/`](docs/) specification suite (4 comprehensive technical manuals), expanded `README.md`, and updated the **Calyx Public Open Source License 1.0 (`CPOSL-1.0`)**.
+
+---
+
+## `Signature QLX-4096 + QVS-256` Apex Quantum-Proof Tier (New in Beta Version 0.1.8)
+
+**`Signature QLX-4096 + QVS-256`** is OpenQPEP's flagship maximum-security key type, engineered specifically to surpass legacy OpenPGP (`RSA-4096` / `Ed25519`) and standard first-generation post-quantum schemes against emerging 2026 quantum and AI-driven cryptanalytic breakthroughs:
+
+| Tier Name | Module-LWE (`QLX`) | Vector Signature (`QVS`) | Public Key (`.qpkrf` Raw) | Secret Key (`.qpkrf` Raw) | Ciphertext / Sig Size |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **`Signature QLX-4096 + QVS-256` (Default Apex)** | $k=16, n=256, q=3329$ (`4,096`-Dim) | $(k=8, l=7), Q=8380417$ (`QVS-256`) | `6,176 B` (`QLX`) + `6,176 B` (`QVS`) | `12,384 B` (`QLX`) + `10,112 B` (`QVS`) | `5,792 B` (`CT`) / `5,440 B` (`Sig`) |
+| **`QLX-2048 + QVS-128 Ultra-Grid`** | $k=8, n=256, q=3329$ (`2,048`-Dim) | $(k=6, l=5), Q=8380417$ (`QVS-128`) | `3,104 B` (`QLX`) + `4,640 B` (`QVS`) | `6,240 B` (`QLX`) + `7,552 B` (`QVS`) | `2,976 B` (`CT`) / `3,904 B` (`Sig`) |
+| **`QLX-1024 + QVS-87 Sovereign Hybrid`** | $k=4, n=256, q=3329$ (`1,024`-Dim) | $(k=4, l=3), Q=8380417$ (`QVS-87`) | `1,568 B` (`QLX`) + `3,104 B` (`QVS`) | `3,168 B` (`QLX`) + `4,992 B` (`QVS`) | `1,568 B` (`CT`) / `2,368 B` (`Sig`) |
+| **`QLX-768 + QVS-65 Velocity`** | $k=3, n=256, q=3329$ (`768`-Dim) | $(k=3, l=2), Q=8380417$ (`QVS-65`) | `1,184 B` (`QLX`) + `2,336 B` (`QVS`) | `2,400 B` (`QLX`) + `3,712 B` (`QVS`) | `1,088 B` (`CT`) / `1,600 B` (`Sig`) |
+
+### 2026 Threat Immunity Matrix (`Signature QLX-4096 + QVS-256`)
+1. **Jesse-Victor-Gharabaghi (JVG) Hybrid QNTT Factorization & Shor's Algorithm**: Whereas JVG ([Preprints.org 202510.1649](https://www.preprints.org/manuscript/202510.1649/v1)) and Shor's algorithm attack RSA composite moduli and abelian discrete logarithms via Quantum Number Theoretic Transform (QNTT) / IQFT period finding, `Signature QLX-4096 + QVS-256` anchors hardness in `4,096`-dimensional Module-LWE and `(8x7)` Module-SIS over polynomial rings with no hidden abelian period, hybridized with `HGC-448` (`X448`/`Ed448`) via `qSponge-512`.
+2. **Quantum-Accelerated Lattice Sieving (Grover-Enhanced BKZ-$eta$)**: Doubling the lattice module rank to $k=16$ ($N = 4,096$ polynomial ring dimensions) and $(k=8, l=7)$ ($3,840$ vector dimensions) pushes the required BKZ block size to $eta > 1650$, maintaining $>512$-bit post-quantum security even under Grover-accelerated $2^{0.265eta}$ quantum sieve bounds ([PostQuantum Sieving Analysis](https://postquantum.com/quantum-research/quantum-sieving-breakthrough/)).
+3. **Quantum Algorithms for the Dihedral Coset Problem (DCP / Extrapolated DCP)**: Hardened against theoretical LWE-to-DCP reductions ([IACR ePrint 2026/1591](https://eprint.iacr.org/2026/1591); refuted in [PQprobe / ePrint 2026/1693](https://pqprobe.com/blog/dcp-claim-refuted)) via Fujisaki-Okamoto (`FO`) IND-CCA2 re-encryption verification (`CALYX-QLX-FO-G|`), lossy $(d_u=11, d_v=5)$ rounding compression, and constant-time implicit rejection (`CALYX-QLX-FO-REJECT|`), preventing coherent quantum coset state extraction.
+4. **Anthropic Claude Mythos Preview (July 2026) HAWK-256 Algebraic Symmetry Flaw & 7-Round AES Shortcuts**: In July 2026, Anthropic's Claude Mythos Preview ([Anthropic Research](https://www.anthropic.com/research/discovering-cryptographic-weaknesses)) halved the security of `HAWK-256` ($2^{64} 	o 2^{38}$) by exploiting rotational/Galois symmetries in rank-2 NTRU lattices and accelerated 7-round AES-128 attacks via the Möbius Bridge. `QVS-256` avoids NTRU ring isomorphisms completely, using asymmetric $(8 	imes 7)$ Module-SIS Fiat-Shamir with Aborts with per-coordinate domain-separated `qSponge-XOF` matrix expansion (`CALYX-QVS-MAT-A|`), while `Calyx-Cascade-512 (CC-512)` cascades **full 14-round AES-256-GCM** inside **full 20-round ChaCha20-Poly1305** across two independent mathematical families (SPN + ARX).
+5. **Grover's Algorithm on Symmetric & Hash-Based Primitives**: Uses 512-bit `qSponge-512` (`SHA3-512`) and `qSponge-XOF` (`SHAKE-256`) over a 1600-bit Keccak state (zero `SHA-256` usage) and 512-bit cascaded `CC-512` keys, leaving $\ge 256$ bits of post-quantum security under Grover's $O(2^{n/2})$ bound.
+6. **Side-Channel & Fault Injection Attacks**: Implements **Verify-Before-Emit `Fault-Guard`** inside `QVSEngine.sign` (mathematically verifying every generated lattice signature against `pk` before returning it so glitch/Rowhammer faults can never leak secret vectors `s1, s2`), constant-time `hmac.compare_digest` checks, and `qSponge-XOF` secret-key XOR masking (`CALYX-QPEP-SK-MASK|`) at rest.

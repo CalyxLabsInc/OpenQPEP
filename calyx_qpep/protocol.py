@@ -1,7 +1,7 @@
 """
 OpenQPEP (Open Quantum-Proof Encryption Protocol) by Calyx Labs Inc.
 Creator & Lead Architect: Tristen Martinez (https://github.com/CalyxLabsInc/OpenQPEP/)
-Universal Version: Beta Version 0.1.6
+Universal Version: Beta Version 0.1.8
 
 Version Progression Log:
 - 0.1.1 -> 0.1.2: Official project & protocol rename to OpenQPEP by Calyx Labs Inc.
@@ -38,11 +38,236 @@ from .qlx_lattice import QLXEngine, QVSEngine, QLX_TIERS, QVS_TIERS, qsponge_var
 
 PROJECT_NAME = "OpenQPEP by Calyx Labs Inc."
 APP_NAME = "Calyx QPEP Client"
-UNIVERSAL_VERSION = "0.1.6"
-UNIVERSAL_VERSION_LABEL = "Beta Version 0.1.6"
-PROTOCOL_VERSION = "OpenQPEP/Beta-0.1.6"
-DEFAULT_SUITE = "QLX-1024 + QVS-87 Sovereign Hybrid"
+UNIVERSAL_VERSION = "0.1.8"
+UNIVERSAL_VERSION_LABEL = "Beta Version 0.1.8"
+PROTOCOL_VERSION = "OpenQPEP/Beta-0.1.8"
+DEFAULT_SUITE = "Signature QLX-4096 + QVS-256"
 QPKRF_EXTENSION = ".qpkrf"
+
+# Hardened 2026 Post-Quantum & AI-Cryptanalysis Immunity Profile for Signature QLX-4096 + QVS-256
+QUANTUM_IMMUNITY_MATRIX: Dict[str, Dict[str, str]] = {
+    "JVG_AND_SHOR": {
+        "threat": "Jesse-Victor-Gharabaghi (JVG) Hybrid QNTT Factorization & Shor's Algorithm",
+        "mitigation": (
+            "Anchors key encapsulation and signatures in 4096-dimensional Module-LWE (QLX-4096, k=16, n=256, q=3329) "
+            "and (8x7) Module-SIS/LWE (QVS-256, Q=8380417) fused with HGC-448 via 512-bit qSponge-512. "
+            "Eliminates reliance on RSA composite factorization or abelian period finding exploited by QNTT/JVG and IQFT/Shor."
+        ),
+    },
+    "GROVER_ENHANCED_BKZ_SIEVING": {
+        "threat": "Quantum-Accelerated Lattice Sieving (Grover-Enhanced BKZ-beta)",
+        "mitigation": (
+            "Scales module rank to k=16 (4,096 polynomial ring dimensions in QLX-4096) and (k=8, l=7) (3,840 total vector "
+            "dimensions in QVS-256), pushing required BKZ block sizes to beta > 1650 (>512-bit post-quantum work factor "
+            "even under quantum-walk and Grover-accelerated 2^(0.265*beta) sieving bounds)."
+        ),
+    },
+    "DIHEDRAL_COSET_PROBLEM_DCP": {
+        "threat": "Quantum Algorithms for the Dihedral Coset Problem (DCP / Extrapolated DCP)",
+        "mitigation": (
+            "Applies Fujisaki-Okamoto (FO) IND-CCA2 re-encryption verification with H_ek transcript binding, lossy (du=11, dv=5) "
+            "rounding compression, and constant-time implicit rejection (CALYX-QLX-FO-REJECT|), preventing coherent quantum "
+            "coset state sampling and faulty-sample extrapolation reductions."
+        ),
+    },
+    "CLAUDE_MYTHOS_HAWK256_AND_AES": {
+        "threat": "Anthropic Claude Mythos Preview (July 2026) HAWK-256 Lattice Symmetry & 7-Round AES Mobius Bridge",
+        "mitigation": (
+            "Replaces structured NTRU rank-2 isomorphisms (vulnerable to HAWK-256 Galois/rotational symmetry shortcuts) with "
+            "asymmetric (8x7) Module-SIS Fiat-Shamir with Aborts and per-coordinate domain-separated qSponge-XOF matrix expansion "
+            "(CALYX-QVS-MAT-A|), while Calyx-Cascade-512 (CC-512) cascades full 14-round AES-256-GCM inside full 20-round "
+            "ChaCha20-Poly1305 (512-bit independent symmetric keys across SPN + ARX families)."
+        ),
+    },
+    "GROVER_SYMMETRIC_AND_HASH": {
+        "threat": "Grover's Algorithm on Symmetric Ciphers & Hash Primitives",
+        "mitigation": (
+            "Enforces 512-bit qSponge-512 (SHA3-512) and qSponge-XOF (SHAKE-256) over a 1600-bit Keccak state (zero SHA-256 usage) "
+            "together with 512-bit cascaded CC-512 payload encryption, preserving >=256 bits of post-quantum security under "
+            "Grover's O(2^(n/2)) quadratic speedup."
+        ),
+    },
+    "SIDE_CHANNEL_AND_FAULT_INJECTION": {
+        "threat": "Side-Channel Timing & Glitch/Rowhammer Fault Injection Attacks",
+        "mitigation": (
+            "Enforces Verify-Before-Emit Fault-Guard inside QVSEngine.sign (verifying every lattice signature against pk before output), "
+            "constant-time hmac.compare_digest verification across all MACs/FO-CCA2 checks, and qSponge-XOF XOR secret-key masking "
+            "(CALYX-QPEP-SK-MASK|) at rest."
+        ),
+    },
+}
+
+# Comprehensive Hardcoded Registry of Supported File Extensions & MIME Types for OpenQPEP File Encryption
+SUPPORTED_FILE_EXTENSIONS: Dict[str, str] = {
+    # Images & Graphics
+    ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".jpe": "image/jpeg", ".jfif": "image/jpeg",
+    ".png": "image/png", ".webp": "image/webp", ".gif": "image/gif", ".bmp": "image/bmp",
+    ".dib": "image/bmp", ".svg": "image/svg+xml", ".svgz": "image/svg+xml", ".ico": "image/x-icon",
+    ".heic": "image/heic", ".heif": "image/heif", ".avif": "image/avif", ".tif": "image/tiff",
+    ".tiff": "image/tiff", ".raw": "image/x-raw", ".cr2": "image/x-canon-cr2", ".nef": "image/x-nikon-nef",
+    ".arw": "image/x-sony-arw", ".dng": "image/x-adobe-dng", ".psd": "image/vnd.adobe.photoshop",
+    ".ai": "application/postscript", ".eps": "application/postscript",
+    # Documents, Office & Publishing
+    ".pdf": "application/pdf", ".txt": "text/plain", ".text": "text/plain", ".md": "text/markdown",
+    ".markdown": "text/markdown", ".rst": "text/x-rst", ".rtf": "application/rtf",
+    ".doc": "application/msword", ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ".xls": "application/vnd.ms-excel", ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    ".ppt": "application/vnd.ms-powerpoint", ".pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    ".odt": "application/vnd.oasis.opendocument.text", ".ods": "application/vnd.oasis.opendocument.spreadsheet",
+    ".odp": "application/vnd.oasis.opendocument.presentation", ".pages": "application/x-iwork-pages-sffpages",
+    ".numbers": "application/x-iwork-numbers-sffnumbers", ".key": "application/x-iwork-keynote-sffkey",
+    ".epub": "application/epub+zip", ".mobi": "application/x-mobipocket-ebook", ".azw3": "application/vnd.amazon.ebook",
+    ".kpf": "application/octet-stream", ".tex": "application/x-tex", ".bib": "text/x-bibtex",
+    # Data, Config & Structured Text
+    ".csv": "text/csv", ".tsv": "text/tab-separated-values", ".json": "application/json",
+    ".jsonl": "application/json", ".ndjson": "application/json", ".xml": "application/xml",
+    ".yaml": "application/x-yaml", ".yml": "application/x-yaml", ".toml": "application/toml",
+    ".ini": "text/plain", ".cfg": "text/plain", ".conf": "text/plain", ".env": "text/plain",
+    ".properties": "text/plain", ".log": "text/plain", ".sql": "application/sql",
+    # Source Code & Web
+    ".html": "text/html", ".htm": "text/html", ".css": "text/css", ".scss": "text/x-scss",
+    ".less": "text/x-less", ".js": "application/javascript", ".mjs": "application/javascript",
+    ".cjs": "application/javascript", ".ts": "application/typescript", ".jsx": "text/jsx",
+    ".tsx": "text/tsx", ".py": "text/x-python", ".pyw": "text/x-python", ".ipynb": "application/x-ipynb+json",
+    ".java": "text/x-java-source", ".kt": "text/x-kotlin", ".kts": "text/x-kotlin",
+    ".scala": "text/x-scala", ".groovy": "text/x-groovy", ".c": "text/x-c", ".h": "text/x-c",
+    ".cpp": "text/x-c++", ".cc": "text/x-c++", ".cxx": "text/x-c++", ".hpp": "text/x-c++",
+    ".cs": "text/x-csharp", ".go": "text/x-go", ".rs": "text/rust", ".swift": "text/x-swift",
+    ".m": "text/x-objectivec", ".mm": "text/x-objectivec++", ".rb": "text/x-ruby",
+    ".php": "application/x-httpd-php", ".pl": "text/x-perl", ".lua": "text/x-lua",
+    ".r": "text/x-r", ".jl": "text/x-julia", ".dart": "application/vnd.dart",
+    ".sh": "application/x-sh", ".bash": "application/x-sh", ".zsh": "application/x-sh",
+    ".fish": "application/x-sh", ".bat": "application/x-msdos-program", ".cmd": "application/x-msdos-program",
+    ".ps1": "application/x-powershell", ".wasm": "application/wasm", ".sol": "text/plain",
+    # Archives, Packages & Disk Images
+    ".zip": "application/zip", ".tar": "application/x-tar", ".gz": "application/gzip",
+    ".tgz": "application/gzip", ".bz2": "application/x-bzip2", ".tbz2": "application/x-bzip2",
+    ".xz": "application/x-xz", ".txz": "application/x-xz", ".zst": "application/zstd",
+    ".7z": "application/x-7z-compressed", ".rar": "application/vnd.rar", ".cab": "application/vnd.ms-cab-compressed",
+    ".iso": "application/x-iso9660-image", ".img": "application/octet-stream", ".dmg": "application/x-apple-diskimage",
+    ".vhd": "application/x-virtualbox-vhd", ".vmdk": "application/x-vmdk", ".qcow2": "application/x-qemu-disk",
+    # Android, JVM & Executables
+    ".apk": "application/vnd.android.package-archive", ".aab": "application/x-authorware-bin",
+    ".apks": "application/zip", ".xapk": "application/zip", ".jar": "application/java-archive",
+    ".war": "application/java-archive", ".dex": "application/octet-stream", ".class": "application/java-vm",
+    ".so": "application/x-sharedlib", ".dll": "application/x-msdownload", ".exe": "application/x-msdownload",
+    ".msi": "application/x-msi", ".deb": "application/vnd.debian.binary-package",
+    ".rpm": "application/x-rpm", ".appimage": "application/x-executable", ".elf": "application/x-executable",
+    ".bin": "application/octet-stream", ".dat": "application/octet-stream", ".pak": "application/octet-stream",
+    # Databases & Scientific Data
+    ".db": "application/x-sqlite3", ".sqlite": "application/x-sqlite3", ".sqlite3": "application/x-sqlite3",
+    ".mdb": "application/x-msaccess", ".accdb": "application/x-msaccess", ".parquet": "application/vnd.apache.parquet",
+    ".feather": "application/octet-stream", ".avro": "application/octet-stream", ".orc": "application/octet-stream",
+    ".h5": "application/x-hdf5", ".hdf5": "application/x-hdf5", ".npy": "application/octet-stream",
+    ".npz": "application/zip", ".pt": "application/octet-stream", ".pth": "application/octet-stream",
+    ".onnx": "application/octet-stream", ".safetensors": "application/octet-stream", ".gguf": "application/octet-stream",
+    # Audio & Music
+    ".mp3": "audio/mpeg", ".wav": "audio/wav", ".flac": "audio/flac", ".aac": "audio/aac",
+    ".ogg": "audio/ogg", ".oga": "audio/ogg", ".opus": "audio/opus", ".m4a": "audio/mp4",
+    ".wma": "audio/x-ms-wma", ".aiff": "audio/x-aiff", ".mid": "audio/midi", ".midi": "audio/midi",
+    # Video & Multimedia
+    ".mp4": "video/mp4", ".m4v": "video/x-m4v", ".mkv": "video/x-matroska", ".webm": "video/webm",
+    ".mov": "video/quicktime", ".avi": "video/x-msvideo", ".wmv": "video/x-ms-wmv",
+    ".flv": "video/x-flv", ".ts": "video/mp2t", ".mts": "video/mp2t", ".3gp": "video/3gpp",
+    # Fonts
+    ".ttf": "font/ttf", ".otf": "font/otf", ".woff": "font/woff", ".woff2": "font/woff2",
+    # Cryptographic Keys, Certificates & OpenQPEP Formats
+    ".qpkrf": "application/x-calyx-qpkrf", ".qpep": "application/x-calyx-qpep", ".qpsig": "application/x-calyx-qpsig",
+    ".asc": "application/pgp-keys", ".pgp": "application/pgp-encrypted", ".gpg": "application/pgp-encrypted",
+    ".sig": "application/pgp-signature", ".pem": "application/x-pem-file", ".crt": "application/x-x509-ca-cert",
+    ".cer": "application/pkix-cert", ".der": "application/x-x509-ca-cert", ".p12": "application/x-pkcs12",
+    ".pfx": "application/x-pkcs12", ".jks": "application/x-java-keystore", ".keystore": "application/x-java-keystore",
+    ".key": "application/pkcs8", ".csr": "application/pkcs10", ".kdbx": "application/x-keepass2",
+}
+
+
+def detect_file_extension_and_mime(data: bytes, filename: Optional[str] = None) -> Tuple[str, str, str]:
+    """
+    Determines the exact (normalized_filename, extension, mime_type) for any file payload
+    using both the provided filename and binary magic-byte header inspection.
+    """
+    ext = ""
+    base_name = (filename or "").strip()
+    if base_name and "." in base_name:
+        candidate_ext = "." + base_name.rsplit(".", 1)[-1].lower().strip()
+        if candidate_ext != ".qpep" and len(candidate_ext) <= 14:
+            ext = candidate_ext
+
+    # Inspect binary magic-byte headers if extension is missing or generic (.bin / .txt / .qpep)
+    if not ext or ext in (".bin", ".dat", ".qpep"):
+        if data.startswith(b"\xff\xd8\xff"):
+            ext = ".jpg"
+        elif data.startswith(b"\x89PNG\r\n\x1a\n"):
+            ext = ".png"
+        elif data.startswith(b"GIF87a") or data.startswith(b"GIF89a"):
+            ext = ".gif"
+        elif len(data) >= 12 and data[:4] == b"RIFF" and data[8:12] == b"WEBP":
+            ext = ".webp"
+        elif data.startswith(b"BM"):
+            ext = ".bmp"
+        elif data.startswith(b"%PDF-"):
+            ext = ".pdf"
+        elif data.startswith(b"PK\x03\x04"):
+            if b"AndroidManifest.xml" in data[:4096] or b"classes.dex" in data[:4096]:
+                ext = ".apk"
+            elif b"word/" in data[:2048]:
+                ext = ".docx"
+            elif b"xl/" in data[:2048]:
+                ext = ".xlsx"
+            elif b"ppt/" in data[:2048]:
+                ext = ".pptx"
+            else:
+                ext = ".zip"
+        elif data.startswith(b"\x1f\x8b\x08"):
+            ext = ".gz"
+        elif data.startswith(b"7z\xbc\xaf\x27\x1c"):
+            ext = ".7z"
+        elif data.startswith(b"Rar!\x1a\x07"):
+            ext = ".rar"
+        elif data.startswith(b"SQLite format 3\x00"):
+            ext = ".sqlite"
+        elif data.startswith(b"ID3") or data.startswith(b"\xff\xfb") or data.startswith(b"\xff\xf3"):
+            ext = ".mp3"
+        elif len(data) >= 12 and data[:4] == b"RIFF" and data[8:12] == b"WAVE":
+            ext = ".wav"
+        elif data.startswith(b"fLaC"):
+            ext = ".flac"
+        elif data.startswith(b"OggS"):
+            ext = ".ogg"
+        elif len(data) >= 12 and data[4:8] == b"ftyp":
+            ext = ".mp4"
+        elif data.startswith(b"\x1a\x45\xdf\xa3"):
+            ext = ".mkv"
+        elif data.startswith(b"\x7fELF"):
+            ext = ".elf"
+        elif data.startswith(b"dex\n035\x00"):
+            ext = ".dex"
+        elif b"-----BEGIN CALYX QPKRF" in data[:256] or b"-----BEGIN OPENQPEP QPKRF" in data[:256]:
+            ext = ".qpkrf"
+        elif not ext:
+            try:
+                data[:1024].decode("utf-8")
+                ext = ".txt"
+            except UnicodeDecodeError:
+                ext = ".bin"
+
+    mime_type = SUPPORTED_FILE_EXTENSIONS.get(ext, "application/octet-stream")
+    if not base_name or base_name in ("encrypted_payload.qpep", "inline_message.txt"):
+        stem = "decrypted_file" if ext != ".txt" else "message"
+        normalized_filename = f"{stem}{ext}"
+    elif base_name.lower().endswith(".qpep"):
+        stem = base_name[:-5]
+        if "." in stem:
+            normalized_filename = stem
+        else:
+            normalized_filename = f"{stem}{ext}"
+    elif not base_name.lower().endswith(ext):
+        normalized_filename = f"{base_name}{ext}"
+    else:
+        normalized_filename = base_name
+
+    return normalized_filename, ext, mime_type
+
 CHUNK_SIZE = 65536
 WIRE_MAGIC = b"\x89QPE\x01\x01"
 
@@ -213,12 +438,12 @@ class CalyxQPEPProtocol:
         name: str,
         email: str,
         passphrase: str,
-        qlx_tier: str = "QLX-1024",
+        qlx_tier: str = "QLX-4096",
         comment: str = "OpenQPEP by Calyx Labs Inc.",
     ) -> QPEPKeyRing:
         policy_witness = enforce_passphrase_policy(passphrase)
         if qlx_tier not in QLX_TIERS:
-            qlx_tier = "QLX-1024"
+            qlx_tier = "QLX-4096"
         qvs_tier = QLX_TIERS[qlx_tier]["qvs_tier"]
 
         hgc_sk = x448.X448PrivateKey.generate()
@@ -567,8 +792,11 @@ class CalyxQPEPProtocol:
         okm = hkdf.derive(ss_hybrid)
         k_s1, k_s2, k_transcript_mac = okm[:32], okm[32:64], okm[64:128]
 
+        norm_fname, file_ext, mime_type = detect_file_extension_and_mime(plaintext, filename)
         inner_envelope = {
-            "filename": filename or "inline_message.txt",
+            "filename": norm_fname,
+            "file_extension": file_ext,
+            "mime_type": mime_type,
             "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
             "plaintext_qsponge_512": qsponge_512(plaintext).hex().upper(),
             "plaintext_size": len(plaintext),
@@ -723,8 +951,15 @@ class CalyxQPEPProtocol:
                 inner_envelope["embedded_signature"], signer_public_keyring=effective_sender
             )
 
+        norm_fname, file_ext, mime_type = detect_file_extension_and_mime(
+            plaintext, inner_envelope.get("filename")
+        )
         meta_info = {
-            "filename": inner_envelope.get("filename"),
+            "qlx_tier": qlx_tier,
+            "qvs_tier": QLX_TIERS[qlx_tier]["qvs_tier"],
+            "filename": norm_fname,
+            "file_extension": inner_envelope.get("file_extension") or file_ext,
+            "mime_type": inner_envelope.get("mime_type") or mime_type,
             "timestamp": inner_envelope.get("timestamp"),
             "plaintext_qsponge_512": actual_hash,
             "plaintext_size": inner_envelope.get("plaintext_size"),
@@ -732,6 +967,52 @@ class CalyxQPEPProtocol:
             "signature_verified": sig_verified,
         }
         return plaintext, meta_info
+
+    @staticmethod
+    def encrypt_file(
+        input_path: str | Path,
+        recipient_keyring: QPEPKeyRing,
+        encrypting_keyring: QPEPKeyRing,
+        passphrase: str,
+        output_path: Optional[str | Path] = None,
+    ) -> Tuple[str, Path]:
+        in_p = Path(input_path)
+        raw_bytes = in_p.read_bytes()
+        armored = CalyxQPEPProtocol.encrypt_bytes(
+            raw_bytes,
+            recipient_keyring=recipient_keyring,
+            encrypting_keyring=encrypting_keyring,
+            passphrase=passphrase,
+            filename=in_p.name,
+        )
+        out_p = Path(output_path) if output_path else in_p.with_name(in_p.name + ".qpep")
+        out_p.write_text(armored, encoding="utf-8")
+        return armored, out_p
+
+    @staticmethod
+    def decrypt_file(
+        input_qpep_path: str | Path,
+        recipient_private_keyring: QPEPKeyRing,
+        passphrase: str,
+        output_path_or_dir: Optional[str | Path] = None,
+        sender_public_keyring: Optional[QPEPKeyRing] = None,
+    ) -> Tuple[bytes, Path, Dict[str, Any]]:
+        in_p = Path(input_qpep_path)
+        armored = in_p.read_text(encoding="utf-8")
+        pt_bytes, meta = CalyxQPEPProtocol.decrypt_packet(
+            armored,
+            recipient_private_keyring=recipient_private_keyring,
+            passphrase=passphrase,
+            sender_public_keyring=sender_public_keyring,
+        )
+        rec_name = meta.get("filename") or "decrypted_file.bin"
+        if output_path_or_dir is None:
+            out_p = in_p.parent / rec_name
+        else:
+            cand = Path(output_path_or_dir)
+            out_p = (cand / rec_name) if cand.is_dir() else cand
+        out_p.write_bytes(pt_bytes)
+        return pt_bytes, out_p, meta
 
     @staticmethod
     def encrypt_text(

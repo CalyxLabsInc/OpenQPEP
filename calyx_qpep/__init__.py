@@ -1,5 +1,5 @@
 """
-OpenQPEP by Calyx Labs Inc. (Beta Version 0.1.6)
+OpenQPEP by Calyx Labs Inc. (Beta Version 0.1.8)
 Official Reference Implementation by Tristen Martinez at Calyx Labs Inc.
 Repository: https://github.com/CalyxLabsInc/OpenQPEP/
 Public Key Directory: https://qpepkeys.calyxlabsinc.org
@@ -11,6 +11,9 @@ from .passphrase import (
     PassphraseValidationResult,
 )
 from .protocol import (
+    SUPPORTED_FILE_EXTENSIONS,
+    QUANTUM_IMMUNITY_MATRIX,
+    detect_file_extension_and_mime,
     OpenQPEPProtocol,
     CalyxQPEPProtocol,
     QPEPKeyRing,
@@ -39,4 +42,4 @@ __all__ = [
     "DEFAULT_SUITE",
     "QPKRF_EXTENSION",
 ]
-__version__ = "0.1.6"
+__version__ = "0.1.8"
