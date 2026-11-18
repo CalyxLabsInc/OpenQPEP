@@ -10,12 +10,12 @@
 
 ## 1. Executive Architecture Overview
 
-**OpenQPEP by Calyx Labs Inc.** (`Beta Version 0.1.9`) is a clean-slate, hybrid post-quantum encryption and digital signature standard engineered by **Tristen Martinez** at **Calyx Labs Inc.** to replace legacy OpenPGP (`RFC 4880`) and improve upon early post-quantum OpenPGP drafts such as [IETF RFC 9980](https://datatracker.ietf.org/doc/html/rfc9980).
+**OpenQPEP by Calyx Labs Inc.** (`Beta Version 0.1.9`) is a clean-slate, hybrid post-quantum encryption and digital signature standard engineered by **Tristen Martinez** at **[Calyx Labs Inc.](https://calyxlabsinc.org/)** to replace legacy OpenPGP (`RFC 4880`) and improve upon early post-quantum OpenPGP specifications such as [IETF RFC 9980](https://datatracker.ietf.org/doc/rfc9980/).
 
 Every cryptographic operation in **OpenQPEP** is built around five core pillars:
 1. **1600-Bit 24-Round Sponge Primitives (`qSponge-512` & `qSponge-XOF`)**: Built directly on the 24-round `Keccak-f[1600]` state permutation with explicit domain separation (`CALYX-QSPONGE-512-v1|` and `CALYX-QSPONGE-XOF-v1|`) and zero reliance on legacy `SHA-1` or `SHA-256`.
-2. **Module-LWE Key Encapsulation (`QLX-768`, `QLX-1024`, `QLX-2048`) + 448-Bit Classical Hybrid (`HGC-448`)**: Performs polynomial ring arithmetic over $R_{3329} = \mathbb{Z}_{3329}[X]/(X^{256}+1)$ via a 7-layer Cooley-Tukey / Gentleman-Sande Number Theoretic Transform (`NTT`) with primitive 256th root of unity $\zeta = 17 \bmod 3329$ and a full Fujisaki-Okamoto (`FO`) IND-CCA2 re-encryption transform, combined with 448-bit Goldilocks Diffie-Hellman (`X448`).
-3. **Lattice Fiat-Shamir with Aborts Signatures (`QVS-65`, `QVS-87`, `QVS-128`) + 448-Bit Edwards Conjunctive Signatures (`Ed448`)**: Performs polynomial ring arithmetic over $R_{8380417} = \mathbb{Z}_{8380417}[X]/(X^{256}+1)$ via an 8-layer complete `NTT` with primitive 512th root of unity $\zeta_Q = 1753 \bmod 8380417$ and strict rejection sampling over masking vectors $\mathbf{y} \in [-\gamma_1+1, \gamma_1]^\ell$.
+2. **Five Multi-Tier Module-LWE & Coupled Hyper-Tesseract Key Encapsulation Tiers (`QLX-768`, `QLX-1024`, `QLX-2048`, `Calyx Signature QLX-4096`, and `Calyx Hyper-Tesseract QLX-16384`) + 448-Bit Classical Hybrid (`HGC-448`)**: Performs polynomial ring arithmetic over $R_{3329} = \mathbb{Z}_{3329}[X]/(X^{256}+1)$ via a 7-layer Cooley-Tukey / Gentleman-Sande Number Theoretic Transform (`NTT`) with primitive 256th root of unity $\zeta = 17 \bmod 3329$ and a full Fujisaki-Okamoto (`FO`) IND-CCA2 re-encryption transform, combined with 448-bit Goldilocks Diffie-Hellman (`X448`).
+3. **Five Lattice Fiat-Shamir with Aborts Signature Tiers (`QVS-65`, `QVS-87`, `QVS-128`, `QVS-256`, and `QVS-1024`) + 448-Bit Edwards Conjunctive Signatures (`Ed448`)**: Performs polynomial ring arithmetic over $R_{8380417} = \mathbb{Z}_{8380417}[X]/(X^{256}+1)$ via an 8-layer complete `NTT` with primitive 512th root of unity $\zeta_Q = 1753 \bmod 8380417$, strict rejection sampling over masking vectors $\mathbf{y} \in [-\gamma_1+1, \gamma_1]^\ell$, and Verify-Before-Emit `Fault-Guard` fault-injection verification.
 4. **Protocol-Enforced `QPKD-Argon` Passphrase Lock**: Hardcodes a mandatory character-class policy (`>=12` characters, `>=2` digits, `>=4` special characters, `>=2` uppercase letters, `>=4` lowercase letters) into a 64-byte cryptographic policy witness absorbed into both key generation and secret key wrapping.
 5. **Dual-Stream Authenticated Payload Cipher (`Calyx-Cascade-512` / `CC-512`) & `\x89QPE\x01\x01` Binary Wire Framing**: Encrypts all payloads and secret key rings twice in cascade through 14-round NIST `AES-256-GCM` ($\text{GF}(2^{128})$ GHASH) and 20-round RFC 8439 `ChaCha20-Poly1305` ($\bmod\ 2^{130}-5$), then whitens the outer wire frame with a 128-bit random salt and `qSponge-XOF` keystream before Base64 armoring.
 
@@ -36,16 +36,18 @@ OpenQPEP completely eliminates `SHA-256` across both the Python reference librar
 
 ---
 
-## 3. `QLX` Module-LWE Key Encapsulation Over $R_{3329} = \mathbb{Z}_{3329}[X]/(X^{256}+1)$
+## 3. `QLX` Module-LWE & Coupled Hyper-Tesseract Key Encapsulation Over $R_{3329} = \mathbb{Z}_{3329}[X]/(X^{256}+1)$
 
-### 3.1 Ring Parameters & Tiers
-Consistent with high-security lattice parameterizations analyzed in [ML-KEM-1024 Deep Dive](https://quantumsequrity.com/blog/ml-kem-1024-deep-dive), OpenQPEP defines three Module-LWE tiers over the cyclotomic ring $R_q = \mathbb{Z}_{3329}[X]/(X^{256}+1)$ ($q = 3329 = 2^8 \cdot 13 + 1$, $n = 256$, primitive 256th root of unity $\zeta = 17 \bmod 3329$ satisfying $\zeta^{128} \equiv -1 \pmod{3329}$):
+### 3.1 Ring Parameters & All Five `QLX` Tiers
+Building upon and scaling far beyond standard Module-LWE parameterizations ([ML-KEM-1024 Deep Dive](https://quantumsequrity.com/blog/ml-kem-1024-deep-dive)), OpenQPEP defines **five** Module-LWE tiers over the cyclotomic ring $R_q = \mathbb{Z}_{3329}[X]/(X^{256}+1)$ ($q = 3329 = 2^8 \cdot 13 + 1$, $n = 256$, primitive 256th root of unity $\zeta = 17 \bmod 3329$ satisfying $\zeta^{128} \equiv -1 \pmod{3329}$):
 
-| OpenQPEP Tier | Module Rank $k$ | Polynomial Dimension | Compression $(d_u, d_v)$ | Public Key (`ek`) | Secret Key (`dk`) | Ciphertext (`ct`) | Paired Signature Tier |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
-| **`QLX-768`** | $k = 3$ | $768$ | $(10, 4)$ | $1,184\text{ B}$ | $2,400\text{ B}$ | $1,088\text{ B}$ | `QVS-65` |
-| **`QLX-1024` (Default)** | $k = 4$ | $1,024$ | $(11, 5)$ | $1,568\text{ B}$ | $3,168\text{ B}$ | $1,568\text{ B}$ | `QVS-87` |
-| **`QLX-2048`** | $k = 8$ | $2,048$ | $(11, 5)$ | $3,104\text{ B}$ | $6,240\text{ B}$ | $2,976\text{ B}$ | `QVS-128` |
+| OpenQPEP Tier & Nickname | Module Rank $k$ (Manifolds) | Polynomial Dimension | Binomial Noise $\eta$ | Compression $(d_u, d_v)$ | Public Key (`ek`) | Secret Key (`dk`) | Ciphertext (`ct`) | Paired Signature Tier |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
+| **`QLX-768` (`Velocity`)** | $k = 3$ ($1$) | $768$ | $\text{CBD}_2$ ($\eta=2$) | $(10, 4)$ | $1,184\text{ B}$ | $2,400\text{ B}$ | $1,088\text{ B}$ | `QVS-65` |
+| **`QLX-1024` (`Sovereign Hybrid`)** | $k = 4$ ($1$) | $1,024$ | $\text{CBD}_2$ ($\eta=2$) | $(11, 5)$ | $1,568\text{ B}$ | $3,168\text{ B}$ | $1,568\text{ B}$ | `QVS-87` |
+| **`QLX-2048` (`Ultra-Grid`)** | $k = 8$ ($1$) | $2,048$ | $\text{CBD}_2$ ($\eta=2$) | $(11, 5)$ | $3,104\text{ B}$ | $6,240\text{ B}$ | $2,976\text{ B}$ | `QVS-128` |
+| **`QLX-4096` (`Calyx Signature` — Default)** | $k = 16$ ($1$) | $4,096$ | $\text{CBD}_2$ ($\eta=2$) | $(11, 5)$ | $6,176\text{ B}$ | $12,384\text{ B}$ | $5,792\text{ B}$ | `QVS-256` |
+| **`QLX-16384` (`Calyx Hyper-Tesseract`)** | $k = 64$ ($4 \times 16$) | $16,384$ | $\text{CBD}_1$ ($\eta=1$) | $(11, 5)$ | $24,608\text{ B}$ | $49,248\text{ B}$ | $23,168\text{ B}$ | `QVS-1024` |
 
 ### 3.2 7-Layer Number Theoretic Transform (`ntt_3329` & `inv_ntt_3329`)
 Because $X^{256} + 1 \equiv \prod_{i=0}^{127} (X^2 - \zeta^{2\text{br}_7(i)+1}) \pmod{3329}$ where $\text{br}_7(i)$ is the 7-bit reversal of $i$:
@@ -54,11 +56,12 @@ Because $X^{256} + 1 \equiv \prod_{i=0}^{127} (X^2 - \zeta^{2\text{br}_7(i)+1}) 
    $$\hat{c}_{2i} = (\hat{a}_{2i}\hat{b}_{2i} + \hat{a}_{2i+1}\hat{b}_{2i+1}\gamma_i) \bmod 3329, \qquad \hat{c}_{2i+1} = (\hat{a}_{2i}\hat{b}_{2i+1} + \hat{a}_{2i+1}\hat{b}_{2i}) \bmod 3329$$
 3. **Inverse NTT (`inv_ntt_3329`)**: Executes 7 Gentleman-Sande inverse butterfly layers and scales each coefficient by $128^{-1} \equiv 3303 \pmod{3329}$.
 
-### 3.3 Key Generation, Encapsulation & Fujisaki-Okamoto IND-CCA2 Decapsulation
+### 3.3 Single-Manifold KeyGen, Encaps & Decaps (`QLX-768`, `QLX-1024`, `QLX-2048`, `Calyx Signature QLX-4096`)
+For single-manifold tiers ($k \in \{3, 4, 8, 16\}$):
 - **Key Generation (`QLXEngine.keygen`)**:
   1. Absorbs 32-byte random seed $d$ and the 64-byte `QPKD-Argon` passphrase policy witness $W_{\text{policy}}$ into `qSponge-512` to derive $(\rho, \sigma) \in \{0,1\}^{256} \times \{0,1\}^{256}$.
   2. Rejection-samples the $k \times k$ matrix $\hat{\mathbf{A}} \in R_{3329}^{k \times k}$ uniformly from $\rho$.
-  3. Samples secret vector $\mathbf{s} \in R_{3329}^k$ and error vector $\mathbf{e} \in R_{3329}^k$ from the Centered Binomial Distribution $\text{CBD}_2(\sigma)$ with coefficients in $\{-2, -1, 0, 1, 2\} \pmod{3329}$.
+  3. Samples secret vector $\mathbf{s} \in R_{3329}^k$ and error vector $\mathbf{e} \in R_{3329}^k$ from $\text{CBD}_2(\sigma)$ with coefficients in $\{-2, -1, 0, 1, 2\} \pmod{3329}$.
   4. Computes the Module-LWE public key in NTT domain:
      $$\hat{\mathbf{t}} = \hat{\mathbf{A}} \circ \text{NTT}(\mathbf{s}) + \text{NTT}(\mathbf{e}) \pmod{3329}$$
   5. Packs $\hat{\mathbf{t}}$ at 12 bits/coefficient ($384k$ bytes) + $\rho$ ($32$ bytes) into `ek`, and packs $\hat{\mathbf{s}}$ ($384k$ bytes) + `ek` + $H(\text{ek})$ + implicit rejection seed $z$ into `dk`.
@@ -69,101 +72,47 @@ Because $X^{256} + 1 \equiv \prod_{i=0}^{127} (X^2 - \zeta^{2\text{br}_7(i)+1}) 
      $$v = \text{NTT}^{-1}(\hat{\mathbf{t}}^T \circ \text{NTT}(\mathbf{r}_v)) + e_2 + \text{Decompress}_1(m) \pmod{3329}$$
   3. Compresses $(\mathbf{u}, v)$ to $(d_u, d_v)$ bits per coefficient to form ciphertext `ct`.
 - **Decapsulation (`QLXEngine.decaps`)**:
-  1. Decompresses $(\mathbf{u}, v)$ and computes the noisy difference polynomial:
-     $$w = v - \text{NTT}^{-1}(\hat{\mathbf{s}}^T \circ \text{NTT}(\mathbf{u})) \pmod{3329}$$
-  2. Because $\mathbf{v} - \mathbf{s}^T\mathbf{u} = \text{Decompress}_1(m) + \mathbf{e}^T\mathbf{r}_v + e_2 - \mathbf{s}^T\mathbf{e}_1 \pmod{3329}$ and the small noise polynomial has infinity norm strictly bounded below $q/4 \approx 832$, 1-bit compression $m' = \text{Compress}_1(w)$ recovers $m$ exactly.
-  3. Re-derives $(K', r') = \text{qSponge-512}(\text{"CALYX-QLX-FO-G|"} \,\|\, m' \,\|\, H(\text{ek}))$, re-encrypts $\text{ct}' = \text{Enc}(\text{ek}, m', r')$, and checks $\text{ct} \stackrel{?}{=} \text{ct}'$ in constant time (`hmac.compare_digest`). If equal, returns $K'$; otherwise returns the implicit-rejection key $\text{qSponge-XOF}(\text{"CALYX-QLX-FO-REJECT|"} \,\|\, z \,\|\, \text{ct}, 32)$.
+  Decompresses $(\mathbf{u}, v)$, recovers $m' = \text{Compress}_1\big(v - \text{NTT}^{-1}(\hat{\mathbf{s}}^T \circ \text{NTT}(\mathbf{u}))\big)$, re-derives $(K', r')$, re-encrypts $\text{ct}'$, and verifies $\text{ct} \stackrel{?}{=} \text{ct}'$ in constant time (`hmac.compare_digest`).
+
+### 3.4 4-Manifold Coupled Hyper-Tesseract Equations (`Calyx Hyper-Tesseract` `QLX-16384`, $k=64$)
+To scale to $k = 64$ polynomials ($64 \times 256 = \mathbf{16,384\text{ dimensions}}$) over $\mathcal{R}_{3329}$ while preserving an $18.4\sigma$ decapsulation noise margin (zero decryption failure), **`Calyx Hyper-Tesseract` (`QLX-16384`)** partitions the 16,384-dimensional space into **four coupled 4,096-dimensional Tesseract Manifolds** ($m \in \{0, 1, 2, 3\}$, $k_m = 16$) with **Unstructured Dense Cross-Manifold Seed Coupling** and **Unit-Variance Centered Binomial Sampling $\text{CBD}_1$ ($\eta = 1$, coefficients in $\{-1, 0, 1\}$, variance $\sigma^2 = 0.5$)**:
+
+1. **Tesseract Manifold Key Generation:**
+   $$\rho_{\text{tesseract}}^{(m)} = \text{qSponge-XOF}\big(\text{"CALYX-TESSERACT-DENSE-MANIFOLD|"} \parallel \rho \parallel m,\; 32\big), \quad m \in \{0, 1, 2, 3\}$$
+   $$\hat{\mathbf{t}}_{16m+i} = \sum_{j=0}^{15} \hat{\mathbf{A}}^{(m)}_{i,j}\big(\rho_{\text{tesseract}}^{(m)}\big) \circ_{\text{NTT}} \hat{\mathbf{s}}_{16m+j} + \hat{\mathbf{e}}_{16m+i} \pmod{3329}, \quad i \in \{0, \dots, 15\}$$
+   producing `ek` (`24,608 B`) and `dk` (`49,248 B`).
+2. **4-Manifold Conjunctive Encapsulation:**
+   Derives four coupled manifold message blocks $(\mu_0, \mu_1, \mu_2, \mu_3)$ where $\mu_0 = \text{msg32}$ and $\mu_m = \text{qSponge-XOF}(\text{"CALYX-TESSERACT-MU|"} \parallel \text{msg32} \parallel H(\text{ek}) \parallel m, 32)$ for $m \in \{1,2,3\}$, and computes $64$ compressed $d_u = 11$ vectors $\mathbf{u} \in \mathcal{R}_{3329}^{64}$ (`22,528 B`) and $4$ compressed $d_v = 5$ manifold commitments $\mathbf{v} = (v_0, v_1, v_2, v_3) \in \mathcal{R}_{3329}^4$ (`640 B`, total `ct = 23,168 B`):
+   $$\mathbf{u}_{16m+i} = \text{Compress}_{11}\!\left(\text{NTT}^{-1}\!\left(\sum_{j=0}^{15} \big(\hat{\mathbf{A}}^{(m)}_{j,i}\big)^T \circ_{\text{NTT}} \hat{\mathbf{r}}_{16m+j}\right) + \mathbf{e}_{1,16m+i}\right)$$
+   $$v_m = \text{Compress}_{5}\!\left(\text{NTT}^{-1}\!\left(\sum_{j=0}^{15} \hat{\mathbf{t}}_{16m+j}^T \circ_{\text{NTT}} \hat{\mathbf{r}}_{16m+j}\right) + e_{2,m} + \text{Decompress}_1(\mu_m)\right)$$
+3. **Full 23,168-Byte `FO` IND-CCA2 Decapsulation:**
+   Recovers $\mu'_0$ from manifold $0$, regenerates all four manifold commitments $(\mu'_0, \mu'_1, \mu'_2, \mu'_3)$ and all 64 polynomials of $\text{ct}'$, and verifies $\text{ct} \stackrel{?}{=} \text{ct}'$ across all 23,168 bytes in constant time.
 
 ---
 
 ## 4. `QVS` Lattice Fiat-Shamir with Aborts Over $R_{8380417} = \mathbb{Z}_{8380417}[X]/(X^{256}+1)$
 
-### 4.1 Ring Parameters & Complete 8-Layer NTT
-Aligned with the prime modulus structure of [FIPS 204 (ML-DSA)](https://www.quantumsecuritydefence.com/insights/fips-204-ml-dsa/), OpenQPEP's `QVSEngine` operates over $R_Q = \mathbb{Z}_Q[X]/(X^{256}+1)$ with prime modulus $Q = 8380417 = 2^{23} - 2^{13} + 1$ and primitive 512th root of unity $\zeta_Q = 1753 \bmod Q$ ($\zeta_Q^{256} \equiv -1 \pmod{Q}$):
+### 4.1 Ring Parameters & All Five `QVS` Signature Tiers
+Aligned with and scaling beyond [FIPS 204 (ML-DSA)](https://www.quantumsecuritydefence.com/insights/fips-204-ml-dsa/), OpenQPEP's `QVSEngine` operates over $R_Q = \mathbb{Z}_Q[X]/(X^{256}+1)$ with prime modulus $Q = 8380417 = 2^{23} - 2^{13} + 1$ and primitive 512th root of unity $\zeta_Q = 1753 \bmod Q$:
 
-| Signature Tier | Matrix Dimensions $(k, \ell)$ | Secret Bound $\eta$ | Challenge Weight $\tau$ | Norm Margin $\beta = \tau\eta$ | Mask Bound $\gamma_1$ | Rounding Bound $\gamma_2$ | Public Key | Signature Size |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| **`QVS-65`** | $(3, 2)$ | $2$ | $39$ | $78$ | $2^{19}$ | $261,888$ | $2,336\text{ B}$ | $1,600\text{ B}$ |
-| **`QVS-87` (Default)** | $(4, 3)$ | $2$ | $49$ | $98$ | $2^{19}$ | $261,888$ | $3,104\text{ B}$ | $2,368\text{ B}$ |
-| **`QVS-128`** | $(6, 5)$ | $2$ | $60$ | $120$ | $2^{19}$ | $261,888$ | $4,640\text{ B}$ | $3,904\text{ B}$ |
+| Signature Tier | Paired `QLX` Tier | Matrix Dimensions $(k, \ell)$ | Total Vector Coordinates | Secret Bound $\eta$ | Challenge Weight $\tau$ | Norm Margin $\beta = \tau\eta$ | Public Key (`pk`) | Secret Key (`sk`) | Signature Size (`sig`) |
+| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **`QVS-65`** | `QLX-768` (`Velocity`) | $(3, 2)$ | $1,280$ | $2$ | $39$ | $78$ | $2,336\text{ B}$ | $3,712\text{ B}$ | $1,600\text{ B}$ |
+| **`QVS-87`** | `QLX-1024` (`Sovereign Hybrid`) | $(4, 3)$ | $1,792$ | $2$ | $49$ | $98$ | $3,104\text{ B}$ | $4,992\text{ B}$ | $2,368\text{ B}$ |
+| **`QVS-128`** | `QLX-2048` (`Ultra-Grid`) | $(6, 5)$ | $2,816$ | $2$ | $60$ | $120$ | $4,640\text{ B}$ | $7,552\text{ B}$ | $3,904\text{ B}$ |
+| **`QVS-256` (Default)** | `QLX-4096` (`Calyx Signature`) | $(8, 7)$ | $3,840$ | $2$ | $60$ | $120$ | $6,176\text{ B}$ | $10,112\text{ B}$ | $5,440\text{ B}$ |
+| **`QVS-1024`** | `QLX-16384` (`Calyx Hyper-Tesseract`) | $(16, 14)$ | $7,680$ | $2$ | $60$ | $120$ | $12,320\text{ B}$ | $20,096\text{ B}$ | $10,816\text{ B}$ |
 
-### 4.2 KeyGen, Rejection-Sampled Signing, and Verification
+### 4.2 KeyGen, Rejection-Sampled Signing, Verify-Before-Emit `Fault-Guard`, and Verification
 - **Key Generation (`QVSEngine.keygen`)**:
-  Samples short secret vectors $\mathbf{s}_1 \in [-\eta, \eta]^\ell$ and $\mathbf{s}_2 \in [-\eta, \eta]^k$, expands $\hat{\mathbf{A}} \in R_Q^{k \times \ell}$ from $\rho$, and computes:
+  Samples short secret vectors $\mathbf{s}_1 \in [-\eta, \eta]^\ell$ and $\mathbf{s}_2 \in [-\eta, \eta]^k$, expands $\hat{\mathbf{A}} \in R_Q^{k \times \ell}$ from $\rho$ with per-coordinate domain separation (`CALYX-QVS-MAT-A|`), and computes:
   $$\mathbf{t} = \text{NTT}^{-1}(\hat{\mathbf{A}} \circ \text{NTT}(\mathbf{s}_1)) + \mathbf{s}_2 \pmod{Q}$$
-- **Signing (`QVSEngine.sign`)**:
+- **Signing (`QVSEngine.sign`) & Verify-Before-Emit `Fault-Guard`**:
   Repeats rejection sampling over masking vectors $\mathbf{y} \in [-\gamma_1+1, \gamma_1]^\ell$:
   1. Computes $\mathbf{w} = \text{NTT}^{-1}(\hat{\mathbf{A}} \circ \text{NTT}(\mathbf{y})) \pmod{Q}$ and decomposes each coefficient $w \equiv w_1 \cdot (2\gamma_2) + w_0 \pmod{Q}$ with $w_0 \in (-\gamma_2, \gamma_2]$.
   2. Hashes $\tilde{c} = \text{qSponge-XOF}(\text{"CALYX-QVS-CHALLENGE|"} \,\|\, \mu \,\|\, \mathbf{w}_1, 64)$ and samples sparse challenge polynomial $c = \text{SampleInBall}(\tilde{c}, \tau) \in R_Q$ with $\tau$ entries in $\{-1, +1\}$.
   3. Computes response vector $\mathbf{z} = \mathbf{y} + c\mathbf{s}_1 \pmod{Q}$.
   4. **Rejection Condition**: Rejects and resamples if $\|\mathbf{z}\|_\infty \ge \gamma_1 - \beta$, or $\|\text{LowBits}(\mathbf{w} - c\mathbf{s}_2, 2\gamma_2)\|_\infty \ge \gamma_2 - \beta$, or $\text{HighBits}(\mathbf{w} - c\mathbf{s}_2, 2\gamma_2) \ne \mathbf{w}_1$.
+  5. **Verify-Before-Emit `Fault-Guard` (`0.1.8+`)**: Before returning $\sigma_{\text{out}} = \tilde{c} \parallel \mathbf{z}$, `QVSEngine.sign` executes `QVSEngine.verify(pk, message, sig_out, tier)` in RAM and aborts if verification fails, preventing Rowhammer or voltage-glitch fault-injection attacks from ever emitting a corrupted signature that could leak $(\mathbf{s}_1, \mathbf{s}_2)$.
 - **Verification (`QVSEngine.verify`)**:
-  Checks $\|\mathbf{z}\|_\infty < \gamma_1 - \beta$, reconstructs $\mathbf{w}' = \text{NTT}^{-1}(\hat{\mathbf{A}} \circ \text{NTT}(\mathbf{z}) - \hat{c} \circ \text{NTT}(\mathbf{t})) \pmod{Q}$, extracts $\mathbf{w}_1' = \text{HighBits}(\mathbf{w}', 2\gamma_2)$ (which equals $\text{HighBits}(\mathbf{w} - c\mathbf{s}_2, 2\gamma_2) = \mathbf{w}_1$ by the algebraic identity $\mathbf{A}\mathbf{z} - c\mathbf{t} = \mathbf{A}(\mathbf{y}+c\mathbf{s}_1) - c(\mathbf{A}\mathbf{s}_1+\mathbf{s}_2) = \mathbf{w} - c\mathbf{s}_2$), and verifies $\tilde{c} \stackrel{?}{=} \text{qSponge-XOF}(\text{"CALYX-QVS-CHALLENGE|"} \,\|\, \mu \,\|\, \mathbf{w}_1', 64)$.
-
-
----
-
-## `Signature QLX-4096 + QVS-256` Apex Quantum-Proof Tier (New in Beta Version 0.1.9)
-
-**`Signature QLX-4096 + QVS-256`** is OpenQPEP's flagship maximum-security key type, engineered specifically to surpass legacy OpenPGP (`RSA-4096` / `Ed25519`) and standard first-generation post-quantum schemes against emerging 2026 quantum and AI-driven cryptanalytic breakthroughs:
-
-| Tier Name | Module-LWE (`QLX`) | Vector Signature (`QVS`) | Public Key (`.qpkrf` Raw) | Secret Key (`.qpkrf` Raw) | Ciphertext / Sig Size |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **`Signature QLX-4096 + QVS-256` (Default Apex)** | $k=16, n=256, q=3329$ (`4,096`-Dim) | $(k=8, l=7), Q=8380417$ (`QVS-256`) | `6,176 B` (`QLX`) + `6,176 B` (`QVS`) | `12,384 B` (`QLX`) + `10,112 B` (`QVS`) | `5,792 B` (`CT`) / `5,440 B` (`Sig`) |
-| **`QLX-2048 + QVS-128 Ultra-Grid`** | $k=8, n=256, q=3329$ (`2,048`-Dim) | $(k=6, l=5), Q=8380417$ (`QVS-128`) | `3,104 B` (`QLX`) + `4,640 B` (`QVS`) | `6,240 B` (`QLX`) + `7,552 B` (`QVS`) | `2,976 B` (`CT`) / `3,904 B` (`Sig`) |
-| **`QLX-1024 + QVS-87 Sovereign Hybrid`** | $k=4, n=256, q=3329$ (`1,024`-Dim) | $(k=4, l=3), Q=8380417$ (`QVS-87`) | `1,568 B` (`QLX`) + `3,104 B` (`QVS`) | `3,168 B` (`QLX`) + `4,992 B` (`QVS`) | `1,568 B` (`CT`) / `2,368 B` (`Sig`) |
-| **`QLX-768 + QVS-65 Velocity`** | $k=3, n=256, q=3329$ (`768`-Dim) | $(k=3, l=2), Q=8380417$ (`QVS-65`) | `1,184 B` (`QLX`) + `2,336 B` (`QVS`) | `2,400 B` (`QLX`) + `3,712 B` (`QVS`) | `1,088 B` (`CT`) / `1,600 B` (`Sig`) |
-
-### 2026 Threat Immunity Matrix (`Signature QLX-4096 + QVS-256`)
-1. **Jesse-Victor-Gharabaghi (JVG) Hybrid QNTT Factorization & Shor's Algorithm**: Whereas JVG ([Preprints.org 202510.1649](https://www.preprints.org/manuscript/202510.1649/v1)) and Shor's algorithm attack RSA composite moduli and abelian discrete logarithms via Quantum Number Theoretic Transform (QNTT) / IQFT period finding, `Signature QLX-4096 + QVS-256` anchors hardness in `4,096`-dimensional Module-LWE and `(8x7)` Module-SIS over polynomial rings with no hidden abelian period, hybridized with `HGC-448` (`X448`/`Ed448`) via `qSponge-512`.
-2. **Quantum-Accelerated Lattice Sieving (Grover-Enhanced BKZ-$eta$)**: Doubling the lattice module rank to $k=16$ ($N = 4,096$ polynomial ring dimensions) and $(k=8, l=7)$ ($3,840$ vector dimensions) pushes the required BKZ block size to $eta > 1650$, maintaining $>512$-bit post-quantum security even under Grover-accelerated $2^{0.265eta}$ quantum sieve bounds ([PostQuantum Sieving Analysis](https://postquantum.com/quantum-research/quantum-sieving-breakthrough/)).
-3. **Quantum Algorithms for the Dihedral Coset Problem (DCP / Extrapolated DCP)**: Hardened against theoretical LWE-to-DCP reductions ([IACR ePrint 2026/1591](https://eprint.iacr.org/2026/1591); refuted in [PQprobe / ePrint 2026/1693](https://pqprobe.com/blog/dcp-claim-refuted)) via Fujisaki-Okamoto (`FO`) IND-CCA2 re-encryption verification (`CALYX-QLX-FO-G|`), lossy $(d_u=11, d_v=5)$ rounding compression, and constant-time implicit rejection (`CALYX-QLX-FO-REJECT|`), preventing coherent quantum coset state extraction.
-4. **Anthropic Claude Mythos Preview (July 2026) HAWK-256 Algebraic Symmetry Flaw & 7-Round AES Shortcuts**: In July 2026, Anthropic's Claude Mythos Preview ([Anthropic Research](https://www.anthropic.com/research/discovering-cryptographic-weaknesses)) halved the security of `HAWK-256` ($2^{64} 	o 2^{38}$) by exploiting rotational/Galois symmetries in rank-2 NTRU lattices and accelerated 7-round AES-128 attacks via the Möbius Bridge. `QVS-256` avoids NTRU ring isomorphisms completely, using asymmetric $(8 	imes 7)$ Module-SIS Fiat-Shamir with Aborts with per-coordinate domain-separated `qSponge-XOF` matrix expansion (`CALYX-QVS-MAT-A|`), while `Calyx-Cascade-512 (CC-512)` cascades **full 14-round AES-256-GCM** inside **full 20-round ChaCha20-Poly1305** across two independent mathematical families (SPN + ARX).
-5. **Grover's Algorithm on Symmetric & Hash-Based Primitives**: Uses 512-bit `qSponge-512` (`SHA3-512`) and `qSponge-XOF` (`SHAKE-256`) over a 1600-bit Keccak state (zero `SHA-256` usage) and 512-bit cascaded `CC-512` keys, leaving $\ge 256$ bits of post-quantum security under Grover's $O(2^{n/2})$ bound.
-6. **Side-Channel & Fault Injection Attacks**: Implements **Verify-Before-Emit `Fault-Guard`** inside `QVSEngine.sign` (mathematically verifying every generated lattice signature against `pk` before returning it so glitch/Rowhammer faults can never leak secret vectors `s1, s2`), constant-time `hmac.compare_digest` checks, and `qSponge-XOF` secret-key XOR masking (`CALYX-QPEP-SK-MASK|`) at rest.
-
-
----
-
-## `Calyx Hyper-Tesseract` (`QLX-16384 + QVS-1024`) — 16,384-Dimensional Flagship Hardware Key Tier (New in Beta Version 0.1.9)
-
-**`Calyx Hyper-Tesseract` (`QLX-16384 + QVS-1024`)** is OpenQPEP's extreme-dimension post-quantum key tier engineered for flagship hardware (**16× the encryption lattice dimension** of [IETF RFC 9980](https://datatracker.ietf.org/doc/rfc9980/) `ML-KEM-1024` v6 and **4× the dimension** of `Calyx Signature` `QLX-4096 + QVS-256`):
-
-| Key Tier Name | Module-LWE (`QLX`) | Vector Signature (`QVS`) | Public Key (`.qpkrf` Raw) | Secret Key (`.qpkrf` Raw) | Ciphertext / Sig Size | Target Hardware Class |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **`Calyx Hyper-Tesseract` (`QLX-16384 + QVS-1024`)** | $k=64$ ($4 	imes 16 	imes 256 = \mathbf{16,384}$-Dim) | $(k=16, l=14), Q=8380417$ (`QVS-1024`, `7,680`-Dim) | `24,608 B` (`QLX`) + `12,320 B` (`QVS`) | `49,248 B` (`QLX`) + `20,096 B` (`QVS`) | `23,168 B` (`CT`) / `10,816 B` (`Sig`) | **High-Tier Flagship Hardware Only** (Galaxy Z Fold 8, 12 GB+ RAM Flagships, High-Spec PCs) |
-| **`Calyx Signature` (`Signature QLX-4096 + QVS-256` — Default)** | $k=16, n=256, q=3329$ (`4,096`-Dim) | $(k=8, l=7), Q=8380417$ (`QVS-256`, `3,840`-Dim) | `6,176 B` (`QLX`) + `6,176 B` (`QVS`) | `12,384 B` (`QLX`) + `10,112 B` (`QVS`) | `5,792 B` (`CT`) / `5,440 B` (`Sig`) | **All Modern Desktop & Android Devices (Default)** |
-| **`QLX-2048 + QVS-128 Ultra-Grid`** | $k=8, n=256, q=3329$ (`2,048`-Dim) | $(k=6, l=5), Q=8380417$ (`QVS-128`, `2,816`-Dim) | `3,104 B` (`QLX`) + `4,640 B` (`QVS`) | `6,240 B` (`QLX`) + `7,552 B` (`QVS`) | `2,976 B` (`CT`) / `3,904 B` (`Sig`) | **Cold Storage & Multi-Decade Archives** |
-| **`QLX-1024 + QVS-87 Sovereign Hybrid`** | $k=4, n=256, q=3329$ (`1,024`-Dim) | $(k=4, l=3), Q=8380417$ (`QVS-87`, `1,792`-Dim) | `1,568 B` (`QLX`) + `3,104 B` (`QVS`) | `3,168 B` (`QLX`) + `4,992 B` (`QVS`) | `1,568 B` (`CT`) / `2,368 B` (`Sig`) | **Standard Desktop & Mobile Devices** |
-| **`QLX-768 + QVS-65 Velocity`** | $k=3, n=256, q=3329$ (`768`-Dim) | $(k=3, l=2), Q=8380417$ (`QVS-65`, `1,280`-Dim) | `1,184 B` (`QLX`) + `2,336 B` (`QVS`) | `2,400 B` (`QLX`) + `3,712 B` (`QVS`) | `1,088 B` (`CT`) / `1,600 B` (`Sig`) | **Low-Latency / Constrained Mobile Links** |
-
-### Mathematical Equations Powering `Calyx Hyper-Tesseract` (`QLX-16384 + QVS-1024`)
-
-1. **4-Manifold Coupled Hyper-Tesseract Module-LWE ($\mathcal{R}_{3329}^{64} \cong igoplus_{m=0}^{3} \mathcal{R}_{3329}^{16}$):**
-   To scale to $k = 64$ polynomials ($64 	imes 256 = 16,384$ dimensions) over $\mathcal{R}_{3329} = \mathbb{Z}_{3329}[X]/(X^{256}+1)$ while maintaining an $18.4\sigma$ decapsulation noise margin (zero decryption failure), `QLX-16384` partitions the 16,384-dimensional space into **four coupled 4,096-dimensional Tesseract Manifolds** ($m \in \{0, 1, 2, 3\}$) with **Unstructured Dense Cross-Manifold Seed Coupling** and **Unit-Variance Centered Binomial Sampling $	ext{CBD}_1$ ($\eta = 1$, coefficients in $\{-1, 0, 1\}$, variance $\sigma^2 = 0.5$)**:
-   $$\rho_{\text{tesseract}}^{(m)} = \text{qSponge-XOF}\big(\text{"CALYX-TESSERACT-DENSE-MANIFOLD|"} \parallel \rho \parallel m,\; 32\big), \quad m \in \{0, 1, 2, 3\}$$
-   $$\hat{\mathbf{t}}_{16m+i} = \sum_{j=0}^{15} \hat{\mathbf{A}}^{(m)}_{i,j}\big(\rho_{\text{tesseract}}^{(m)}\big) \circ_{\text{NTT}} \hat{\mathbf{s}}_{16m+j} + \hat{\mathbf{e}}_{16m+i} \pmod{3329}, \quad i \in \{0, \dots, 15\}$$
-
-2. **4-Manifold Conjunctive Encapsulation (`QLXEngine.encaps`):**
-   Given a 32-byte master random secret $\text{msg32}$ and public-key sponge digest $H(ek) = \text{qSponge-XOF}(\text{"CALYX-QLX-H-EK|"} \parallel ek, 32)$, `QLX-16384` derives four coupled manifold message blocks $(\mu_0, \mu_1, \mu_2, \mu_3)$:
-   $$\mu_0 = \text{msg32}, \qquad \mu_m = \text{qSponge-XOF}\big(\text{"CALYX-TESSERACT-MU|"} \parallel \text{msg32} \parallel H(ek) \parallel m,\; 32\big) \;\forall m \in \{1,2,3\}$$
-   and computes $64$ compressed $d_u = 11$ polynomial vectors $\mathbf{u} \in \mathcal{R}_{3329}^{64}$ (`22,528 B`) and $4$ compressed $d_v = 5$ manifold commitment polynomials $\mathbf{v} = (v_0, v_1, v_2, v_3) \in \mathcal{R}_{3329}^4$ (`640 B`, total ciphertext `23,168 B`):
-   $$\mathbf{u}_{16m+i} = \text{Compress}_{11}\!\left(\text{NTT}^{-1}\!\left(\sum_{j=0}^{15} \big(\hat{\mathbf{A}}^{(m)}_{j,i}\big)^T \circ_{\text{NTT}} \hat{\mathbf{r}}_{16m+j}\right) + \mathbf{e}_{1,16m+i}\right)$$
-   $$v_m = \text{Compress}_{5}\!\left(\text{NTT}^{-1}\!\left(\sum_{j=0}^{15} \hat{\mathbf{t}}_{16m+j}^T \circ_{\text{NTT}} \hat{\mathbf{r}}_{16m+j}\right) + e_{2,m} + \text{Decompress}_1(\mu_m)\right)$$
-
-3. **Full 23,168-Byte Fujisaki-Okamoto (`FO`) IND-CCA2 Re-Encryption Verification (`QLXEngine.decaps`):**
-   Decapsulation recovers $\mu'_0 = \text{Compress}_1\big(\text{Decompress}_5(v_0) - \text{NTT}^{-1}(\sum_{j=0}^{15} \hat{\mathbf{s}}_j \circ_{\text{NTT}} \text{NTT}(\text{Decompress}_{11}(\mathbf{u}_j)))\big)$, regenerates all four manifold commitments $(\mu'_0, \mu'_1, \mu'_2, \mu'_3)$ and all 64 polynomials of $\text{ct}'$, and verifies $\text{ct} \stackrel{?}{=} \text{ct}'$ in constant time (`hmac.compare_digest`), falling back to implicit rejection $\text{qSponge-XOF}(\text{"CALYX-QLX-FO-REJECT|"} \parallel z \parallel \text{ct}, 32)$ if any single coordinate across the 16,384 dimensions was modified.
-
-4. **`QVS-1024` ($16 \times 14$ High-Rank Lattice Fiat-Shamir with Aborts over $\mathcal{R}_{8380417}$ + `Fault-Guard`):**
-   Expands the signature lattice matrix to $\mathbf{A} \in \mathcal{R}_{8380417}^{16 \times 14}$ ($4,096 \times 3,584$ coordinates = $7,680$ total secret/error dimensions) with challenge weight $\tau = 60$ and norm bound $\|\mathbf{z}\|_\infty < 2^{19} - 120$, verified in RAM via Verify-Before-Emit `Fault-Guard` before emission.
-
-### ⚠️ Mandatory Hardware Warning: Why `Calyx Hyper-Tesseract` Should ONLY Be Used on High-Tier Devices
-* **Recommended High-Tier Hardware:** Flagship smartphones with **12 GB+ LPDDR5X RAM** and flagship multi-core processors (such as the **Samsung Galaxy Z Fold 8**, Galaxy S25/S26 Ultra, or Pixel 10 Pro) and high-RAM desktop, workstation, or server PCs.
-* **Why Low-Tier Devices Will Cause Issues:**
-  1. **320,000+ NTT Butterfly Multiplications per Operation:** Generating a key or signing/decrypting with `Calyx Hyper-Tesseract` evaluates $4 \times (16 \times 16) = 1,024$ Module-LWE polynomial ring blocks (`QLX-16384`) plus $16 \times 14 = 224$ 24-bit signature ring blocks (`QVS-1024`) per rejection-sampling pass. On low-tier or budget devices with slower single-core CPUs, this heavy mathematical loop blocks the main thread and triggers **Android "Application Not Responding" (`ANR`) timeouts, UI freezes, and severe thermal throttling**.
-  2. **RAM & Android WebView Heap Pressure:** A single `Calyx Hyper-Tesseract` `.qpkrf` Private Key Ring stores **`69,344 bytes` (`~69.3 KB`)** of raw lattice vectors (`49,248 B` `QLX-16384` + `20,096 B` `QVS-1024`) and allocates multi-megabyte contiguous typed-array buffers during matrix expansion. On low-tier devices ($\le 4$–$6\text{ GB}$ RAM) with restricted WebView heap limits, this can cause **Out-Of-Memory (`OOM`) crashes or dropped frames**.
-  3. **Use `Calyx Signature` (`QLX-4096 + QVS-256`) on Standard Devices:** On mid-range or low-tier phones, select **`Calyx Signature` (`Signature QLX-4096 + QVS-256`)** or **`QLX-1024 + QVS-87`**, which execute in `< 50 ms`.
-
-### Cryptographic Assessment: Why `Calyx Hyper-Tesseract` Achieves Practical / Thermodynamic Quantum Immunity
-In formal cryptographic science, no software-based public-key system relying on computational complexity assumptions ($P \neq BQP$) can claim unconditional information-theoretic immunity against every unimagined future mathematical theorem. However, against **all known and projected quantum and AI cryptanalytic algorithms**—including Shor's algorithm, the [Jesse-Victor-Gharabaghi (JVG) QNTT algorithm](https://www.preprints.org/manuscript/202510.1649/v1), [Grover-Enhanced BKZ Quantum Lattice Sieving](https://postquantum.com/quantum-research/quantum-sieving-breakthrough/) ($2^{0.265\beta}$), [Dihedral Coset Problem (DCP) reductions](https://eprint.iacr.org/2026/1591), Grover's $O(2^{n/2})$ search, and [Anthropic Claude Mythos Preview's July 2026 ring-symmetry and reduced-round AES shortcuts](https://www.anthropic.com/research/discovering-cryptographic-weaknesses)—**`Calyx Hyper-Tesseract` (`QLX-16384 + QVS-1024`) achieves complete practical and thermodynamic quantum immunity**:
-* Across 16,384 coupled lattice dimensions ($k=64$) and 7,680 signature dimensions ($16 \times 14$), the combined post-quantum lattice work factor exceeds **$2^{1024}$ quantum operations** (requiring BKZ block sizes $\beta > 6,400$), while the 512-bit `qSponge-512` (`SHA3-512`) and 512-bit dual-family `CC-512` (`AES-256-GCM + ChaCha20-Poly1305`) symmetric layers enforce a **$\ge 256$-bit post-quantum Grover lower bound**—exceeding the physical Landauer thermodynamic energy limit of any quantum computer that can exist in the observable universe.
+  Checks $\|\mathbf{z}\|_\infty < \gamma_1 - \beta$, reconstructs $\mathbf{w}' = \text{NTT}^{-1}(\hat{\mathbf{A}} \circ \text{NTT}(\mathbf{z}) - \hat{c} \circ \text{NTT}(\mathbf{t})) \pmod{Q}$, extracts $\mathbf{w}_1' = \text{HighBits}(\mathbf{w}', 2\gamma_2)$, and verifies $\tilde{c} \stackrel{?}{=} \text{qSponge-XOF}(\text{"CALYX-QVS-CHALLENGE|"} \,\|\, \mu \,\|\, \mathbf{w}_1', 64)$.
