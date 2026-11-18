@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-OpenQPEP Interactive Blue-Text English-Command CLI (Beta Version 0.1.8)
+OpenQPEP Interactive Blue-Text English-Command CLI (Beta Version 0.1.9)
 Project: OpenQPEP by Calyx Labs Inc. (Creator: Tristen Martinez)
 Repository: https://github.com/CalyxLabsInc/OpenQPEP/
 Directory: https://qpepkeys.calyxlabsinc.org
@@ -228,22 +228,29 @@ def _publish_entry_to_directory(entry: Dict[str, Any]) -> bool:
 def cmd_create_key(store: OpenQPEPKeyStore) -> None:
     bprint("\n--- OpenQPEP Guided Key Generation ---")
     bprint("Specify Key Type:")
-    bprint("  1. Signature QLX-4096 + QVS-256 (Default — 4096-Dim Apex Quantum-Proof + HGC-448 + CC-512)")
-    bprint("  2. QLX-2048 + QVS-128 Ultra-Grid (2048-Dim Hyper-Lattice + HGC-448 + CC-512)")
-    bprint("  3. QLX-1024 + QVS-87 Sovereign Hybrid (1024-Dim Lattice + HGC-448 + CC-512)")
-    bprint("  4. QLX-768 + QVS-65 Velocity (768-Dim High-Speed Lattice + HGC-448 + CC-512)")
-    t_choice = binput("Enter option number (1-4, default 1):") or "1"
+    bprint("  1. Calyx Signature: QLX-4096 + QVS-256 (Default Recommended — 4096-Dim Quantum-Proof + HGC-448 + CC-512)")
+    bprint("  2. Calyx Hyper-Tesseract: QLX-16384 + QVS-1024 (16,384-Dim 4-Manifold Tesseract — HIGH-TIER HARDWARE ONLY)")
+    bprint("  3. QLX-2048 + QVS-128 Ultra-Grid (2048-Dim Hyper-Lattice + HGC-448 + CC-512)")
+    bprint("  4. QLX-1024 + QVS-87 Sovereign Hybrid (1024-Dim Lattice + HGC-448 + CC-512)")
+    bprint("  5. QLX-768 + QVS-65 Velocity (768-Dim High-Speed Lattice + HGC-448 + CC-512)")
+    t_choice = binput("Enter option number (1-5, default 1):") or "1"
     tier_map = {
         "1": "QLX-4096",
-        "2": "QLX-2048",
-        "3": "QLX-1024",
-        "4": "QLX-768",
+        "2": "QLX-16384",
+        "3": "QLX-2048",
+        "4": "QLX-1024",
+        "5": "QLX-768",
+        "qlx-16384": "QLX-16384",
+        "hyper-tesseract": "QLX-16384",
         "qlx-4096": "QLX-4096",
         "qlx-2048": "QLX-2048",
         "qlx-1024": "QLX-1024",
         "qlx-768": "QLX-768",
     }
     qlx_tier = tier_map.get(t_choice.lower(), "QLX-4096")
+    if qlx_tier == "QLX-16384":
+        bprint("  [!] HARDWARE NOTICE: Calyx Hyper-Tesseract (QLX-16384 + QVS-1024) is intended ONLY for high-tier")
+        bprint("      flagship devices (e.g. Galaxy Z Fold 8 / high-RAM PCs). Low-tier devices may freeze or OOM.")
 
     name = ""
     while not name:
@@ -630,7 +637,7 @@ def main(argv=None) -> int:
     p_kg.add_argument("--name", required=True)
     p_kg.add_argument("--email", required=True)
     p_kg.add_argument("--passphrase", required=True)
-    p_kg.add_argument("--tier", default="QLX-4096", choices=["QLX-768", "QLX-1024", "QLX-2048", "QLX-4096"])
+    p_kg.add_argument("--tier", default="QLX-4096", choices=["QLX-768", "QLX-1024", "QLX-2048", "QLX-4096", "QLX-16384"])
     p_kg.add_argument("--pub-out", required=True)
     p_kg.add_argument("--priv-out", required=True)
 

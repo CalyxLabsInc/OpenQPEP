@@ -1,7 +1,7 @@
-# OpenQPEP Interactive CLI, Android Client & Public Key Directory Guide (`Beta Version 0.1.8`)
+# OpenQPEP Interactive CLI, Android Client & Public Key Directory Guide (`Beta Version 0.1.9`)
 
-**Protocol:** **OpenQPEP by Calyx Labs Inc.** (`Beta Version 0.1.8`)  
-**Android Application:** **Calyx QPEP Client** (`Beta Version 0.1.8`)  
+**Protocol:** **OpenQPEP by Calyx Labs Inc.** (`Beta Version 0.1.9`)  
+**Android Application:** **Calyx QPEP Client** (`Beta Version 0.1.9`)  
 **Creator & Lead Architect:** **Tristen Martinez** ([Calyx Labs Inc.](https://github.com/CalyxLabsInc/OpenQPEP/))  
 **Public Key Registry:** [https://qpepkeys.calyxlabsinc.org](https://qpepkeys.calyxlabsinc.org)  
 
@@ -9,7 +9,7 @@
 
 ## 1. Using the Interactive Blue-Text OpenQPEP CLI (`openqpep`)
 
-Starting in `Beta Version 0.1.5` / `0.1.8`, **OpenQPEP** includes an interactive, blue-themed terminal shell that lets users and developers execute every cryptographic workflow using plain English commands—without writing boilerplate Python scripts or memorizing long flag strings.
+Starting in `Beta Version 0.1.5` / `0.1.9`, **OpenQPEP** includes an interactive, blue-themed terminal shell that lets users and developers execute every cryptographic workflow using plain English commands—without writing boilerplate Python scripts or memorizing long flag strings.
 
 ### 1.1 Launching the Interactive CLI
 ```bash
@@ -40,7 +40,7 @@ python3 -m calyx_qpep.cli
 
 ---
 
-## 2. Calyx QPEP Client Android Application (`Beta Version 0.1.8`)
+## 2. Calyx QPEP Client Android Application (`Beta Version 0.1.9`)
 
 The **Calyx QPEP Client** Android application (`com.calyxlabs.qpepclient`) supports Android 10 (`API 29`) through Android 17 (`API 37`, aligned with modern [Android Target SDK Requirements](https://targetsdk.com/) and [Android 17 Compatibility Guidelines](https://medium.com/@zobaer53/bringing-a-3-year-old-android-app-to-android-17-0da7e2a7c457)):
 
@@ -54,7 +54,7 @@ The **Calyx QPEP Client** Android application (`com.calyxlabs.qpepclient`) suppo
 ## 3. Public Key Directory Server (`https://qpepkeys.calyxlabsinc.org`)
 
 The zero-dependency Python 3 + SQLite3 directory server (`directory_server/app.py`) runs behind a Cloudflare Zero Trust Tunnel (`cloudflared`) on `127.0.0.1:8443` and exposes four REST endpoints:
-- `GET /api/v1/health`: Returns live server and protocol status (`OpenQPEP/Beta-0.1.8`).
+- `GET /api/v1/health`: Returns live server and protocol status (`OpenQPEP/Beta-0.1.9`).
 - `POST /api/v1/keys/publish`: Validates that the uploaded `.qpkrf` block is a `PUBLIC KEY RING` (rejecting any private key ring) and indexes it by 64-character `key_hash`, `name`, and `email`.
 - `GET /api/v1/keys/search?q=<query>`: Searches registered public keys by **Key Hash**, name, or email.
 - `GET /api/v1/keys/<KEY_HASH>?download=1`: Downloads the raw `.qpkrf` public key file.

@@ -21,8 +21,8 @@ class TestOpenQPEPProtocol(unittest.TestCase):
         self.valid_pass_2 = "Tristen$%^&99Az"
 
     def test_universal_version_0_1_6(self):
-        self.assertEqual(UNIVERSAL_VERSION, "0.1.8")
-        self.assertEqual(UNIVERSAL_VERSION_LABEL, "Beta Version 0.1.8")
+        self.assertEqual(UNIVERSAL_VERSION, "0.1.9")
+        self.assertEqual(UNIVERSAL_VERSION_LABEL, "Beta Version 0.1.9")
 
     def test_hardcoded_passphrase_policy(self):
         with self.assertRaises(QPEPPassphrasePolicyError):
@@ -39,7 +39,7 @@ class TestOpenQPEPProtocol(unittest.TestCase):
         pub_str = OpenQPEPProtocol.export_qpkrf(kr, include_private=False)
         self.assertIn("Key-Hash:", pub_str)
         self.assertIn("OpenQPEP by Calyx Labs Inc.", pub_str)
-        self.assertIn("Beta Version 0.1.8", pub_str)
+        self.assertIn("Beta Version 0.1.9", pub_str)
         imported_pub = OpenQPEPProtocol.import_qpkrf(pub_str)
         self.assertFalse(imported_pub.has_private_key)
         self.assertEqual(imported_pub.key_hash, kr.key_hash)
@@ -207,6 +207,50 @@ class TestOpenQPEPProtocol(unittest.TestCase):
         self.assertTrue(ok)
         self.assertEqual(msg, "QLX-4096 Signed Directive")
         self.assertEqual(matched.key_hash, apex_sender.key_hash)
+
+
+
+    def test_10_calyx_hyper_tesseract_qlx_16384_qvs_1024_roundtrip(self):
+        """Verifies the new Calyx Hyper-Tesseract (QLX-16384 + QVS-1024) 16,384-Dim tier, sizes, and roundtrip."""
+        from calyx_qpep.qlx_lattice import QLX_TIERS, QVS_TIERS
+        from calyx_qpep.protocol import CALYX_HYPER_TESSERACT_HARDWARE_WARNING
+
+        self.assertIn("HIGH-TIER HARDWARE REQUIRED", CALYX_HYPER_TESSERACT_HARDWARE_WARNING)
+        self.assertIn("QLX-16384", QLX_TIERS)
+        self.assertIn("QVS-1024", QVS_TIERS)
+        self.assertEqual(QLX_TIERS["QLX-16384"]["pk_bytes"], 24608)
+        self.assertEqual(QLX_TIERS["QLX-16384"]["sk_bytes"], 49248)
+        self.assertEqual(QLX_TIERS["QLX-16384"]["ct_bytes"], 23168)
+        self.assertEqual(QVS_TIERS["QVS-1024"]["pk_bytes"], 12320)
+        self.assertEqual(QVS_TIERS["QVS-1024"]["sk_bytes"], 20096)
+        self.assertEqual(QVS_TIERS["QVS-1024"]["sig_bytes"], 10816)
+
+        tess_sender = OpenQPEPProtocol.generate_keypair(
+            "TesseractSender", "tesseract@calyxlabsinc.org", self.valid_pass_1, qlx_tier="QLX-16384"
+        )
+        tess_recip = OpenQPEPProtocol.generate_keypair(
+            "TesseractRecip", "recip16384@calyxlabsinc.org", self.valid_pass_2, qlx_tier="QLX-16384"
+        )
+        self.assertEqual(tess_sender.qlx_tier, "QLX-16384")
+        self.assertEqual(tess_sender.qvs_tier, "QVS-1024")
+        self.assertTrue(OpenQPEPProtocol.verify_public_keyring_self_signature(tess_sender))
+
+        pkt = OpenQPEPProtocol.encrypt_text(
+            "Calyx Hyper-Tesseract 16,384-Dim Flagship Hardware Payload",
+            recipient_keyring=tess_recip,
+            encrypting_keyring=tess_sender,
+            passphrase=self.valid_pass_1,
+        )
+        pt, meta = OpenQPEPProtocol.decrypt_packet(
+            pkt,
+            recipient_private_keyring=tess_recip,
+            passphrase=self.valid_pass_2,
+            sender_public_keyring=tess_sender,
+        )
+        self.assertEqual(pt.decode("utf-8"), "Calyx Hyper-Tesseract 16,384-Dim Flagship Hardware Payload")
+        self.assertTrue(meta["signature_verified"])
+        self.assertEqual(meta["qlx_tier"], "QLX-16384")
+        self.assertEqual(meta["qvs_tier"], "QVS-1024")
 
 
 if __name__ == "__main__":

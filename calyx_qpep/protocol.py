@@ -1,7 +1,7 @@
 """
 OpenQPEP (Open Quantum-Proof Encryption Protocol) by Calyx Labs Inc.
 Creator & Lead Architect: Tristen Martinez (https://github.com/CalyxLabsInc/OpenQPEP/)
-Universal Version: Beta Version 0.1.8
+Universal Version: Beta Version 0.1.9
 
 Version Progression Log:
 - 0.1.1 -> 0.1.2: Official project & protocol rename to OpenQPEP by Calyx Labs Inc.
@@ -15,6 +15,14 @@ Version Progression Log:
                   local keyring and step-by-step guided workflows.
 - 0.1.5 -> 0.1.6: Recreated and expanded docs/ specification suite (4 deep technical
                   markdown manuals), expanded README.md, and updated CPOSL license.
+- 0.1.6 -> 0.1.7: Universal Multi-Extension Binary File Encryption & Decryption Fix
+                  (165+ hardcoded file extensions, magic-byte header detection, and
+                  raw binary Uint8Array / bytes pipeline with live image preview).
+- 0.1.7 -> 0.1.8: Introduced Calyx Signature (Signature QLX-4096 + QVS-256) key tier,
+                  Verify-Before-Emit Fault-Guard, and 6-vector 2026 Quantum Threat Matrix.
+- 0.1.8 -> 0.1.9: Introduced Calyx Hyper-Tesseract (QLX-16384 + QVS-1024) 16,384-Dim
+                  4-Manifold Coupled Hyper-Tesseract key tier for high-tier hardware,
+                  hardware warning guards, and corrected ecosystem changelog.
 """
 import os
 import json
@@ -38,11 +46,23 @@ from .qlx_lattice import QLXEngine, QVSEngine, QLX_TIERS, QVS_TIERS, qsponge_var
 
 PROJECT_NAME = "OpenQPEP by Calyx Labs Inc."
 APP_NAME = "Calyx QPEP Client"
-UNIVERSAL_VERSION = "0.1.8"
-UNIVERSAL_VERSION_LABEL = "Beta Version 0.1.8"
-PROTOCOL_VERSION = "OpenQPEP/Beta-0.1.8"
+UNIVERSAL_VERSION = "0.1.9"
+UNIVERSAL_VERSION_LABEL = "Beta Version 0.1.9"
+PROTOCOL_VERSION = "OpenQPEP/Beta-0.1.9"
 DEFAULT_SUITE = "Signature QLX-4096 + QVS-256"
 QPKRF_EXTENSION = ".qpkrf"
+
+CALYX_HYPER_TESSERACT_HARDWARE_WARNING = (
+    "WARNING — HIGH-TIER HARDWARE REQUIRED FOR CALYX HYPER-TESSERACT (QLX-16384 + QVS-1024): "
+    "Calyx Hyper-Tesseract operates over a 16,384-dimensional 4-Manifold Coupled Module-LWE lattice (k=64 polynomials) "
+    "and a (16x14) QVS-1024 vector signature matrix (7,680 polynomial dimensions), executing over 320,000+ modular "
+    "NTT butterfly operations and allocating ~69.3 KB of raw secret lattice vectors per key ring. "
+    "Use ONLY on flagship smartphones (e.g., Samsung Galaxy Z Fold 8, Galaxy S25/S26 Ultra, Pixel 10 Pro with 12 GB+ RAM) "
+    "or high-RAM desktop/server PCs. Running Calyx Hyper-Tesseract on low-tier or budget mobile devices (<=6 GB RAM) "
+    "will cause severe UI freezes, Android Application Not Responding (ANR) timeouts, thermal throttling, or WebView "
+    "Out-Of-Memory (OOM) crashes. On standard or low-tier devices, use Calyx Signature (QLX-4096 + QVS-256) or QLX-1024 + QVS-87."
+)
+
 
 # Hardened 2026 Post-Quantum & AI-Cryptanalysis Immunity Profile for Signature QLX-4096 + QVS-256
 QUANTUM_IMMUNITY_MATRIX: Dict[str, Dict[str, str]] = {
