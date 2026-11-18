@@ -30,7 +30,6 @@ Detailed technical specifications and architectural manuals are located in the [
 2. [**`docs/02_OpenQPEP_vs_OpenPGP_Security_Comparison.md`**](docs/02_OpenQPEP_vs_OpenPGP_Security_Comparison.md) — Side-by-side security analysis comparing **OpenQPEP (`Beta Version 0.1.9`)** against legacy OpenPGP (`RFC 4880`) and Post-Quantum OpenPGP ([RFC 9980](https://datatracker.ietf.org/doc/html/rfc9980) / [Post-Quantum OpenPGP Overview](https://postquantum.com/security-pqc/post-quantum-openpgp-rfc-9980/)).
 3. [**`docs/03_QPKRF_Key_Ring_and_Binary_Wire_Format.md`**](docs/03_QPKRF_Key_Ring_and_Binary_Wire_Format.md) — Byte-level specification of the `.qpkrf` (Quantum Proof Key Ring File) envelope, `Key Hash` derivation, `integrity_mac` verification, and the `\x89QPE\x01\x01` whitened binary wire frame.
 4. [**`docs/04_Interactive_CLI_Android_Client_and_Directory_Guide.md`**](docs/04_Interactive_CLI_Android_Client_and_Directory_Guide.md) — User and developer manual for the **Interactive Blue-Text OpenQPEP CLI**, the **Calyx QPEP Client** Android app, and the [https://qpepkeys.calyxlabsinc.org](https://qpepkeys.calyxlabsinc.org) Public Key Directory server.
-5. [**`GUIDE.md`**](GUIDE.md) — Step-by-step Linux server + Cloudflare Zero Trust deployment and update guide for `qpepkeys.calyxlabsinc.org`.
 
 ---
 
