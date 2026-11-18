@@ -79,7 +79,7 @@ OpenQPEP follows an incremental beta versioning scheme (`+0.0.1` per major archi
 
 ---
 
-## `Signature QLX-4096 + QVS-256` Apex Quantum-Proof Tier (New in Beta Version 0.1.9)
+## `Signature QLX-4096 + QVS-256` Apex Quantum-Proof Tier (New in Beta Version 0.1.8)
 
 **`Signature QLX-4096 + QVS-256`** is OpenQPEP's flagship maximum-security key type, engineered specifically to surpass legacy OpenPGP (`RSA-4096` / `Ed25519`) and standard first-generation post-quantum schemes against emerging 2026 quantum and AI-driven cryptanalytic breakthroughs:
 
