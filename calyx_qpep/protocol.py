@@ -46,9 +46,9 @@ from .qlx_lattice import QLXEngine, QVSEngine, QLX_TIERS, QVS_TIERS, qsponge_var
 
 PROJECT_NAME = "OpenQPEP by Calyx Labs Inc."
 APP_NAME = "Calyx QPEP Client"
-UNIVERSAL_VERSION = "0.1.9"
-UNIVERSAL_VERSION_LABEL = "Beta Version 0.1.9"
-PROTOCOL_VERSION = "OpenQPEP/Beta-0.1.9"
+UNIVERSAL_VERSION = "0.2.0"
+UNIVERSAL_VERSION_LABEL = "Beta Version 0.2.0"
+PROTOCOL_VERSION = "OpenQPEP/Beta-0.2.0"
 DEFAULT_SUITE = "Signature QLX-4096 + QVS-256"
 QPKRF_EXTENSION = ".qpkrf"
 
@@ -872,7 +872,6 @@ class CalyxQPEPProtocol:
             "Protocol": PROJECT_NAME,
             "Version": f"{PROTOCOL_VERSION} ({UNIVERSAL_VERSION_LABEL})",
             "Suite": f"{qlx_tier}+HGC-448 / CC-512",
-            "Recipient-Key-Hash": recipient_keyring.key_hash,
             "Encrypting-Key-Hash": encrypting_keyring.key_hash,
         }
         return _armor_wrap("CALYX QPEP ENCRYPTED PACKET", metadata, json.dumps(packet_obj).encode("utf-8"))
@@ -1104,7 +1103,6 @@ class CalyxQPEPProtocol:
             "Version": f"{PROTOCOL_VERSION} ({UNIVERSAL_VERSION_LABEL})",
             "Mode": "ATTACHED-SIGNATURE",
             "Suite": f"{qvs_tier}+qSponge-512",
-            "Signer-Key-Hash": signer_private_keyring.key_hash,
             "Timestamp": timestamp,
         }
         return _armor_wrap("CALYX QPEP ATTACHED SIGNATURE", metadata, json.dumps(sig_obj).encode("utf-8"))

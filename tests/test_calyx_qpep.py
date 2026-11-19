@@ -21,8 +21,8 @@ class TestOpenQPEPProtocol(unittest.TestCase):
         self.valid_pass_2 = "Tristen$%^&99Az"
 
     def test_universal_version_0_1_6(self):
-        self.assertEqual(UNIVERSAL_VERSION, "0.1.9")
-        self.assertEqual(UNIVERSAL_VERSION_LABEL, "Beta Version 0.1.9")
+        self.assertEqual(UNIVERSAL_VERSION, "0.2.0")
+        self.assertEqual(UNIVERSAL_VERSION_LABEL, "Beta Version 0.2.0")
 
     def test_hardcoded_passphrase_policy(self):
         with self.assertRaises(QPEPPassphrasePolicyError):
@@ -39,7 +39,7 @@ class TestOpenQPEPProtocol(unittest.TestCase):
         pub_str = OpenQPEPProtocol.export_qpkrf(kr, include_private=False)
         self.assertIn("Key-Hash:", pub_str)
         self.assertIn("OpenQPEP by Calyx Labs Inc.", pub_str)
-        self.assertIn("Beta Version 0.1.9", pub_str)
+        self.assertIn("Beta Version 0.2.0", pub_str)
         imported_pub = OpenQPEPProtocol.import_qpkrf(pub_str)
         self.assertFalse(imported_pub.has_private_key)
         self.assertEqual(imported_pub.key_hash, kr.key_hash)
@@ -252,6 +252,24 @@ class TestOpenQPEPProtocol(unittest.TestCase):
         self.assertEqual(meta["qlx_tier"], "QLX-16384")
         self.assertEqual(meta["qvs_tier"], "QVS-1024")
 
+
+
+    def test_11_v020_zero_cleartext_armor_headers(self):
+        """Verifies Beta v0.2.0 omits cleartext Recipient-Key-Hash and Signer-Key-Hash armor headers."""
+        sender = OpenQPEPProtocol.generate_keypair("Alice", "alice@calyxlabsinc.org", self.valid_pass_1)
+        recip = OpenQPEPProtocol.generate_keypair("Bob", "bob@calyxlabsinc.org", self.valid_pass_2)
+        recip_pub = OpenQPEPProtocol.import_qpkrf(OpenQPEPProtocol.export_qpkrf(recip, include_private=False))
+        enc = OpenQPEPProtocol.encrypt_text("Zero metadata armor test", recipient_keyring=recip_pub, encrypting_keyring=sender, passphrase=self.valid_pass_1)
+        self.assertNotIn("Recipient-Key-Hash:", enc)
+        self.assertNotIn("Sender-Key-Hash:", enc)
+        self.assertNotIn("Signer-Key-Hash:", enc)
+        pt_bytes, _meta = OpenQPEPProtocol.decrypt_packet(enc, recip, self.valid_pass_2)
+        self.assertEqual(pt_bytes.decode("utf-8"), "Zero metadata armor test")
+        sig = OpenQPEPProtocol.sign_text("Zero metadata sig test", sender, self.valid_pass_1)
+        self.assertNotIn("Signer-Key-Hash:", sig)
+        ok, extracted_msg, _matched = OpenQPEPProtocol.verify_text_signature(sig, keyring_pool=[sender])
+        self.assertTrue(ok)
+        self.assertEqual(extracted_msg, "Zero metadata sig test")
 
 if __name__ == "__main__":
     unittest.main()
