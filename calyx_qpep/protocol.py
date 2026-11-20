@@ -42,13 +42,25 @@ from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM, ChaCha20Poly1305
 
 from .passphrase import enforce_passphrase_policy, analyze_passphrase, QPEPPassphrasePolicyError
+from .exceptions import (
+    OpenQPEPError,
+    QPEPMacVerificationError,
+    QPEPFaultGuardError,
+    QPEPWireFormatError,
+    QPEPTruncationError,
+    QPEPKeyRingError,
+    QPEPSuiteError,
+)
+from .primitives.cc512_aead import cc512_encrypt as _cc512_encrypt_mod, cc512_decrypt as _cc512_decrypt_mod
+from .primitives.consttime import ct_eq
+from .primitives.zeroize import SecretBuffer
 from .qlx_lattice import QLXEngine, QVSEngine, QLX_TIERS, QVS_TIERS, qsponge_var, qsponge_512
 
 PROJECT_NAME = "OpenQPEP by Calyx Labs Inc."
 APP_NAME = "Calyx QPEP Client"
-UNIVERSAL_VERSION = "0.2.0"
-UNIVERSAL_VERSION_LABEL = "Beta Version 0.2.0"
-PROTOCOL_VERSION = "OpenQPEP/Beta-0.2.0"
+UNIVERSAL_VERSION = "0.2.1"
+UNIVERSAL_VERSION_LABEL = "Beta Version 0.2.1"
+PROTOCOL_VERSION = "OpenQPEP/Beta-0.2.1"
 DEFAULT_SUITE = "Signature QLX-4096 + QVS-256"
 QPKRF_EXTENSION = ".qpkrf"
 
@@ -927,7 +939,7 @@ class CalyxQPEPProtocol:
 
         chunks = packet_obj.get("chunks", [])
         if not chunks:
-            raise ValueError("Malformed OpenQPEP packet: empty chunk list.")
+            raise QPEPWireFormatError("Malformed OpenQPEP packet: empty chunk list.")
         if chunks[-1].get("final") != 1 or any(ch.get("final") != 0 for ch in chunks[:-1]):
             raise ValueError("Stream truncation or invalid final frame flag detected.")
 

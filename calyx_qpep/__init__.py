@@ -1,23 +1,8 @@
 """
-OpenQPEP by Calyx Labs Inc. (Beta Version 0.2.0)
-Official Reference Implementation by Tristen Martinez at Calyx Labs Inc.
-Repository: https://github.com/CalyxLabsInc/OpenQPEP/
-Public Key Directory: https://qpepkeys.calyxlabsinc.org
+OpenQPEP by Calyx Labs Inc. — Beta Version 0.2.1 (Modular Cryptographic Kernel)
+Clean backward-compatible facade over calyx_qpep.primitives.*, calyx_qpep.lattice.*, and protocol.
 """
-from .passphrase import (
-    enforce_passphrase_policy,
-    analyze_passphrase,
-    QPEPPassphrasePolicyError,
-    PassphraseValidationResult,
-)
-from .protocol import (
-    SUPPORTED_FILE_EXTENSIONS,
-    QUANTUM_IMMUNITY_MATRIX,
-    CALYX_HYPER_TESSERACT_HARDWARE_WARNING,
-    detect_file_extension_and_mime,
-    OpenQPEPProtocol,
-    CalyxQPEPProtocol,
-    QPEPKeyRing,
+from .constants import (
     PROJECT_NAME,
     APP_NAME,
     UNIVERSAL_VERSION,
@@ -25,16 +10,31 @@ from .protocol import (
     PROTOCOL_VERSION,
     DEFAULT_SUITE,
     QPKRF_EXTENSION,
+    CALYX_HYPER_TESSERACT_HARDWARE_WARNING,
+)
+from .exceptions import (
+    OpenQPEPError,
+    QPEPPassphrasePolicyError,
+    QPEPMacVerificationError,
+    QPEPFaultGuardError,
+    QPEPWireFormatError,
+    QPEPTruncationError,
+    QPEPKeyRingError,
+    QPEPSuiteError,
+)
+from .primitives import ct_eq, ct_cmov, SecretBuffer, zeroize_bytes, qsponge_512, qsponge_var
+from .passphrase import PassphraseValidationResult, analyze_passphrase, enforce_passphrase_policy
+from .protocol import (
+    CalyxQPEPProtocol,
+    OpenQPEPProtocol,
+    QPEPKeyRing,
+    SUPPORTED_FILE_EXTENSIONS,
+    QUANTUM_IMMUNITY_MATRIX,
+    detect_file_extension_and_mime,
 )
 
+__version__ = UNIVERSAL_VERSION
 __all__ = [
-    "OpenQPEPProtocol",
-    "CalyxQPEPProtocol",
-    "QPEPKeyRing",
-    "enforce_passphrase_policy",
-    "analyze_passphrase",
-    "QPEPPassphrasePolicyError",
-    "PassphraseValidationResult",
     "PROJECT_NAME",
     "APP_NAME",
     "UNIVERSAL_VERSION",
@@ -42,5 +42,29 @@ __all__ = [
     "PROTOCOL_VERSION",
     "DEFAULT_SUITE",
     "QPKRF_EXTENSION",
+    "CALYX_HYPER_TESSERACT_HARDWARE_WARNING",
+    "OpenQPEPError",
+    "QPEPPassphrasePolicyError",
+    "QPEPMacVerificationError",
+    "QPEPFaultGuardError",
+    "QPEPWireFormatError",
+    "QPEPTruncationError",
+    "QPEPKeyRingError",
+    "QPEPSuiteError",
+    "ct_eq",
+    "ct_cmov",
+    "SecretBuffer",
+    "zeroize_bytes",
+    "qsponge_512",
+    "qsponge_var",
+    "PassphraseValidationResult",
+    "analyze_passphrase",
+    "enforce_passphrase_policy",
+    "CalyxQPEPProtocol",
+    "OpenQPEPProtocol",
+    "QPEPKeyRing",
+    "SUPPORTED_FILE_EXTENSIONS",
+    "QUANTUM_IMMUNITY_MATRIX",
+    "detect_file_extension_and_mime",
+    "__version__",
 ]
-__version__ = "0.2.0"

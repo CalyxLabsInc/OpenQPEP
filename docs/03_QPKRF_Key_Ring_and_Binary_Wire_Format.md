@@ -1,6 +1,6 @@
-# OpenQPEP `.qpkrf` Key Ring & Binary Wire Format Specification (`Beta Version 0.2.0`)
+# OpenQPEP `.qpkrf` Key Ring & Binary Wire Format Specification (`Beta Version 0.2.1`)
 
-**Protocol:** **OpenQPEP by Calyx Labs Inc.** (`Beta Version 0.2.0`)  
+**Protocol:** **OpenQPEP by Calyx Labs Inc.** (`Beta Version 0.2.1`)  
 **Creator & Lead Architect:** **Tristen Martinez** ([Calyx Labs Inc.](https://github.com/CalyxLabsInc/OpenQPEP/))  
 **File Extensions:** `.qpkrf` (Quantum Proof Key Ring File) & `.qpep` (Encrypted Packet)  
 

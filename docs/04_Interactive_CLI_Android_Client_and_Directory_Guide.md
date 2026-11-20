@@ -1,7 +1,7 @@
-# OpenQPEP Interactive CLI, Android Client & Public Key Directory Guide (`Beta Version 0.2.0`)
+# OpenQPEP Interactive CLI, Android Client & Public Key Directory Guide (`Beta Version 0.2.1`)
 
-**Protocol:** **OpenQPEP by Calyx Labs Inc.** (`Beta Version 0.2.0`)  
-**Android Application:** **Calyx QPEP Client** (`Beta Version 0.2.0`)  
+**Protocol:** **OpenQPEP by Calyx Labs Inc.** (`Beta Version 0.2.1`)  
+**Android Application:** **Calyx QPEP Client** (`Beta Version 0.2.1`)  
 **Creator & Lead Architect:** **Tristen Martinez** ([Calyx Labs Inc.](https://github.com/CalyxLabsInc/OpenQPEP/))  
 **Public Key Registry:** [https://qpepkeys.calyxlabsinc.org](https://qpepkeys.calyxlabsinc.org)  
 
@@ -40,7 +40,7 @@ python3 -m calyx_qpep.cli
 
 ---
 
-## 2. Calyx QPEP Client Android Application (`Beta Version 0.2.0`)
+## 2. Calyx QPEP Client Android Application (`Beta Version 0.2.1`)
 
 The **Calyx QPEP Client** Android application (`com.calyxlabs.qpepclient`, `versionCode 3`) supports Android 10 (`API 29`) through Android 17 (`API 37`, aligned with modern [Android Target SDK Requirements](https://targetsdk.com/) and [Android 17 Compatibility Guidelines](https://medium.com/@zobaer53/bringing-a-3-year-old-android-app-to-android-17-0da7e2a7c457)):
 
@@ -56,7 +56,7 @@ The **Calyx QPEP Client** Android application (`com.calyxlabs.qpepclient`, `vers
 ## 3. Public Key Directory Server (`https://qpepkeys.calyxlabsinc.org`)
 
 The zero-dependency Python 3 + SQLite3 directory server (`app.py`) runs behind a Cloudflare Zero Trust Tunnel (`cloudflared`) on `127.0.0.1:8443` and exposes four REST endpoints:
-- `GET /api/v1/health`: Returns live server and protocol status (`OpenQPEP/Beta-0.2.0`).
+- `GET /api/v1/health`: Returns live server and protocol status (`OpenQPEP/Beta-0.2.1`).
 - `POST /api/v1/keys/publish`: Validates that the uploaded `.qpkrf` block is a `PUBLIC KEY RING` (rejecting any private key ring) and indexes it by 64-character `key_hash`, `name`, `email`, and `suite` (supporting all 5 tiers including `Calyx Signature` and `Calyx Hyper-Tesseract`).
 - `GET /api/v1/keys/search?q=<query>`: Searches registered public keys by **Key Hash**, name, or email.
 - `GET /api/v1/keys/<KEY_HASH>?download=1`: Downloads the raw `.qpkrf` public key file.
@@ -66,7 +66,7 @@ The zero-dependency Python 3 + SQLite3 directory server (`app.py`) runs behind a
 
 ## 4. Calyx QPEP Client for iOS (Signed `.mobileconfig` Profile)
 
-In addition to Android, **Calyx QPEP Client (`Beta Version 0.2.0`)** is available for **iPhone and iPad** as a cryptographically signed Apple Configuration Profile (`.mobileconfig`, MIME type `application/x-apple-aspen-config`, signed by **Calyx Labs Inc.**):
+In addition to Android, **Calyx QPEP Client (`Beta Version 0.2.1`)** is available for **iPhone and iPad** as a cryptographically signed Apple Configuration Profile (`.mobileconfig`, MIME type `application/x-apple-aspen-config`, signed by **Calyx Labs Inc.**):
 - **Direct Safari Install URL:** [https://calyxlabsinc.org/CalyxQPEPClient.mobileconfig](https://calyxlabsinc.org/CalyxQPEPClient.mobileconfig)
 - **Standalone WebClip Endpoint:** [https://calyxlabsinc.org/qpep-client-ios/](https://calyxlabsinc.org/qpep-client-ios/)
 - **Installation Steps on iOS:**
@@ -79,11 +79,11 @@ In addition to Android, **Calyx QPEP Client (`Beta Version 0.2.0`)** is availabl
 
 ---
 
-## 5. Calyx Encrypted Messenger (Android, iOS & Web — Powered by OpenQPEP `Beta Version 0.2.0`)
+## 5. Calyx Encrypted Messenger (Android, iOS & Web — Powered by OpenQPEP `Beta Version 0.2.1`)
 
-**Calyx Encrypted Messenger** (nicknamed **Calyx QPEP Messenger**, Android package `com.calyxlabs.qpem`) is Calyx Labs Inc.'s real-time post-quantum messaging application powered 100% by the **OpenQPEP `Beta Version 0.2.0`** protocol:
+**Calyx Encrypted Messenger** (nicknamed **Calyx QPEP Messenger**, Android package `com.calyxlabs.qpem`) is Calyx Labs Inc.'s real-time post-quantum messaging application powered 100% by the **OpenQPEP `Beta Version 0.2.1`** protocol:
 - **Zero Phone Numbers / `.qpkrf` Key Hash Accounts:** Users authenticate and message solely via their self-certified `.qpkrf` Key Ring and **64-character Key Hash**.
-- **All Five OpenQPEP v0.2.0 Key Suites:** Supports `Calyx Signature` (`QLX-4096 + QVS-256`, default), `Calyx Hyper-Tesseract` (`QLX-16384 + QVS-1024`, high-tier hardware), `QLX-2048 + QVS-128`, `QLX-1024 + QVS-87`, and `QLX-768 + QVS-65`.
+- **All Five OpenQPEP v0.2.1 Key Suites:** Supports `Calyx Signature` (`QLX-4096 + QVS-256`, default), `Calyx Hyper-Tesseract` (`QLX-16384 + QVS-1024`, high-tier hardware), `QLX-2048 + QVS-128`, `QLX-1024 + QVS-87`, and `QLX-768 + QVS-65`.
 - **Real-Time Sync, 3-State Receipts & Scannable CLX-Code (`SC Code`):** Features Sent/Delivered/Read indicators, an in-app camera scanner for peer SC Codes, and binary-safe file encryption across 165+ file extensions.
 - **Platforms & Links:**
   - **Product Page:** [https://calyxlabsinc.org/messenger.html](https://calyxlabsinc.org/messenger.html)

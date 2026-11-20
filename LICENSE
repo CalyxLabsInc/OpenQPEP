@@ -1,85 +1,163 @@
-Calyx Public Open Source License 1.0 (CPOSL-1.0) — OpenQPEP Beta Version 0.1.7
 ================================================================================
-Project: OpenQPEP by Calyx Labs Inc. (Android App: Calyx QPEP Client)
-Universal Version: Beta Version 0.1.7 (0.1.7)
-Copyright (c) 2026 Calyx Labs Inc. (Creator & Lead Architect: Tristen Martinez)
-Official Repository: https://github.com/CalyxLabsInc/OpenQPEP/
-Official Key Directory: https://qpepkeys.calyxlabsinc.org
-All Rights Reserved under the terms of the Calyx Public Open Source License 1.0.
+Calyx Public Open Source Specifications v1.0 License (CPOSLS-1.0)
+================================================================================
+License Identifier : CPOSLS-1.0
+License Version    : 1.0 (Universal FOSS Edition)
+License Steward    : Calyx Labs Inc. (https://calyxlabsinc.org/)
+Applicability      : Universal — Free for any developer, creator, team, or
+                     organization to apply to any software, specification,
+                     protocol, library, tool, or documentation.
 
-PREAMBLE
---------
-The Calyx Public Open Source License 1.0 ("CPOSL-1.0" or "License") governs the
-use, reproduction, modification, and distribution of OpenQPEP by Calyx Labs Inc.
-(the Open Quantum-Proof Encryption Protocol, formerly Calyx QPEP), the Quantum
-Proof Key Ring File (".qpkrf") specification, the OpenQPEP Interactive CLI, the
-Calyx QPEP Client Android application, and associated reference software created
-by Tristen Martinez at Calyx Labs Inc.
+Copyright (c) 2026 Calyx Labs Inc. (Original Author: Tristen Martinez)
+Project / Work     : All Software, Protocols, Specifications, and Applications
+                     by Calyx Labs Inc. (including the OpenQPEP Suite: OpenQPEP
+                     Core Protocol, SDK & CLI, Calyx QPEP Client, Calyx
+                     Encrypted Messenger / Calyx QPEM, Calyx Key Directory, and
+                     associated servers, websites, and tools)
+Official Website   : https://calyxlabsinc.org/
+Official GitHub    : https://github.com/CalyxLabsInc/
 
+--------------------------------------------------------------------------------
+PREAMBLE — 100% FREE AND OPEN-SOURCE SOFTWARE (FOSS) GUARANTEE
+--------------------------------------------------------------------------------
+The Calyx Public Open Source Specifications v1.0 License ("CPOSLS-1.0" or
+"this License") is a permissive, universal Free and Open-Source Software (FOSS)
+license created by Calyx Labs Inc. for unrestricted adoption by any developer,
+researcher, or organization worldwide.
+
+Any Work distributed under CPOSLS-1.0 is completely Free and Open-Source
+Software (FOSS). Everyone is granted full, irrevocable freedom to run, study,
+audit, copy, modify, fork, merge, publish, distribute, sublicense, and
+commercialize the Work for any purpose whatsoever, with ZERO copyleft lock-in,
+ZERO royalties, and ZERO field-of-use restrictions.
+
+THE SOLE CONDITION OF THIS LICENSE IS ORIGINAL AUTHOR ATTRIBUTION (SECTION 3).
+
+--------------------------------------------------------------------------------
 1. DEFINITIONS
---------------
-1.1 "Protocol Standard" means OpenQPEP by Calyx Labs Inc. (Beta Version 0.1.7
-    and subsequent versions), including its QLX-768, QLX-1024, and QLX-2048
-    7-layer NTT Module-LWE key encapsulation tiers over Z_3329[X]/(X^256+1),
-    HGC-448 448-bit Goldilocks curve combiner, QVS-65, QVS-87, and QVS-128
-    8-layer NTT Lattice Fiat-Shamir with Aborts signature schemes over
-    Z_8380417[X]/(X^256+1), qSponge-512 and qSponge-XOF 24-round Keccak-f[1600]
-    sponge primitives, Calyx-Cascade-512 (CC-512) dual-stream authenticated
-    cipher cascade (AES-256-GCM + ChaCha20-Poly1305), QPKD-Argon memory-hard
-    passphrase derivation lock, \x89QPE\x01\x01 binary wire framing, and the
-    .qpkrf key ring file format.
-1.2 "Licensor" means Calyx Labs Inc. and original creator Tristen Martinez.
-1.3 "Covered Work" means the Original Work of authorship or any Derivative Work
-    thereof distributed under this License.
+--------------------------------------------------------------------------------
+1.1 "License" means this Calyx Public Open Source Specifications v1.0 License
+    (CPOSLS-1.0).
+1.2 "Original Author" (or "Licensor") means the individual(s), developer(s),
+    or legal entity identified in the copyright and attribution notice who
+    created or originally published the Work under this License.
+1.3 "Work" means the software, source code, object/binary code, cryptographic
+    or technical specification, protocol, documentation, assets, or other
+    copyrightable material made available under this License.
+1.4 "Derivative Work" means any work, whether in Source Form or Object Form,
+    that is based on, derived from, modifies, translates, adapts, extends, or
+    incorporates all or any substantial portion of the Work.
+1.5 "Source Form" means the preferred form for making modifications, including
+    but not limited to source code, build scripts, specification documents, and
+    configuration files.
+1.6 "Object Form" means any form resulting from mechanical transformation or
+    translation of Source Form, including compiled binaries, executables,
+    bytecode, packaged archives, or generated documentation.
+1.7 "You" (or "Recipient") means any individual or legal entity exercising
+    permissions granted by this License.
 
-2. GRANT OF COPYRIGHT AND PATENT LICENSE
-----------------------------------------
-Subject to the terms and conditions of this License, Licensor hereby grants to
-every recipient of the Covered Work a perpetual, worldwide, non-exclusive,
-no-charge, royalty-free copyright and patent license to use, copy, study,
-modify, merge, publish, distribute, and sublicense the Covered Work in both
-Source Code and Object Form.
+--------------------------------------------------------------------------------
+2. GRANT OF COMPLETE FOSS RIGHTS (COPYRIGHT & PATENT LICENSE)
+--------------------------------------------------------------------------------
+2.1 Copyright License. Subject solely to the Original Author Attribution
+    requirement in Section 3, the Original Author hereby grants to You a
+    perpetual, worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+    copyright license to:
+      (a) Use and execute the Work for any purpose (including personal,
+          educational, research, government, non-profit, and commercial use);
+      (b) Study, inspect, audit, and analyze the Work in Source Form and
+          Object Form;
+      (c) Copy, reproduce, and mirror the Work in whole or in part;
+      (d) Modify, adapt, fork, merge, translate, and create Derivative Works;
+      (e) Publish, publicly display, publicly perform, distribute, sublicense,
+          and sell copies of the Work or Derivative Works; and
+      (f) Combine or integrate the Work or Derivative Works with other software
+          (whether open-source or proprietary) under any compatible terms.
 
-3. MANDATORY CRYPTOGRAPHIC INTEGRITY & PASSPHRASE ENFORCEMENT CONDITION
------------------------------------------------------------------------
-To prevent cryptographic downgrade attacks and protect end-user security across
-the OpenQPEP ecosystem, any Covered Work or Derivative Work that reads, writes,
-generates, or claims interoperability with OpenQPEP packets or .qpkrf (Quantum
-Proof Key Ring File) files MUST strictly preserve:
-  (a) The non-bypassable QPKD-Argon Passphrase Policy requiring every passphrase
-      to be at least twelve (12) characters in length and contain at least two
-      (2) numeric digits, four (4) special characters, two (2) uppercase
-      letters, and four (4) lowercase letters;
-  (b) The atomic .qpkrf conjunctive self-certification signature and
-      integrity_mac verification checks;
-  (c) Attached-only signature encapsulation (prohibiting detached signatures);
-  (d) Dual-stream CC-512 authenticated frame integrity and final-chunk
-      truncation verification.
+2.2 Patent License. Subject solely to Section 3, the Original Author hereby
+    grants to You a perpetual, worldwide, non-exclusive, no-charge,
+    royalty-free, irrevocable patent license to make, have made, use, offer to
+    sell, sell, import, and otherwise transfer the Work, solely with respect to
+    patent claims licensable by the Original Author that are necessarily
+    infringed by the Work itself.
 
-Derivative Works that strip or weaken these security guarantees MUST NOT use the
-names "OpenQPEP", "Calyx QPEP", "Calyx QPEP Client", or the ".qpkrf" extension.
+2.3 No Additional Restrictions. No fees, royalties, source-disclosure mandates
+    (copyleft/share-alike), usage limits, or commercial restrictions are
+    imposed by this License. You are never required to release the source code
+    of your own Derivative Works or larger combined products.
 
-4. ATTRIBUTION & NOTICE PRESERVATION
-------------------------------------
-All copies or substantial portions of the Covered Work must retain the above
-copyright notice, attribution to Tristen Martinez and Calyx Labs Inc., the link
-to https://github.com/CalyxLabsInc/OpenQPEP/, and a copy of this License.
+--------------------------------------------------------------------------------
+3. SOLE REQUIREMENT: ORIGINAL AUTHOR ATTRIBUTION
+--------------------------------------------------------------------------------
+The ONLY requirement for exercising any and all rights granted under this
+License is that You provide clear Original Author Attribution as follows:
 
-5. TRADEMARKS & BRANDING
-------------------------
+3.1 Source Distributions. All copies or substantial portions of the Work
+    distributed in Source Form must retain:
+      (a) The Original Author's copyright notice and attribution (name and/or
+          organization as stated in the Work);
+      (b) The original project URL or reference, if provided in the notice; and
+      (c) A copy of this CPOSLS-1.0 License text.
+
+3.2 Binary / Object Form & Documentation Distributions. When distributing the
+    Work or a substantial portion of it in compiled, binary, web, or packaged
+    Object Form, You must reproduce the Original Author's attribution notice
+    and this License (or a clear link/reference to them) in at least one
+    reasonably accessible location—such as a LICENSE/NOTICE file, an "About" or
+    "Credits" screen, or accompanying documentation.
+
+3.3 Marking Modifications (Optional Good Practice). If You modify the Work,
+    You may add your own copyright notice for your modifications, provided You
+    do not remove, obscure, or misrepresent the Original Author's attribution.
+
+--------------------------------------------------------------------------------
+4. TRADEMARKS & NO IMPLIED ENDORSEMENT
+--------------------------------------------------------------------------------
 This License does not grant permission to use the trade names, trademarks,
-service marks, or product names of Calyx Labs Inc., "OpenQPEP by Calyx Labs
-Inc.", or "Calyx QPEP Client" for commercial endorsement without prior written
-permission from Calyx Labs Inc., except as required for reasonable and customary
-attribution under Section 4.
+service marks, logos, or product names of the Original Author (or of Calyx Labs
+Inc.) to imply endorsement, sponsorship, or official affiliation without prior
+written permission, except as strictly necessary to fulfill the Original Author
+Attribution requirement in Section 3.
 
-6. DISCLAIMER OF WARRANTY & LIMITATION OF LIABILITY
----------------------------------------------------
-THE COVERED WORK IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO WARRANTIES OF MERCHANTABILITY, FITNESS FOR
-A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. IN NO EVENT SHALL CALYX LABS INC.,
-TRISTEN MARTINEZ, OR ANY CONTRIBUTOR BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR OTHERWISE, ARISING FROM,
-OUT OF, OR IN CONNECTION WITH THE COVERED WORK OR THE USE OR OTHER DEALINGS IN
-THE COVERED WORK.
+--------------------------------------------------------------------------------
+5. DISCLAIMER OF WARRANTY
+--------------------------------------------------------------------------------
+THE WORK IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+PARTICULAR PURPOSE, TITLE, AND NON-INFRINGEMENT. YOU ARE SOLELY RESPONSIBLE FOR
+DETERMINING THE APPROPRIATENESS OF USING OR REDISTRIBUTING THE WORK AND ASSUME
+ANY RISKS ASSOCIATED WITH EXERCISING PERMISSIONS UNDER THIS LICENSE.
+
+--------------------------------------------------------------------------------
+6. LIMITATION OF LIABILITY
+--------------------------------------------------------------------------------
+IN NO EVENT AND UNDER NO LEGAL THEORY—WHETHER IN TORT (INCLUDING NEGLIGENCE),
+CONTRACT, OR OTHERWISE—SHALL THE ORIGINAL AUTHOR, ANY CONTRIBUTOR, OR CALYX
+LABS INC. (AS LICENSE STEWARD) BE LIABLE TO YOU FOR ANY CLAIM, DAMAGES, OR
+OTHER LIABILITY, INCLUDING ANY DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR
+CONSEQUENTIAL DAMAGES OF ANY CHARACTER ARISING OUT OF THIS LICENSE OR THE USE
+OR INABILITY TO USE THE WORK, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
+DAMAGES.
+
+--------------------------------------------------------------------------------
+7. LICENSE TEXT REUSE
+--------------------------------------------------------------------------------
+Anyone may freely copy, distribute, and apply this CPOSLS-1.0 License text to
+their own works without permission or fee. If you modify the terms of this
+License itself, you must remove the name "Calyx Public Open Source
+Specifications v1.0 License" and the identifier "CPOSLS-1.0" so recipients are
+not misled as to which license governs your work.
+
+================================================================================
+APPENDIX: HOW THIRD-PARTY DEVELOPERS CAN APPLY CPOSLS-1.0 TO THEIR OWN PROJECTS
+================================================================================
+To license your own software, specification, or documentation under CPOSLS-1.0:
+1. Place a copy of this file named `LICENSE` in the root of your repository.
+2. Replace the Copyright, Project / Work, and URL lines at the top with your
+   own name/organization, project name, and URL.
+3. Optionally include the following short header in your source files:
+
+   Copyright (c) YEAR <ORIGINAL AUTHOR NAME / ORGANIZATION>
+   Licensed under the Calyx Public Open Source Specifications v1.0 License
+   (CPOSLS-1.0). Completely FOSS — Original Author Attribution required.
 ================================================================================

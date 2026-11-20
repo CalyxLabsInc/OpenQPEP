@@ -4,11 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "openqpep"
-version = "0.2.0"
-description = "OpenQPEP by Calyx Labs Inc. (Beta Version 0.2.0) — Quantum-Proof Encryption Protocol, Interactive CLI & .qpkrf Reference Implementation"
+version = "0.2.1"
+description = "OpenQPEP by Calyx Labs Inc. (Beta Version 0.2.1) — Quantum-Proof Encryption Protocol, Interactive CLI & .qpkrf Reference Implementation"
 readme = "README.md"
 requires-python = ">=3.10"
-license = {text = "Calyx Public Open Source License 1.0 (CPOSL-1.0)"}
+license = {text = "Calyx Public Open Source License 1.0 (CPOSLS-1.0)"}
 authors = [{name = "Tristen Martinez (Calyx Labs Inc.)", email = "support@calyxlabsinc.org"}]
 dependencies = ["cryptography>=38.0.0"]
 

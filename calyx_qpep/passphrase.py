@@ -17,8 +17,7 @@ MIN_UPPERCASE = 2
 MIN_LOWERCASE = 4
 
 
-class QPEPPassphrasePolicyError(ValueError):
-    """Raised when a passphrase violates the mandatory Calyx QPEP security policy."""
+from .exceptions import QPEPPassphrasePolicyError
 
 
 @dataclass(frozen=True)

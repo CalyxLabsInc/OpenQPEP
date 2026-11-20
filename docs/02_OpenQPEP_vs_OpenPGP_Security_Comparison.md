@@ -1,6 +1,6 @@
 # OpenQPEP vs. Legacy OpenPGP (`RFC 4880`) & Post-Quantum OpenPGP (`RFC 9980` v6) — Security Analysis
 
-**Protocol:** **OpenQPEP by Calyx Labs Inc.** (`Beta Version 0.2.0`)  
+**Protocol:** **OpenQPEP by Calyx Labs Inc.** (`Beta Version 0.2.1`)  
 **Creator & Lead Architect:** **Tristen Martinez** ([Calyx Labs Inc.](https://github.com/CalyxLabsInc/OpenQPEP/))  
 **Public Key Registry:** [https://qpepkeys.calyxlabsinc.org](https://qpepkeys.calyxlabsinc.org)  
 
@@ -25,9 +25,9 @@ Legacy OpenPGP (`RFC 4880`) was standardized in the 1990s around classical numbe
 
 ---
 
-## 2. Head-to-Head Comparison: Legacy OpenPGP vs. Post-Quantum OpenPGP (`RFC 9980` v6) vs. OpenQPEP (`Beta Version 0.2.0`)
+## 2. Head-to-Head Comparison: Legacy OpenPGP vs. Post-Quantum OpenPGP (`RFC 9980` v6) vs. OpenQPEP (`Beta Version 0.2.1`)
 
-| Security Dimension | Legacy OpenPGP (`RFC 4880`) | Post-Quantum OpenPGP ([RFC 9980](https://datatracker.ietf.org/doc/rfc9980/) v6 & [LibrePGP v5](https://postquantum.com/security-pqc/post-quantum-openpgp-rfc-9980/)) | **OpenQPEP by Calyx Labs Inc. (`Beta Version 0.2.0`)** |
+| Security Dimension | Legacy OpenPGP (`RFC 4880`) | Post-Quantum OpenPGP ([RFC 9980](https://datatracker.ietf.org/doc/rfc9980/) v6 & [LibrePGP v5](https://postquantum.com/security-pqc/post-quantum-openpgp-rfc-9980/)) | **OpenQPEP by Calyx Labs Inc. (`Beta Version 0.2.1`)** |
 | :--- | :--- | :--- | :--- |
 | **Encryption Lattice Tiers (`KEM`)** | Classical RSA-2048/4096 or X25519 (0 lattice dims) | `ML-KEM-768` ($768$-dim) or `ML-KEM-1024` ($1,024$-dim ceiling) | **5 Tiers:** `QLX-768` ($768$-dim), `QLX-1024` ($1,024$-dim), `QLX-2048` ($2,048$-dim), **`Calyx Signature QLX-4096` ($4,096$-dim Default)**, and **`Calyx Hyper-Tesseract QLX-16384` ($16,384$-dim Flagship Hardware)** + `HGC-448` |
 | **Digital Signature Tiers** | Classical RSA / Ed25519 | `ML-DSA-65+Ed25519` or `ML-DSA-87+Ed448` ($8 \times 7$ ceiling) | **5 Conjunctive Tiers + `Ed448` + `Fault-Guard`:** `QVS-65` ($3 \times 2$), `QVS-87` ($4 \times 3$), `QVS-128` ($6 \times 5$), **`QVS-256` ($8 \times 7$ Default)**, and **`QVS-1024` ($16 \times 14$ Hyper-Tesseract)** |

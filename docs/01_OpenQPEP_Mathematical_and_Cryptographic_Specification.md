@@ -1,16 +1,16 @@
-# OpenQPEP Mathematical & Cryptographic Specification (`Beta Version 0.2.0`)
+# OpenQPEP Mathematical & Cryptographic Specification (`Beta Version 0.2.1`)
 
 **Protocol:** **OpenQPEP by Calyx Labs Inc.** (Open Quantum-Proof Encryption Protocol)  
-**Android Application:** **Calyx QPEP Client** (`Beta Version 0.2.0`)  
+**Android Application:** **Calyx QPEP Client** (`Beta Version 0.2.1`)  
 **Creator & Lead Architect:** **Tristen Martinez** ([Calyx Labs Inc.](https://github.com/CalyxLabsInc/OpenQPEP/))  
 **Public Key Registry:** [https://qpepkeys.calyxlabsinc.org](https://qpepkeys.calyxlabsinc.org)  
-**Universal Version:** `Beta Version 0.2.0` (`0.1.9`)  
+**Universal Version:** `Beta Version 0.2.1` (`0.1.9`)  
 
 ---
 
 ## 1. Executive Architecture Overview
 
-**OpenQPEP by Calyx Labs Inc.** (`Beta Version 0.2.0`) is a clean-slate, hybrid post-quantum encryption and digital signature standard engineered by **Tristen Martinez** at **[Calyx Labs Inc.](https://calyxlabsinc.org/)** to replace legacy OpenPGP (`RFC 4880`) and improve upon early post-quantum OpenPGP specifications such as [IETF RFC 9980](https://datatracker.ietf.org/doc/rfc9980/).
+**OpenQPEP by Calyx Labs Inc.** (`Beta Version 0.2.1`) is a clean-slate, hybrid post-quantum encryption and digital signature standard engineered by **Tristen Martinez** at **[Calyx Labs Inc.](https://calyxlabsinc.org/)** to replace legacy OpenPGP (`RFC 4880`) and improve upon early post-quantum OpenPGP specifications such as [IETF RFC 9980](https://datatracker.ietf.org/doc/rfc9980/).
 
 Every cryptographic operation in **OpenQPEP** is built around five core pillars:
 1. **1600-Bit 24-Round Sponge Primitives (`qSponge-512` & `qSponge-XOF`)**: Built directly on the 24-round `Keccak-f[1600]` state permutation with explicit domain separation (`CALYX-QSPONGE-512-v1|` and `CALYX-QSPONGE-XOF-v1|`) and zero reliance on legacy `SHA-1` or `SHA-256`.
