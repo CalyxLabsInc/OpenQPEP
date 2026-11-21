@@ -29,9 +29,9 @@ SRCS := ntt_3329.c ntt_8380417.c cbd.c pentad_accel.c
 all: $(TARGET)
 
 $(TARGET): $(SRCS)
-$(CC) $(CFLAGS) $(SIMD_FLAGS) $(LDFLAGS) -o $(TARGET) $(SRCS)
+	$(CC) $(CFLAGS) $(SIMD_FLAGS) $(LDFLAGS) -o $(TARGET) $(SRCS)
 
 clean:
-rm -f ../libopenqpep.so ../libopenqpep.dylib ../libopenqpep.dll
+	rm -f ../libopenqpep.so ../libopenqpep.dylib ../libopenqpep.dll
 
 .PHONY: all clean
