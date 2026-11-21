@@ -1,0 +1,27 @@
+{
+  "schema": "openqpep-kat-v3",
+  "family": "beyond_lwe",
+  "protocol_version": "OpenQPEP/1.0.0",
+  "universal_version": "1.0.0",
+  "suite_id": "CSP-Omega",
+  "suite_name": "Calyx Sovereign-Pentad: CSP-Omega + QHS-512 (5-Family Beyond-LWE Citadel \u2014 HIGH-TIER HARDWARE ONLY)",
+  "qlx_tier": "CSP-Omega",
+  "qvs_tier": "QHS-512",
+  "drbg_algorithm": "qSponge-XOF (SHAKE-256, domain CALYX-OPENQPEP-KAT-DRBG-v1.0.0|)",
+  "drbg_seed_hex": "909192939495969798999a9b9c9d9e9fa0a1a2a3a4a5a6a7a8a9aaabacadaeaf",
+  "message_utf8": "OpenQPEP Official Release 1.0.0 Deterministic Known Answer Test Vector",
+  "message_hex": "4f70656e51504550204f6666696369616c2052656c6561736520312e302e302044657465726d696e6973746963204b6e6f776e20416e73776572205465737420566563746f72",
+  "beyond_lwe": {
+    "key_hash": "45709232AD33E2ADC63BA47678ED1CCBBEF1C67EA180E895E37D53D2B886F4D3",
+    "wire_magic_hex": "895150450500",
+    "public_material_bytes": 42697,
+    "public_material_sha3_512": "38caacf733a305de1b423c454f0dfd2a4abf6834d269eeff5b2f00ad3cdbb7e05fba9020f557c14d1d1a82314cde9553242ac0385bcb8252f9eceb85ff8287f4",
+    "ct_bytes": 3434,
+    "ct_sha3_512": "59b148e0abed3b7fbf3e0d9eb09c603c807da53a2cc26a7c051cd9f8759760a83e2d989530ceed62621cdf3cf31fdeb562f7ac19952b64d31659df9044aa8e27",
+    "sig_bytes": 5633,
+    "sig_sha3_512": "98ea2032b7dc7339000085c27074f1dbbce571419be9cf7c81cee87aa91c733de84cbc489e0f90d1641409aaef97f1fc53cc9869cfe3fb670cad1c771f02809d",
+    "qpkrf_roundtrip_verified": true,
+    "decrypt_verified": true,
+    "signature_verified": true
+  }
+}

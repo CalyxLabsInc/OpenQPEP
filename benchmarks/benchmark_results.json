@@ -1,0 +1,112 @@
+[
+  {
+    "release": "v1.0.0",
+    "suite": "Calyx Signature: QLX-4096 + QVS-256 (Recommended Default \u2014 All Devices)",
+    "hardware_tier": "All Devices",
+    "keygen_ms": 80.96,
+    "encaps_ms": 36.56,
+    "decaps_ms": 45.65,
+    "sign_ms": 25.92,
+    "verify_ms": 9.39,
+    "peak_rss_mib": 35.38
+  },
+  {
+    "release": "v1.0.0",
+    "suite": "Calyx Velocity: QLX-768 + QVS-65 (High-Speed Mobile \u2014 All Devices)",
+    "hardware_tier": "All Devices",
+    "keygen_ms": 15.3,
+    "encaps_ms": 2.24,
+    "decaps_ms": 3.62,
+    "sign_ms": 4.17,
+    "verify_ms": 2.04,
+    "peak_rss_mib": 35.38
+  },
+  {
+    "release": "v1.0.0",
+    "suite": "Calyx Sovereign-Hybrid: QLX-1024 + QVS-87 (Balanced Post-Quantum \u2014 All Devices)",
+    "hardware_tier": "All Devices",
+    "keygen_ms": 21.39,
+    "encaps_ms": 3.29,
+    "decaps_ms": 4.49,
+    "sign_ms": 6.63,
+    "verify_ms": 2.64,
+    "peak_rss_mib": 35.38
+  },
+  {
+    "release": "v1.0.0",
+    "suite": "Calyx Ultra-Grid: QLX-2048 + QVS-128 (2,048-Dim Lattice \u2014 All Devices)",
+    "hardware_tier": "All Devices",
+    "keygen_ms": 44.96,
+    "encaps_ms": 18.63,
+    "decaps_ms": 26.21,
+    "sign_ms": 27.81,
+    "verify_ms": 12.5,
+    "peak_rss_mib": 35.38
+  },
+  {
+    "release": "v1.0.0",
+    "suite": "Calyx Hyper-Tesseract: QLX-16384 + QVS-1024 (16,384-Dim 4-Manifold \u2014 HIGH-TIER HARDWARE ONLY)",
+    "hardware_tier": "HIGH-TIER HARDWARE ONLY (>= 12 GB RAM)",
+    "keygen_ms": 361.78,
+    "encaps_ms": 152.78,
+    "decaps_ms": 165.74,
+    "sign_ms": 287.26,
+    "verify_ms": 32.06,
+    "peak_rss_mib": 40.27
+  },
+  {
+    "release": "v1.0.0",
+    "suite": "Calyx Isogeny-Forge: CIF-SQI-512 + QHS-512 (2D Supersingular Isogeny \u2014 All Devices)",
+    "hardware_tier": "All Devices",
+    "keygen_ms": 318.25,
+    "encaps_ms": 482.08,
+    "decaps_ms": 229.49,
+    "sign_ms": 33.73,
+    "verify_ms": 1.29,
+    "peak_rss_mib": 40.27
+  },
+  {
+    "release": "v1.0.0",
+    "suite": "Calyx Rank-Metric Tensor: CRT-RSD512 + QMQ-512 (Rank-Syndrome Code-Based \u2014 All Devices)",
+    "hardware_tier": "All Devices",
+    "keygen_ms": 587.43,
+    "encaps_ms": 62.26,
+    "decaps_ms": 157.41,
+    "sign_ms": 8.36,
+    "verify_ms": 3.32,
+    "peak_rss_mib": 40.27
+  },
+  {
+    "release": "v1.0.0",
+    "suite": "Calyx Goppa-Monolith: CGM-8192 + QHS-512 (Binary Goppa Code-Based \u2014 HIGH-TIER HARDWARE ONLY)",
+    "hardware_tier": "HIGH-TIER HARDWARE ONLY (>= 12 GB RAM)",
+    "keygen_ms": 869.39,
+    "encaps_ms": 2.19,
+    "decaps_ms": 35.53,
+    "sign_ms": 108.42,
+    "verify_ms": 1.81,
+    "peak_rss_mib": 40.27
+  },
+  {
+    "release": "v1.0.0",
+    "suite": "Calyx Unstructured-Citadel: CULC-2048 + CGM-8192 (Zero-Ring Plain-LWE + Goppa \u2014 HIGH-TIER HARDWARE ONLY)",
+    "hardware_tier": "HIGH-TIER HARDWARE ONLY (>= 12 GB RAM)",
+    "keygen_ms": 538.52,
+    "encaps_ms": 14.71,
+    "decaps_ms": 26.74,
+    "sign_ms": 32.6,
+    "verify_ms": 1.39,
+    "peak_rss_mib": 40.27
+  },
+  {
+    "release": "v1.0.0",
+    "suite": "Calyx Sovereign-Pentad: CSP-Omega + QHS-512 (5-Family Beyond-LWE Citadel \u2014 HIGH-TIER HARDWARE ONLY)",
+    "hardware_tier": "HIGH-TIER HARDWARE ONLY (>= 12 GB RAM)",
+    "keygen_ms": 633.56,
+    "encaps_ms": 570.31,
+    "decaps_ms": 362.24,
+    "sign_ms": 4964.93,
+    "verify_ms": 2258.24,
+    "peak_rss_mib": 40.27
+  }
+]
