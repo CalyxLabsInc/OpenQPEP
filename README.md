@@ -1,6 +1,6 @@
-# OpenQPEP by Calyx Labs Inc. — Official Release `v1.1.5` (`OpenQPEP/1.1.5`)
+# OpenQPEP by Calyx Labs Inc. — Official Release `v1.1.6` (`OpenQPEP/1.1.6`)
 
-**Protocol Version:** `OpenQPEP/1.1.5` (`Official Release 1.1.5`, PEP 440 `1.1.5`, upgraded from **Official Release `1.1.4`**)  
+**Protocol Version:** `OpenQPEP/1.1.6` (`Official Release 1.1.6`, PEP 440 `1.1.6`, upgraded from **Official Release `1.1.5`**)  
 **Creator & Lead Architect:** Tristen Martinez (Calyx Labs Inc., Cleveland, Ohio)  
 **Repository:** https://github.com/CalyxLabsInc/OpenQPEP  
 **Public Key Directory & QPEP-KT:** https://qpepkeys.calyxlabsinc.org  
@@ -10,9 +10,10 @@
 
 OpenQPEP is a modern, quantum-proof encryption, authentication, and messaging protocol engineered to replace legacy OpenPGP (RFC 4880 / RFC 9580) as a worldwide standard—with provable multi-assumption post-quantum security, constant-time native C99/Rust/WASM/Go performance, and 100% deterministic Known Answer Test (KAT) verification.
 
-## Official Release `v1.1.5` Highlights
+## Official Release `v1.1.6` Highlights
 
-- **100% Official `v1.0.x`–`v1.1.x` Interoperability (`1.0.0`–`1.1.4` ↔ `1.1.5`):** Preserves complete Wire Format v5 (`\x89QPE\x05\x00`), Compact TLV v5.1 (`\x89QPE\x05\x01`), Stream v5 (`\x89QPS\x05\x00`), and `kdf_version: 4` compatibility across all Official Public Stable Releases while continuing to hard-reject all retired pre-release formats (`-rc`, `-pc`, `-beta`, Wire v1–v4, `kdf_version < 4`) with `QPEPLegacyProtocolError`.
+- **100% Official `v1.0.x`–`v1.1.x` Interoperability (`1.0.0`–`1.1.5` ↔ `1.1.6`):** Preserves complete Wire Format v5 (`\x89QPE\x05\x00`), Compact TLV v5.1 (`\x89QPE\x05\x01`), Stream v5 (`\x89QPS\x05\x00`), and `kdf_version: 4` compatibility across all Official Public Stable Releases while continuing to hard-reject all retired pre-release formats (`-rc`, `-pc`, `-beta`, Wire v1–v4, `kdf_version < 4`) with `QPEPLegacyProtocolError`.
+- **RFC 7748 / RFC 8032 `HGC-448` Low-Order Hardening & `.qpkrf` Anti-Substitution:** Added full X448 contributory & canonical `u < p` validation (`validate_x448_public_key`), strict Ed448 verification (`strict_ed448_verify`) rejecting all 4 small-order torsion points `E[4]` (closing OpenSSL's order-4 `S=0` forgery) and non-canonical `S >= L` malleability, plus strict duplicate-JSON-key rejection, Unicode homograph / Bidi / zero-width UID defenses, and armor-header anti-substitution validation.
 - **Constant-Time Division-Free Lattice Arithmetic (KyberSlash Immunity):** Eliminated all variable-time `//` and `%` integer divisions from `poly_ring.py` (`compress_poly`, `decompress_poly`, `byte_encode_12`, `byte_decode_12`, `sample_cbd*`, `sample_eta_qvs`, `sample_mask_y_qvs`, `pack_poly24_qvs`, `unpack_poly24_qvs`), `ntt_3329.py`, `ntt_8380417.py` (`center_qvs`, `decompose_qvs`), `consttime.py`, C99 `ntt_3329.c`, and Rust `ntt.rs`—aligned bit-for-bit across Python, C99, and Rust and permanently enforced by AST verification.
 - **FIPS 204-Style Hedged Signatures & Universal Verify-Before-Emit Fault-Guard (All 10 Suites):** Upgraded `QVSEngine`, `QHS-512`, `QMQ-512` (UOV), and `CIF-SQI-512` (CSIDH-512 SeaSign) to hedged deterministic signing (`hedged=True` default, `hedged=False` pure-deterministic option) resistant to both weak/stuck RNGs and differential fault analysis, and expanded mandatory Verify-Before-Emit Fault-Guard (`QPEPFaultGuardError`) across **all 10 canonical suites** (`QVS`, `Ed448`, `QHS-512`, `QMQ-512`, `CIF-SQI-512`, `CSP-Omega`).
 - **Constant-Time CMT-4 `CC-512` AEAD & Nonce-Misuse-Resistant `CC-512-SIV` Mode:** Strict `QPEPWireFormatError` key/nonce/length validation and `SecretBuffer` scrubbing across `CC-512`, plus deterministic & hedged Synthetic-IV `CC-512-SIV` (`cc512_siv_encrypt`, `cc512_siv_decrypt`, `cc512_siv_wrap_key`, `cc512_siv_unwrap_key`, `CC512SIV`) for nonce-misuse-resistant key wrapping and offline vaults while keeping Wire v5 `CC-512` 100% bit-exact.
@@ -24,7 +25,7 @@ OpenQPEP is a modern, quantum-proof encryption, authentication, and messaging pr
   - **5 Genuine Beyond-LWE Suites:** **CSIDH-512** Supersingular Isogeny (`CIF-SQI-512`), **LRPC / ROLLO-I** Rank-Metric Syndrome Decoding (`CRT-RSD512`) + **UOV** Multivariate Quadratic (`QMQ-512`), **Classic McEliece / Niederreiter Binary Goppa Patterson** (`CGM-8192`), **Zero-Ring Plain-LWE + Goppa** (`CULC-2048`), and **5-Family Citadel** (`CSP-Omega`).
 - **Complete Hardened Sub-Protocol Stack:** `QPEP-Ratchet`, `QPEP-MLS` (256-member TreeKEM), `QPEP-AKE`, `QPEP-KT` (Ed448 publicly verifiable STHs + RFC 9162 Merkle Consistency Proofs), `QVS-Ring`, `DeniableVault`, `ThresholdKEM`, `Sphinx-PQ`, `LT-QR`, `BlindSearchVault`, `TimeLockCapsule`, `LatticeZKProof`, and `EncryptedLWWMapCRDT`.
 
-## All 10 Canonical OpenQPEP Post-Quantum Suites (`v1.1.5`)
+## All 10 Canonical OpenQPEP Post-Quantum Suites (`v1.1.6`)
 
 | Canonical Suite Name | KEM + Signature | Mathematical Family | Hardware Classification |
 | :--- | :--- | :--- | :--- |
@@ -45,7 +46,7 @@ OpenQPEP is a modern, quantum-proof encryption, authentication, and messaging pr
 # 1. Build Native C99 / SIMD Accelerator (zero warnings with -Werror)
 make -C calyx_qpep/native/csrc clean all
 
-# 2. Install OpenQPEP Official Release 1.1.5
+# 2. Install OpenQPEP Official Release 1.1.6
 pip install -e .
 
 # 3. Verify All 10 Deterministic Golden KAT Suites (Native C99 & Pure-Python)
@@ -63,7 +64,7 @@ openqpep
 ## Specifications & Documentation
 
 - [WIRE_FORMAT_V5_SPEC.md](WIRE_FORMAT_V5_SPEC.md) — Official Binary Wire Format v5 / Compact TLV v5.1 / Stream v5 Specification
-- [specs/OPENQPEP_v1.1.5_OFFICIAL_RELEASE_SPEC.md](specs/OPENQPEP_v1.1.5_OFFICIAL_RELEASE_SPEC.md) — Official Release `v1.1.5` Frozen Wire v5 Specification
+- [specs/OPENQPEP_v1.1.6_OFFICIAL_RELEASE_SPEC.md](specs/OPENQPEP_v1.1.6_OFFICIAL_RELEASE_SPEC.md) — Official Release `v1.1.6` Frozen Wire v5 Specification
 - [CHANGELOG.md](CHANGELOG.md) — Official Release Changelog
 - [docs/01_OpenQPEP_Mathematical_and_Cryptographic_Specification.md](docs/01_OpenQPEP_Mathematical_and_Cryptographic_Specification.md) — Mathematical & Cryptographic Specification
 - [docs/02_OpenQPEP_vs_OpenPGP_Security_Comparison.md](docs/02_OpenQPEP_vs_OpenPGP_Security_Comparison.md) — OpenQPEP vs. OpenPGP Security Comparison

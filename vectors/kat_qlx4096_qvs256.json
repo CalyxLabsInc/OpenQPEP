@@ -1,8 +1,8 @@
 {
   "schema": "openqpep-kat-v3",
   "family": "structured_lattice",
-  "protocol_version": "OpenQPEP/1.1.5",
-  "universal_version": "1.1.5",
+  "protocol_version": "OpenQPEP/1.1.6",
+  "universal_version": "1.1.6",
   "suite_id": "QLX-4096",
   "suite_name": "Calyx Lattice-Apex: QLX-4096 + QVS-256 (4,096-Dim Module-LWE \u2014 All Devices)",
   "qlx_tier": "QLX-4096",
@@ -39,7 +39,7 @@
     "key_hash": "3683C2171209AC997DF6476CBDDF375C64827D583264FE97BD7A421D01E7B347",
     "wire_magic_hex": "895150450500",
     "wire_frame_bytes": 24682,
-    "wire_frame_sha3_512": "dd95ef512364f504fbc50a36a06e9afb55832cd7897ccbca3a46497f408c72c0c06c580ba7ce8ba3cdebf62c3154c87d59eb9365edf1115526a4d51c1b1c72c6",
+    "wire_frame_sha3_512": "415072aac0beb4ef7000ab8467c78fc1554a6a21388e7cf7067c6ae05587838881db92f30400295b73ea564b3bbdf4a0f3e1e20a2a8edbbc72809fbb71176a02",
     "wire_frame_prefix_hex": "895150450500010066fd7de28aab18ae5c6eecd0a5c512bfe0334776ee8b0502bad6eceb466ea37d637cf94f4e7e99a6b4f19ce5e9760f56eccf402055ea31f8",
     "cleartext_identity_headers_present": false
   }

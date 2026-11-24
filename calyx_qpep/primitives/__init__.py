@@ -1,4 +1,4 @@
-"""OpenQPEP Low-Level Cryptographic Primitives (Official Release 1.1.5)."""
+"""OpenQPEP Low-Level Cryptographic Primitives (Official Release 1.1.6)."""
 from .qsponge import qsponge_512, qsponge_var
 from .consttime import (
     barrett_reduce_3329,
@@ -41,7 +41,20 @@ from .cc512_aead import (
     cc512_siv_unwrap_key,
     cc512_siv_wrap_key,
 )
-from .hgc448 import x448_keygen, x448_exchange, ed448_keygen, ed448_sign, ed448_verify
+from .hgc448 import (
+    CURVE448_P,
+    ED448_ORDER_L,
+    ed448_keygen,
+    ed448_sign,
+    ed448_verify,
+    is_ed448_small_order_point,
+    is_x448_low_order_point,
+    strict_ed448_verify,
+    validate_ed448_point,
+    validate_x448_public_key,
+    x448_exchange,
+    x448_keygen,
+)
 
 __all__ = [
     "qsponge_512", "qsponge_var",
@@ -57,5 +70,8 @@ __all__ = [
     "cc512_siv_encrypt", "cc512_siv_decrypt",
     "cc512_siv_wrap_key", "cc512_siv_unwrap_key",
     "CC512SIV",
-    "x448_keygen", "x448_exchange", "ed448_keygen", "ed448_sign", "ed448_verify",
+    "CURVE448_P", "ED448_ORDER_L",
+    "x448_keygen", "x448_exchange", "validate_x448_public_key", "is_x448_low_order_point",
+    "ed448_keygen", "ed448_sign", "ed448_verify", "strict_ed448_verify",
+    "validate_ed448_point", "is_ed448_small_order_point",
 ]

@@ -1,9 +1,9 @@
 """
-OpenQPEP by Calyx Labs Inc. — Official Release 1.1.5 (v1.1.5)
+OpenQPEP by Calyx Labs Inc. — Official Release 1.1.6 (v1.1.6)
 Canonical Post-Quantum Hybrid Protocol Reference Engine.
 Licensed under Calyx Public Open Source Specifications v1.0 License (CPOSLS-1.0).
 
-Official Release 1.1.5 Architecture:
+Official Release 1.1.6 Architecture:
   - Wire Format: Strict Official Wire Format v5 (\\x89QPE\\x05\\x00) & Compact TLV v5.1 (\\x89QPE\\x05\\x01).
   - KDF Envelope: Mandatory kdf_version: 4 (RFC 9106 QPKD-Argon2id + qSponge-512, "OpenQPEP/1.0.0").
   - Symmetric AEAD: CMT-4 Key-Committing Calyx-Cascade-512 (AES-256-GCM + ChaCha20-Poly1305 + qSponge-512).
@@ -17,6 +17,7 @@ import hashlib
 import hmac
 import json
 import os
+import unicodedata
 import zlib
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -76,16 +77,26 @@ from .primitives.hgc448 import (
     ed448_keygen,
     ed448_sign,
     ed448_verify,
+    strict_ed448_verify,
+    validate_ed448_point,
+    validate_x448_public_key,
     x448_exchange,
     x448_keygen,
 )
 from .primitives.zeroize import SecretBuffer, zeroize_bytes, zeroize_secret_dict
 from .qlx_lattice import QLX_TIERS, QVS_TIERS, QLXEngine, QVSEngine, qsponge_512, qsponge_var
-from .wire.armor import FORBIDDEN_ARMOR_HEADERS, _compute_armor_crc, _validate_header_token
+from .wire.armor import (
+    FORBIDDEN_ARMOR_HEADERS,
+    MAX_ARMOR_HEADER_COUNT,
+    MAX_ARMOR_HEADER_LINE_LEN,
+    _compute_armor_crc,
+    _has_forbidden_control_or_bidi,
+    _validate_header_token,
+)
 from .wire.file_registry import SUPPORTED_FILE_EXTENSIONS, detect_file_extension_and_mime
 from .wire.framing import pack_wire_frame, unpack_wire_frame
 
-# Hardened Post-Quantum & AI-Cryptanalysis Immunity Profile for OpenQPEP Official Release 1.1.5
+# Hardened Post-Quantum & AI-Cryptanalysis Immunity Profile for OpenQPEP Official Release 1.1.6
 QUANTUM_IMMUNITY_MATRIX: Dict[str, Dict[str, str]] = {
     "JVG_AND_SHOR": {
         "threat": "Hybrid QNTT Factorization & Shor's Algorithm",
@@ -261,11 +272,23 @@ def _armor_unwrap(armored_text: str, expected_label: Optional[str] = None) -> Tu
             raise QPEPWireFormatError(f"Expected armor label '{expected_label}', got '{begin_label}'")
 
     metadata: Dict[str, str] = {}
+    seen_meta_keys = set()
     idx = 1
     while idx < len(lines) - 1 and lines[idx] != "":
-        if ":" in lines[idx]:
-            k, v = lines[idx].split(":", 1)
-            metadata[k.strip()] = v.strip()
+        line = lines[idx]
+        if ":" in line:
+            if len(line) > MAX_ARMOR_HEADER_LINE_LEN:
+                raise QPEPWireFormatError("OpenQPEP armor header line exceeds maximum allowed length.")
+            k, v = line.split(":", 1)
+            ks, vs = k.strip(), v.strip()
+            _validate_header_token(ks, vs)
+            k_low = ks.lower()
+            if k_low in seen_meta_keys:
+                raise QPEPWireFormatError(f"Duplicate OpenQPEP armor header '{ks}' rejected.")
+            seen_meta_keys.add(k_low)
+            if len(seen_meta_keys) > MAX_ARMOR_HEADER_COUNT:
+                raise QPEPWireFormatError("Too many OpenQPEP armor header lines.")
+            metadata[ks] = vs
         idx += 1
     if idx < len(lines) - 1 and lines[idx] == "":
         idx += 1
@@ -292,11 +315,11 @@ def _armor_unwrap(armored_text: str, expected_label: Optional[str] = None) -> Tu
     if len(raw_frame) >= 6 and raw_frame[:6] in ALL_LEGACY_WIRE_MAGICS:
         raise QPEPLegacyProtocolError(
             "Legacy pre-release (-rc / -pc / -beta) wire format is strictly rejected in "
-            "OpenQPEP Official Release 1.1.5 (zero backwards compatibility). Official Wire Format v5 (\\x89QPE\\x05\\x00) is required."
+            "OpenQPEP Official Release 1.1.6 (zero backwards compatibility). Official Wire Format v5 (\\x89QPE\\x05\\x00) is required."
         )
     if not raw_frame.startswith(WIRE_MAGIC):
         raise QPEPLegacyProtocolError(
-            "Unsupported or legacy wire format. OpenQPEP Official Release 1.1.5 requires Official Wire Format v5 (\\x89QPE\\x05\\x00)."
+            "Unsupported or legacy wire format. OpenQPEP Official Release 1.1.6 requires Official Wire Format v5 (\\x89QPE\\x05\\x00)."
         )
 
     # Strictly enforce mandatory armor CRC verification in constant time
@@ -343,22 +366,81 @@ class QPEPKeyRing:
         return self.encrypted_private_bundle is not None
 
 
+_HEX_UPPER_CHARS = frozenset("0123456789ABCDEF")
+_CONFUSABLE_SCRIPTS = frozenset({"LATIN", "CYRILLIC", "GREEK"})
+
+
+def _reject_duplicate_json_keys(pairs: List[Tuple[str, Any]]) -> Dict[str, Any]:
+    obj: Dict[str, Any] = {}
+    for k, v in pairs:
+        if k in obj:
+            raise QPEPWireFormatError(f"Duplicate JSON key '{k}' rejected (anti-substitution defense).")
+        obj[k] = v
+    return obj
+
+
+def _reject_json_constant(token: str) -> Any:
+    raise QPEPWireFormatError(f"Non-standard JSON constant '{token}' rejected.")
+
+
+def _strict_json_loads(raw: bytes | str) -> Any:
+    """Parses JSON strictly, rejecting duplicate keys, NaN/Infinity constants, and invalid UTF-8."""
+    try:
+        text = raw.decode("utf-8") if isinstance(raw, (bytes, bytearray)) else str(raw)
+        return json.loads(
+            text,
+            object_pairs_hook=_reject_duplicate_json_keys,
+            parse_constant=_reject_json_constant,
+        )
+    except (json.JSONDecodeError, UnicodeDecodeError, ValueError) as exc:
+        if isinstance(exc, QPEPWireFormatError):
+            raise
+        raise QPEPWireFormatError("Malformed JSON payload inside OpenQPEP frame.") from exc
+
+
+def _classify_confusable_script(ch: str) -> Optional[str]:
+    if not ch.isalpha():
+        return None
+    name = unicodedata.name(ch, "")
+    for script in _CONFUSABLE_SCRIPTS:
+        if name.startswith(script + " ") or (" " + script + " ") in name:
+            return script
+    return None
+
+
 def _validate_identity_field(field_name: str, value: Any, max_len: int, allow_empty: bool = False) -> str:
-    """Strictly validates keyring UID fields against non-string inputs, control characters, and oversizing."""
+    """
+    Strictly validates keyring UID fields against non-string inputs, oversizing, ASCII/Unicode
+    control & bidi-override characters, zero-width spoofing, non-NFC normalization, and
+    mixed-script Unicode homograph spoofing (Latin/Cyrillic/Greek).
+    """
     if not isinstance(value, str):
         raise QPEPWireFormatError(f"Keyring '{field_name}' must be a string.")
     if not allow_empty and not value.strip():
         raise QPEPWireFormatError(f"Keyring '{field_name}' must not be empty.")
     if len(value) > max_len:
         raise QPEPWireFormatError(f"Keyring '{field_name}' exceeds maximum allowed length of {max_len} characters.")
-    if any(ord(ch) < 32 or ord(ch) == 127 for ch in value):
-        raise QPEPWireFormatError(f"Keyring '{field_name}' contains prohibited ASCII control characters.")
+    if _has_forbidden_control_or_bidi(value):
+        raise QPEPWireFormatError(f"Keyring '{field_name}' contains prohibited control, format, or Bidi-override characters.")
+    if unicodedata.normalize("NFC", value) != value:
+        raise QPEPWireFormatError(f"Keyring '{field_name}' must be in Unicode NFC canonical form.")
+    if field_name == "email" and any(ord(ch) > 127 for ch in value):
+        raise QPEPWireFormatError("Keyring 'email' must contain strictly ASCII printable characters (homograph defense).")
+    scripts_seen = set()
+    for ch in value:
+        sc = _classify_confusable_script(ch)
+        if sc is not None:
+            scripts_seen.add(sc)
+            if len(scripts_seen) > 1:
+                raise QPEPWireFormatError(
+                    f"Keyring '{field_name}' rejected: mixed-script Unicode homograph spoofing detected ({sorted(scripts_seen)})."
+                )
     return value
 
 
 class CalyxQPEPProtocol:
     """
-    Official Reference Implementation of OpenQPEP by Calyx Labs Inc. (Official Release 1.1.5).
+    Official Reference Implementation of OpenQPEP by Calyx Labs Inc. (Official Release 1.1.6).
     """
 
     @staticmethod
@@ -489,6 +571,36 @@ class CalyxQPEPProtocol:
     @staticmethod
     def verify_public_keyring_self_signature(keyring: QPEPKeyRing) -> bool:
         try:
+            if not isinstance(keyring, QPEPKeyRing) or not isinstance(keyring.public_bundle, dict):
+                return False
+            _validate_identity_field("name", keyring.name, 256, allow_empty=False)
+            _validate_identity_field("email", keyring.email, 320, allow_empty=False)
+            _validate_identity_field("comment", keyring.comment, 512, allow_empty=True)
+            if (
+                not isinstance(keyring.created_at, str)
+                or not keyring.created_at.strip()
+                or len(keyring.created_at) > 64
+                or _has_forbidden_control_or_bidi(keyring.created_at)
+            ):
+                return False
+            if (
+                not isinstance(keyring.key_hash, str)
+                or len(keyring.key_hash) != 64
+                or any(ch not in _HEX_UPPER_CHARS for ch in keyring.key_hash)
+            ):
+                return False
+            if (
+                not isinstance(keyring.integrity_mac, str)
+                or len(keyring.integrity_mac) != 128
+                or any(ch not in _HEX_UPPER_CHARS for ch in keyring.integrity_mac)
+            ):
+                return False
+
+            if keyring.qlx_tier not in QLX_TIERS:
+                return False
+            if keyring.qvs_tier != QLX_TIERS[keyring.qlx_tier]["qvs_tier"]:
+                return False
+
             expected_mac = _compute_keyring_integrity_mac(
                 keyring.key_hash,
                 keyring.created_at,
@@ -496,10 +608,13 @@ class CalyxQPEPProtocol:
                 keyring.email,
                 keyring.public_bundle,
             )
-            if not hmac.compare_digest(keyring.integrity_mac, expected_mac):
+            if not ct_eq_str(keyring.integrity_mac, expected_mac):
                 return False
 
             suite_id = CalyxQPEPProtocol.get_keyring_suite_id(keyring)
+            if suite_id not in QLX_TIERS and suite_id not in BEYOND_LWE_SUITES:
+                return False
+
             hgc_pk_bytes = _b64d(keyring.public_bundle["hgc_448_public_b64"])
             qlx_pk = _b64d(keyring.public_bundle["qlx_public_b64"])
             hgc_sig_pk_bytes = _b64d(keyring.public_bundle["hgc_sig_public_b64"])
@@ -507,8 +622,18 @@ class CalyxQPEPProtocol:
             self_sig_blob = _b64d(keyring.public_bundle["self_signature_b64"])
             blwe_digest = _canonical_blwe_digest(keyring.public_bundle)
 
+            # Strict public-key size, canonical encoding & low-order/small-order rejection
+            if not validate_x448_public_key(hgc_pk_bytes, strict_canonical=True):
+                return False
+            if not validate_ed448_point(hgc_sig_pk_bytes, reject_small_order=True):
+                return False
+            if len(qlx_pk) != QLX_TIERS[keyring.qlx_tier]["pk_bytes"]:
+                return False
+            if len(qvs_pk) != QVS_TIERS[keyring.qvs_tier]["pk_bytes"]:
+                return False
+
             expected_hash = _compute_key_hash(suite_id, hgc_pk_bytes, qlx_pk, hgc_sig_pk_bytes, qvs_pk, blwe_digest)
-            if not hmac.compare_digest(keyring.key_hash, expected_hash):
+            if not ct_eq_str(keyring.key_hash, expected_hash):
                 return False
 
             qvs_tier = keyring.qvs_tier
@@ -526,7 +651,7 @@ class CalyxQPEPProtocol:
                 + qvs_pk
                 + blwe_digest
             )
-            if not ed448_verify(hgc_sig_pk_bytes, sig1, cert_transcript):
+            if not strict_ed448_verify(hgc_sig_pk_bytes, sig1, cert_transcript):
                 return False
             return QVSEngine.verify(qvs_pk, cert_transcript, sig2, tier=qvs_tier)
         except (OpenQPEPError, ValueError, TypeError, KeyError, IndexError, binascii.Error, UnicodeDecodeError):
@@ -545,7 +670,7 @@ class CalyxQPEPProtocol:
         if kdf_version < MANDATORY_KDF_VERSION:
             raise QPEPLegacyProtocolError(
                 f"Legacy pre-release key ring (kdf_version: {kdf_version} from -rc / -pc / -beta) is strictly rejected "
-                f"in OpenQPEP Official Release 1.1.5 (zero backwards compatibility; mandatory kdf_version: {MANDATORY_KDF_VERSION})."
+                f"in OpenQPEP Official Release 1.1.6 (zero backwards compatibility; mandatory kdf_version: {MANDATORY_KDF_VERSION})."
             )
 
         k_s1, k_s2, k_mac, _ = derive_qpkrf_keys_v4(passphrase, kdf_salt, kdf_params=kdf_params)
@@ -566,7 +691,9 @@ class CalyxQPEPProtocol:
                 raise QPEPMacVerificationError("Invalid passphrase or tampered QPKRF private key ring.") from exc
 
             with SecretBuffer(decrypted_json) as dj_buf:
-                parsed = json.loads(dj_buf.as_bytes().decode("utf-8"))
+                parsed = _strict_json_loads(dj_buf.as_bytes())
+                if not isinstance(parsed, dict):
+                    raise QPEPMacVerificationError("Corrupted QPKRF private bundle JSON structure.")
                 try:
                     with SecretBuffer(_b64d(parsed["qlx_masked_private_b64"])) as masked_buf:
                         with SecretBuffer(
@@ -678,7 +805,7 @@ class CalyxQPEPProtocol:
         else:
             armored_text = str(armored_or_path)
 
-        label, _, payload_bytes = _armor_unwrap(armored_text)
+        label, armor_meta, payload_bytes = _armor_unwrap(armored_text)
         valid_labels = (
             "CALYX QPKRF PUBLIC KEY RING",
             "CALYX QPKRF PRIVATE KEY RING",
@@ -686,33 +813,65 @@ class CalyxQPEPProtocol:
             "OPENQPEP QPKRF PRIVATE KEY RING",
         )
         if label not in valid_labels:
-            raise ValueError(f"Unexpected QPKRF armor header: {label}")
+            raise QPEPWireFormatError(f"Unexpected QPKRF armor header: {label}")
 
-        envelope = json.loads(payload_bytes.decode("utf-8"))
+        envelope = _strict_json_loads(payload_bytes)
+        if not isinstance(envelope, dict):
+            raise QPEPWireFormatError("QPKRF payload must be a JSON object.")
+
         env_ver = str(envelope.get("version") or "")
         low_ver = env_ver.lower()
         if "-rc" in low_ver or "-pc" in low_ver or "-beta" in low_ver or low_ver.startswith("0."):
             raise QPEPLegacyProtocolError(
-                f"Legacy pre-release .qpkrf key ring ({env_ver}) is strictly rejected in OpenQPEP Official Release 1.1.5 "
+                f"Legacy pre-release .qpkrf key ring ({env_ver}) is strictly rejected in OpenQPEP Official Release 1.1.6 "
                 f"(zero backwards compatibility)."
             )
-        identity = envelope["identity"]
-        pub_b = envelope["public_bundle"]
+        if not ct_eq_str(envelope.get("magic"), "QPKRF-v1.0.0"):
+            raise QPEPWireFormatError("Invalid or missing QPKRF magic identifier.")
+
+        identity = envelope.get("identity")
+        pub_b = envelope.get("public_bundle")
+        if not isinstance(identity, dict) or not isinstance(pub_b, dict):
+            raise QPEPWireFormatError("QPKRF envelope missing required 'identity' or 'public_bundle' objects.")
+
+        # Strict UID validation (anti-homograph, anti-bidi, anti-oversizing)
+        uid_name = _validate_identity_field("name", identity.get("name"), 256, allow_empty=False)
+        uid_email = _validate_identity_field("email", identity.get("email"), 320, allow_empty=False)
+        uid_comment = _validate_identity_field("comment", identity.get("comment", ""), 512, allow_empty=True)
+
+        # Anti-substitution cross-checks between armor headers, envelope metadata, and public_bundle
+        env_key_hash = envelope.get("key_hash")
+        if not isinstance(env_key_hash, str) or len(env_key_hash) != 64:
+            raise QPEPKeyRingError("QPKRF envelope has invalid or missing key_hash.")
+        header_kh = armor_meta.get("Key-Hash")
+        if header_kh is not None and not ct_eq_str(header_kh, env_key_hash):
+            raise QPEPKeyRingError("QPKRF armor Key-Hash header does not match signed envelope key_hash (anti-substitution).")
+
+        env_suite_id = envelope.get("suite_id")
+        pub_suite_id = pub_b.get("suite_id")
+        if env_suite_id is not None and pub_suite_id is not None and not ct_eq_str(env_suite_id, pub_suite_id):
+            raise QPEPKeyRingError("QPKRF envelope suite_id does not match public_bundle suite_id (anti-substitution).")
+
+        ring_type = envelope.get("ring_type")
+        enc_priv = envelope.get("encrypted_private_bundle")
+        if ring_type == "PUBLIC_KEY_RING" and enc_priv is not None:
+            raise QPEPKeyRingError("QPKRF marked PUBLIC_KEY_RING must not contain encrypted_private_bundle.")
+
         keyring = QPEPKeyRing(
-            key_hash=envelope["key_hash"],
+            key_hash=env_key_hash,
             created_at=envelope["created_at"],
-            name=identity["name"],
-            email=identity["email"],
+            name=uid_name,
+            email=uid_email,
             qlx_tier=pub_b.get("qlx_tier", "QLX-4096"),
             qvs_tier=pub_b.get("qvs_tier", "QVS-256"),
-            comment=identity.get("comment", ""),
+            comment=uid_comment,
             public_bundle=pub_b,
-            encrypted_private_bundle=envelope.get("encrypted_private_bundle"),
+            encrypted_private_bundle=enc_priv,
             integrity_mac=envelope["integrity_mac"],
         )
 
         if not CalyxQPEPProtocol.verify_public_keyring_self_signature(keyring):
-            raise ValueError("QPKRF self-certification signature or integrity_mac verification failed.")
+            raise QPEPKeyRingError("QPKRF self-certification signature or integrity_mac verification failed.")
 
         if keyring.has_private_key:
             if not passphrase:
@@ -912,7 +1071,9 @@ class CalyxQPEPProtocol:
                 }
 
             _, _, payload_bytes = _armor_unwrap(armored_packet, expected_label="CALYX QPEP ENCRYPTED PACKET")
-            packet_obj = json.loads(payload_bytes.decode("utf-8"))
+            packet_obj = _strict_json_loads(payload_bytes)
+            if not isinstance(packet_obj, dict):
+                raise QPEPWireFormatError("OpenQPEP packet payload must be a JSON object.")
 
             if not ct_eq_str(packet_obj.get("recipient_key_hash"), recipient_private_keyring.key_hash):
                 raise QPEPKeyRingError("Packet is addressed to a different Key Hash.")
@@ -1195,7 +1356,9 @@ class CalyxQPEPProtocol:
             _, _, payload_bytes = _armor_unwrap(
                 armored_attached_signature, expected_label="CALYX QPEP ATTACHED SIGNATURE"
             )
-            sig_obj = json.loads(payload_bytes.decode("utf-8"))
+            sig_obj = _strict_json_loads(payload_bytes)
+            if not isinstance(sig_obj, dict):
+                raise QPEPWireFormatError("OpenQPEP attached signature payload must be a JSON object.")
             if "attached_message_b64" not in sig_obj:
                 raise QPEPWireFormatError("Detached signatures are prohibited in OpenQPEP; message must be attached.")
 
@@ -1219,7 +1382,7 @@ class CalyxQPEPProtocol:
                 transcript = (
                     f"CALYX-QPEP-ATTACHED-SIG-v1.0.0|{candidate.key_hash}|{sig_obj['timestamp']}|{actual_digest}".encode("utf-8")
                 )
-                ed_ok = ed448_verify(
+                ed_ok = strict_ed448_verify(
                     _b64d(candidate.public_bundle["hgc_sig_public_b64"]),
                     _b64d(sig_obj["hgc_signature_b64"]),
                     transcript,

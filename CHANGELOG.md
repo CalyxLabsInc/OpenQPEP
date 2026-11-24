@@ -1,4 +1,17 @@
-# OpenQPEP Core Protocol Changelog — Official Release `v1.1.5`
+# OpenQPEP Core Protocol Changelog — Official Release `v1.1.6`
+
+## Official Release `v1.1.6` (2026-11-24) — Strict Key-Hash Binding, Anti-Substitution & `HGC-448` Low-Order Hardening
+
+- **Full RFC 7748 X448 & RFC 8032 Ed448 Low-Order / Canonical Hardening (`calyx_qpep/primitives/hgc448.py`):**
+  - Added `validate_x448_public_key` & `is_x448_low_order_point` rejecting all Curve448 & twist low-order points (`u mod p in {0, 1, p-1}`) and non-canonical `u >= p` encodings inside `x448_exchange` and keyring verification.
+  - Added `strict_ed448_verify`, `validate_ed448_point`, and `is_ed448_small_order_point` enforcing canonical on-curve decoding (`y < p`, zero padding bits 448..454, no `-0`), rejecting all 4 small-order torsion points `E[4]` (closing OpenSSL's cofactored order-4 `S=0` forgery on `(1, 0)` and `(p-1, 0)`), and enforcing canonical scalar `0 <= S < L` (blocking `S + L` signature malleability); wired `ed448_verify` directly through `strict_ed448_verify`.
+- **`.qpkrf` Parser & Anti-Substitution Hardening (`calyx_qpep/protocol.py`, `calyx_qpep/wire/armor.py`):**
+  - Added `_strict_json_loads` rejecting duplicate JSON keys at any depth and non-standard `NaN`/`Infinity` constants across `import_qpkrf`, `unlock_private_keys`, `decrypt_packet`, and `verify_signature`.
+  - Hardened `_validate_identity_field` against Unicode Bidi overrides (Trojan Source), zero-width/format characters, non-NFC strings, non-ASCII email spoofing, and mixed-script Latin/Cyrillic/Greek homograph UIDs while preserving legitimate single-script NFC Unicode names.
+  - Enforced armor `Key-Hash:` header consistency, `envelope.suite_id` vs `public_bundle.suite_id` consistency, `PUBLIC_KEY_RING` private-bundle smuggling rejection, exact public-key sizes & tier cross-binding, and duplicate/oversized/Bidi ASCII armor header rejection.
+- **Verification:** Added 8-test security regression suite `tests/test_v116_hgc448_and_qpkrf_hardening.py` and verified 10/10 Native C99 + 10/10 Pure-Python Golden KATs + 138/138 tests.
+
+---
 
 ## Official Release `v1.1.5` (2026-11-24) — Constant-Time `poly_ring.py` Compression, Decompression & CBD Sampling (KyberSlash Closure)
 

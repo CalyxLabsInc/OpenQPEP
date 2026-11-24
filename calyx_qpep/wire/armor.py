@@ -1,5 +1,5 @@
 """
-OpenQPEP Zero-Metadata ASCII Armor Codec (Official Release 1.1.5 / Wire Format v5 \\x89QPE\\x05\\x00).
+OpenQPEP Zero-Metadata ASCII Armor Codec (Official Release 1.1.6 / Wire Format v5 \\x89QPE\\x05\\x00).
 
 Security Guarantees:
   - Zero cleartext identity metadata headers (never emits Sender/Recipient/Signer Key Hashes).
@@ -12,6 +12,7 @@ Security Guarantees:
 """
 import base64
 import binascii
+import unicodedata
 from typing import Dict, Optional, Tuple
 
 from ..constants import (
@@ -25,12 +26,32 @@ from ..primitives.consttime import ct_eq
 from ..primitives.qsponge import qsponge_var
 from .framing import pack_wire_frame, unpack_wire_frame
 
+MAX_ARMOR_HEADER_COUNT = 32
+MAX_ARMOR_HEADER_LINE_LEN = 1024
+
+_FORBIDDEN_UNICODE_CATEGORIES = frozenset({"Cc", "Cf", "Cs", "Co", "Cn"})
+_BIDI_CONTROL_CODEPOINTS = frozenset({
+    0x061C, 0x200E, 0x200F,
+    0x202A, 0x202B, 0x202C, 0x202D, 0x202E,
+    0x2066, 0x2067, 0x2068, 0x2069,
+})
+
 FORBIDDEN_ARMOR_HEADERS = frozenset({
     "sender-key-hash",
     "recipient-key-hash",
     "signer-key-hash",
     "encrypting-key-hash",
 })
+
+
+def _has_forbidden_control_or_bidi(text: str) -> bool:
+    for ch in text:
+        cp = ord(ch)
+        if cp < 32 or cp == 127 or cp in _BIDI_CONTROL_CODEPOINTS:
+            return True
+        if unicodedata.category(ch) in _FORBIDDEN_UNICODE_CATEGORIES:
+            return True
+    return False
 
 
 def _compute_armor_crc(wire_frame: bytes) -> str:
@@ -41,8 +62,14 @@ def _compute_armor_crc(wire_frame: bytes) -> str:
 
 
 def _validate_header_token(key: str, value: str) -> None:
-    if any(ch in key for ch in ("\r", "\n", "\x00", ":")) or any(ch in value for ch in ("\r", "\n", "\x00")):
-        raise QPEPWireFormatError("Invalid control character or header injection detected in ASCII armor header.")
+    if (
+        not key
+        or len(key) + len(value) + 2 > MAX_ARMOR_HEADER_LINE_LEN
+        or ":" in key
+        or _has_forbidden_control_or_bidi(key)
+        or _has_forbidden_control_or_bidi(value)
+    ):
+        raise QPEPWireFormatError("Invalid control/bidi character, oversized line, or header injection in ASCII armor header.")
 
 
 def armor_wrap(
@@ -100,6 +127,7 @@ def armor_unwrap(armored: str, expected_label: str) -> Tuple[bytes, Dict[str, st
         raise QPEPWireFormatError(f"Missing or mismatched ASCII armor markers for '{expected_label}'.") from exc
 
     headers: Dict[str, str] = {}
+    seen_header_keys = set()
     body_lines = []
     checksum_line: Optional[str] = None
     in_body = False
@@ -110,8 +138,18 @@ def armor_unwrap(armored: str, expected_label: str) -> Tuple[bytes, Dict[str, st
                 in_body = True
                 continue
             if ":" in line:
+                if len(line) > MAX_ARMOR_HEADER_LINE_LEN:
+                    raise QPEPWireFormatError("ASCII armor header line exceeds maximum allowed length.")
                 k, v = line.split(":", 1)
-                headers[k.strip()] = v.strip()
+                ks, vs = k.strip(), v.strip()
+                _validate_header_token(ks, vs)
+                k_low = ks.lower()
+                if k_low in seen_header_keys:
+                    raise QPEPWireFormatError(f"Duplicate ASCII armor header '{ks}' rejected.")
+                seen_header_keys.add(k_low)
+                if len(seen_header_keys) > MAX_ARMOR_HEADER_COUNT:
+                    raise QPEPWireFormatError("Too many ASCII armor headers.")
+                headers[ks] = vs
             else:
                 in_body = True
                 if line.startswith("="):
