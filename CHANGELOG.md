@@ -1,4 +1,19 @@
-# OpenQPEP Core Protocol Changelog — Official Release `v1.1.6`
+# OpenQPEP Core Protocol Changelog — Official Release `v1.1.7`
+
+## Official Release `v1.1.7` (2026-11-24) — Hardened `QPKD-Argon2id` Pure-Python & C-Backend Parity + Auto-Calibration
+
+- **100% Bit-Exact RFC 9106 Argon2id Across All 3 Backends (`calyx_qpep/kdf/argon2id_cascade.py`):**
+  - Rewrote `_argon2id_pure_python` with authentic RFC 9106 Section 3.4.1.2 Argon2id hybrid addressing (data-independent Argon2i address blocks in pass 0 slices 0–1 + data-dependent Argon2d in pass 0 slices 2–3 and subsequent passes) and exact Section 3.4.2 reference window & `start_pos` arithmetic—closing the prior pure-Python vs. C-backend mismatch (`associated_data` discrepancy and silent 64-KiB block truncation).
+  - Added native OpenSSL 3.2+ C `Argon2id` (`argon2id-rfc9106-openssl` via `cryptography`) as a zero-extra-dependency C backend alongside `argon2-cffi` (`argon2id-rfc9106-cffi`) and Pure-Python (`argon2id-rfc9106-pure-python`), all verified bit-exact against RFC 9106 Section 5.3 (`0d640df58d78766c...`) and multi-parameter differential matrices via `verify_argon2id_backend_parity()`.
+  - Enforced strict anti-DoS parameter bounds (`validate_kdf_params`: `m_kib <= 1 GiB`, `t_cost <= 64`, `p_lanes <= 16`, `m_kib >= 8 * p_lanes`, `bool` rejection) and refused silent memory downgrades above `MAX_PURE_PYTHON_ARGON2_KIB` (`8192 KiB`) unless explicitly overridden; hardened `OpenQPEPProtocol.unlock_private_keys` against malformed `kdf_params` / `kdf_version` payloads.
+- **Memory-Ceiling Safety Bounds & Calibrated Auto-Tuner (`calyx_qpep/kdf/hardware_tuner.py`):**
+  - Added container/cgroup RAM limit awareness (`detect_cgroup_ram_limit_mib`, `detect_available_ram_mib`), `compute_safe_memory_ceiling_kib` (25% RAM cap, 512 MiB auto-tuner ceiling), and `enforce_kdf_memory_ceiling` (1 GiB hard ceiling), with automatic clamping + `+1` iteration compensation in `select_kdf_profile`.
+  - Upgraded `benchmark_kdf` with multi-sample latency stats (`min_ms`, `median_ms`, `max_ms`), memory-bandwidth throughput (`mib_per_sec`), and floor-preserving `recommended_t_cost`, plus `calibrate_kdf_for_device()` returning ready-to-use `calibrated_kdf_params` with `SecretBuffer` scrubbing.
+- **Hardened Passphrase Policy & Entropy Telemetry (`calyx_qpep/kdf/passphrase_policy.py`):**
+  - Enforced upper length ceilings (`MAX_LENGTH = 1024` chars / `4096` UTF-8 bytes), blocked NUL / C0–C1 control / surrogate / Unicode Bidi-override characters, actively scrubbed witness staging buffers via `SecretBuffer`, and added conservative `estimate_passphrase_entropy_bits` + `strength_tier` while preserving 100% bit-exact `CALYX-QPEP-HARDCODED-POLICY-WITNESS-v1.0.0|` compatibility.
+- **Verification:** Added 8-test suite `tests/test_v117_kdf_parity_and_calibration.py` and verified 10/10 Native C99 + 10/10 Pure-Python Golden KATs + 146/146 tests.
+
+---
 
 ## Official Release `v1.1.6` (2026-11-24) — Strict Key-Hash Binding, Anti-Substitution & `HGC-448` Low-Order Hardening
 

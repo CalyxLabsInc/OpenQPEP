@@ -1,6 +1,6 @@
 """
 Calyx-Cascade-512 (CC-512) Provably CMT-4 Key-Committing Dual-Stream AEAD &
-Nonce-Misuse-Resistant Synthetic-IV Mode (CC-512-SIV) — Official Release 1.1.6.
+Nonce-Misuse-Resistant Synthetic-IV Mode (CC-512-SIV) — Official Release 1.1.7.
 
 Security Guarantees:
   1. Wire v5 CMT-4 Key-Committing CC-512 AEAD (`cc512_encrypt` / `cc512_decrypt`, 100% frozen Wire v5):

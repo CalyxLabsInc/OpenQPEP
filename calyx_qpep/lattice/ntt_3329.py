@@ -1,4 +1,4 @@
-# OpenQPEP Official Release 1.1.6 (v1.1.6)
+# OpenQPEP Official Release 1.1.7 (v1.1.7)
 """
 7-Layer Cooley-Tukey / Gentleman-Sande Number Theoretic Transform over Z_3329[X]/(X^256+1).
 Automatically dispatches through libopenqpep (C99/AVX2/NEON) when available, with

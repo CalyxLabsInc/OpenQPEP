@@ -1,5 +1,5 @@
 """
-OpenQPEP by Calyx Labs Inc. — Official Release 1.1.6 (v1.1.6, Modular Cryptographic Kernel)
+OpenQPEP by Calyx Labs Inc. — Official Release 1.1.7 (v1.1.7, Modular Cryptographic Kernel)
 Clean official API facade over calyx_qpep.primitives.*, calyx_qpep.lattice.*, compat_server, and protocol.
 """
 from .compat_server import SlidingWindowRateLimiter
@@ -28,8 +28,25 @@ from .exceptions import (
     QPEPTruncationError,
     QPEPWireFormatError,
 )
+from .kdf import (
+    argon2id_raw,
+    benchmark_kdf,
+    calibrate_kdf_for_device,
+    compute_safe_memory_ceiling_kib,
+    enforce_kdf_memory_ceiling,
+    get_active_kdf_backend,
+    get_available_kdf_backends,
+    select_kdf_profile,
+    validate_kdf_params,
+    verify_argon2id_backend_parity,
+)
 from .native.loader import is_native_available, native_backend_info, set_native_enabled
-from .passphrase import PassphraseValidationResult, analyze_passphrase, enforce_passphrase_policy
+from .passphrase import (
+    PassphraseValidationResult,
+    analyze_passphrase,
+    enforce_passphrase_policy,
+    estimate_passphrase_entropy_bits,
+)
 from .primitives import (
     CC512SIV,
     LockedMemoryBuffer,
@@ -111,6 +128,17 @@ __all__ = [
     "PassphraseValidationResult",
     "analyze_passphrase",
     "enforce_passphrase_policy",
+    "estimate_passphrase_entropy_bits",
+    "argon2id_raw",
+    "benchmark_kdf",
+    "calibrate_kdf_for_device",
+    "compute_safe_memory_ceiling_kib",
+    "enforce_kdf_memory_ceiling",
+    "get_active_kdf_backend",
+    "get_available_kdf_backends",
+    "select_kdf_profile",
+    "validate_kdf_params",
+    "verify_argon2id_backend_parity",
     "CalyxQPEPProtocol",
     "OpenQPEPProtocol",
     "QPEPKeyRing",

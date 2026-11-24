@@ -1,4 +1,4 @@
-"""OpenQPEP Adversarial Security Audit Suite: Wire Fuzzer, Attack Simulator, Timing Audit & 5-Language Interop Matrix (Official Release 1.1.6)."""
+"""OpenQPEP Adversarial Security Audit Suite: Wire Fuzzer, Attack Simulator, Timing Audit & 5-Language Interop Matrix (Official Release 1.1.7)."""
 from .fuzz_wire import fuzz_wire_parsers, validate_webview_bridge_command
 from .attack_sim import (
     simulate_fo_cca2_malleability,

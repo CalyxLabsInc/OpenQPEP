@@ -1,9 +1,9 @@
 """
-OpenQPEP by Calyx Labs Inc. — Official Release 1.1.6 (v1.1.6)
+OpenQPEP by Calyx Labs Inc. — Official Release 1.1.7 (v1.1.7)
 Canonical Post-Quantum Hybrid Protocol Reference Engine.
 Licensed under Calyx Public Open Source Specifications v1.0 License (CPOSLS-1.0).
 
-Official Release 1.1.6 Architecture:
+Official Release 1.1.7 Architecture:
   - Wire Format: Strict Official Wire Format v5 (\\x89QPE\\x05\\x00) & Compact TLV v5.1 (\\x89QPE\\x05\\x01).
   - KDF Envelope: Mandatory kdf_version: 4 (RFC 9106 QPKD-Argon2id + qSponge-512, "OpenQPEP/1.0.0").
   - Symmetric AEAD: CMT-4 Key-Committing Calyx-Cascade-512 (AES-256-GCM + ChaCha20-Poly1305 + qSponge-512).
@@ -96,7 +96,7 @@ from .wire.armor import (
 from .wire.file_registry import SUPPORTED_FILE_EXTENSIONS, detect_file_extension_and_mime
 from .wire.framing import pack_wire_frame, unpack_wire_frame
 
-# Hardened Post-Quantum & AI-Cryptanalysis Immunity Profile for OpenQPEP Official Release 1.1.6
+# Hardened Post-Quantum & AI-Cryptanalysis Immunity Profile for OpenQPEP Official Release 1.1.7
 QUANTUM_IMMUNITY_MATRIX: Dict[str, Dict[str, str]] = {
     "JVG_AND_SHOR": {
         "threat": "Hybrid QNTT Factorization & Shor's Algorithm",
@@ -315,11 +315,11 @@ def _armor_unwrap(armored_text: str, expected_label: Optional[str] = None) -> Tu
     if len(raw_frame) >= 6 and raw_frame[:6] in ALL_LEGACY_WIRE_MAGICS:
         raise QPEPLegacyProtocolError(
             "Legacy pre-release (-rc / -pc / -beta) wire format is strictly rejected in "
-            "OpenQPEP Official Release 1.1.6 (zero backwards compatibility). Official Wire Format v5 (\\x89QPE\\x05\\x00) is required."
+            "OpenQPEP Official Release 1.1.7 (zero backwards compatibility). Official Wire Format v5 (\\x89QPE\\x05\\x00) is required."
         )
     if not raw_frame.startswith(WIRE_MAGIC):
         raise QPEPLegacyProtocolError(
-            "Unsupported or legacy wire format. OpenQPEP Official Release 1.1.6 requires Official Wire Format v5 (\\x89QPE\\x05\\x00)."
+            "Unsupported or legacy wire format. OpenQPEP Official Release 1.1.7 requires Official Wire Format v5 (\\x89QPE\\x05\\x00)."
         )
 
     # Strictly enforce mandatory armor CRC verification in constant time
@@ -440,7 +440,7 @@ def _validate_identity_field(field_name: str, value: Any, max_len: int, allow_em
 
 class CalyxQPEPProtocol:
     """
-    Official Reference Implementation of OpenQPEP by Calyx Labs Inc. (Official Release 1.1.6).
+    Official Reference Implementation of OpenQPEP by Calyx Labs Inc. (Official Release 1.1.7).
     """
 
     @staticmethod
@@ -664,13 +664,27 @@ class CalyxQPEPProtocol:
             raise QPEPKeyRingError("This QPKRF key ring contains only a public key.")
 
         priv_enc = keyring.encrypted_private_bundle
-        kdf_salt = _b64d(priv_enc["kdf_salt_b64"])
-        kdf_params = priv_enc.get("kdf_params") or {}
-        kdf_version = int(priv_enc.get("kdf_version") or kdf_params.get("kdf_version") or 0)
+        if not isinstance(priv_enc, dict):
+            raise QPEPWireFormatError("Malformed QPKRF encrypted_private_bundle structure.")
+        try:
+            kdf_salt = _b64d(priv_enc["kdf_salt_b64"])
+        except (KeyError, ValueError, TypeError, binascii.Error) as exc:
+            raise QPEPWireFormatError("Missing or malformed QPKRF kdf_salt_b64.") from exc
+        kdf_params = priv_enc.get("kdf_params")
+        if kdf_params is None:
+            kdf_params = {}
+        if not isinstance(kdf_params, dict):
+            raise QPEPWireFormatError("Malformed QPKRF kdf_params object.")
+        raw_kdf_ver = priv_enc.get("kdf_version")
+        if raw_kdf_ver is None:
+            raw_kdf_ver = kdf_params.get("kdf_version", 0)
+        if isinstance(raw_kdf_ver, bool) or not isinstance(raw_kdf_ver, int):
+            raise QPEPWireFormatError("Invalid QPKRF kdf_version field (must be integer).")
+        kdf_version = raw_kdf_ver
         if kdf_version < MANDATORY_KDF_VERSION:
             raise QPEPLegacyProtocolError(
                 f"Legacy pre-release key ring (kdf_version: {kdf_version} from -rc / -pc / -beta) is strictly rejected "
-                f"in OpenQPEP Official Release 1.1.6 (zero backwards compatibility; mandatory kdf_version: {MANDATORY_KDF_VERSION})."
+                f"in OpenQPEP Official Release 1.1.7 (zero backwards compatibility; mandatory kdf_version: {MANDATORY_KDF_VERSION})."
             )
 
         k_s1, k_s2, k_mac, _ = derive_qpkrf_keys_v4(passphrase, kdf_salt, kdf_params=kdf_params)
@@ -823,7 +837,7 @@ class CalyxQPEPProtocol:
         low_ver = env_ver.lower()
         if "-rc" in low_ver or "-pc" in low_ver or "-beta" in low_ver or low_ver.startswith("0."):
             raise QPEPLegacyProtocolError(
-                f"Legacy pre-release .qpkrf key ring ({env_ver}) is strictly rejected in OpenQPEP Official Release 1.1.6 "
+                f"Legacy pre-release .qpkrf key ring ({env_ver}) is strictly rejected in OpenQPEP Official Release 1.1.7 "
                 f"(zero backwards compatibility)."
             )
         if not ct_eq_str(envelope.get("magic"), "QPKRF-v1.0.0"):

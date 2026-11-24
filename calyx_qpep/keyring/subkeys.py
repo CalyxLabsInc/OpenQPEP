@@ -1,5 +1,5 @@
 """
-OpenQPEP Master Identity Key + Rotatable Operational Subkeys (Official Release 1.1.6 / kdf_version: 4).
+OpenQPEP Master Identity Key + Rotatable Operational Subkeys (Official Release 1.1.7 / kdf_version: 4).
 Separates a user's long-lived Master Identity Key (64-character Key Hash) from short-lived
 operational Encryption Subkeys (QLX + X448) and Signing Subkeys (QVS + Ed448) with explicit
 UTC expiration timestamps and conjunctive Master QVS + Ed448 certification.

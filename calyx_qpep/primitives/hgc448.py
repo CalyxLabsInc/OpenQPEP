@@ -1,6 +1,6 @@
 """
 HGC-448 (448-bit Goldilocks X448 Diffie-Hellman & Ed448 Edwards Signatures) Hybrid Combiner
-(Official Release 1.1.6 / v1.1.6).
+(Official Release 1.1.7 / v1.1.7).
 
 Security Hardening:
   - Full RFC 7748 X448 contributory validation: rejects non-canonical u >= p encodings,

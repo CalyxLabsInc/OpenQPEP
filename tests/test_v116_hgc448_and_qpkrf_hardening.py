@@ -39,10 +39,10 @@ from calyx_qpep.wire.armor import armor_unwrap, armor_wrap
 class TestOpenQPEPv116HGC448AndQPKRFHardening(unittest.TestCase):
     PASS = "Calyx!@#$_2026v116Aa99"
 
-    def test_01_version_metadata_is_116(self):
-        self.assertEqual(UNIVERSAL_VERSION, "1.1.6")
-        self.assertEqual(UNIVERSAL_VERSION_LABEL, "Official Release 1.1.6")
-        self.assertEqual(PROTOCOL_VERSION, "OpenQPEP/1.1.6")
+    def test_01_version_metadata_format(self):
+        self.assertTrue(UNIVERSAL_VERSION.startswith("1."))
+        self.assertEqual(UNIVERSAL_VERSION_LABEL, f"Official Release {UNIVERSAL_VERSION}")
+        self.assertEqual(PROTOCOL_VERSION, f"OpenQPEP/{UNIVERSAL_VERSION}")
 
     def test_02_x448_low_order_and_non_canonical_public_key_rejection(self):
         pub_a, priv_a = x448_keygen()
