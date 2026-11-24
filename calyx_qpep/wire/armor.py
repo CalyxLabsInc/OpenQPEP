@@ -1,5 +1,5 @@
 """
-OpenQPEP Zero-Metadata ASCII Armor Codec (Official Release 1.1.0 / Wire Format v5 \\x89QPE\\x05\\x00).
+OpenQPEP Zero-Metadata ASCII Armor Codec (Official Release 1.1.1 / Wire Format v5 \\x89QPE\\x05\\x00).
 
 Security Guarantees:
   - Zero cleartext identity metadata headers (never emits Sender/Recipient/Signer Key Hashes).
@@ -11,6 +11,7 @@ Security Guarantees:
     -rc, -pc, and -beta frames with QPEPLegacyProtocolError.
 """
 import base64
+import binascii
 from typing import Dict, Optional, Tuple
 
 from ..constants import (
@@ -132,8 +133,8 @@ def armor_unwrap(armored: str, expected_label: str) -> Tuple[bytes, Dict[str, st
 
     try:
         raw_frame = base64.b64decode("".join(body_lines), validate=True)
-    except Exception as exc:
-        raise QPEPWireFormatError("Invalid Base64 encoding inside ASCII armor body.") from exc
+    except (binascii.Error, ValueError, TypeError) as exc:
+        raise QPEPWireFormatError("Invalid Base64 encoding inside OpenQPEP ASCII armor body.") from exc
 
     # Unpack wire frame FIRST so legacy -rc / -pc / -beta frames raise QPEPLegacyProtocolError deterministically
     payload, _ptype = unpack_wire_frame(raw_frame, expected_label)

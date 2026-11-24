@@ -1,5 +1,5 @@
 """
-OpenQPEP Cryptographic Timestamp Bindings (Official Release 1.1.0 / Wire v5).
+OpenQPEP Cryptographic Timestamp Bindings (Official Release 1.1.1 / Wire v5).
 Binds a signed payload's qSponge-512 digest to a UTC timestamp, a public hash-chain anchor,
 and/or a Timestamp Authority (TSA) conjunctive QVS + Ed448 attestation.
 """
@@ -11,7 +11,7 @@ from typing import Any, Dict, Optional, Tuple
 from ..constants import PACKET_TYPE_SIGNATURE, PROTOCOL_VERSION, UNIVERSAL_VERSION
 from ..exceptions import QPEPWireFormatError
 from ..lattice.qvs_dsa import QVSEngine
-from ..primitives.consttime import ct_eq
+from ..primitives.consttime import ct_eq, ct_eq_str
 from ..primitives.hgc448 import ed448_sign, ed448_verify
 from ..primitives.qsponge import qsponge_512
 from ..primitives.zeroize import SecretBuffer
@@ -115,7 +115,7 @@ def verify_timestamp_proof(
     tsa_verified = False
     att = obj.get("tsa_attestation")
     if tsa_public_keyring is not None:
-        if not att or att.get("tsa_key_hash") != tsa_public_keyring.key_hash:
+        if not att or not ct_eq_str(att.get("tsa_key_hash"), tsa_public_keyring.key_hash):
             return False, {"error": "TSA attestation missing or key_hash mismatch."}
         transcript = qsponge_512(b"CALYX-TSA-SIGN-v1.0.0|" + expected_commit.encode("ascii"))
         qvs_pk = base64.b64decode(tsa_public_keyring.public_bundle["qvs_public_b64"])

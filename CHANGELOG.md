@@ -1,4 +1,13 @@
-# OpenQPEP Core Protocol Changelog — Official Release `v1.1.0`
+# OpenQPEP Core Protocol Changelog — Official Release `v1.1.1`
+
+## Official Release `v1.1.1` (2026-11-24) — Strict Input Bounds, Typed Exceptions & Constant-Time Audit Sweep
+
+- **Zero Broad `except Exception:` in Production Protocol Modules:** Audited and replaced every broad `except Exception:` handler across all production modules (`protocol.py`, `beyond_lwe_bridge.py`, `primitives/cc512_aead.py`, `primitives/hgc448.py`, `wire/armor.py`, `wire/multi_recipient.py`, `directory_kt/merkle_log.py`, `hardware/fido2_prf.py`, `isogeny/isogeny_suite.py`, `lattice/citadel_suite.py`, `pentad/sovereign_pentad.py`, `ratchet/session_state.py`, `zkp/lattice_sigma.py`, `audit/attack_sim.py`) with explicit narrow exception tuples; guarded permanently by AST verification in `tests/test_v111_hardening.py`.
+- **Constant-Time String & Integer Comparison Sweep:** Added `ct_eq_str` and `ct_eq_int` to `calyx_qpep/primitives/consttime.py` and eliminated non-constant-time hash/key/commitment/challenge equality checks across `protocol.py`, `directory_kt/merkle_log.py`, `pentad/sovereign_pentad.py`, `keyring/revocation.py`, `keyring/subkeys.py`, `recovery/qshare_codec.py`, `signatures/multisig.py`, `signatures/timestamp_proof.py`, and `zkp/lattice_sigma.py`.
+- **Deterministic Typed Exceptions & Strict Input Bounds:** Enforced typed `OpenQPEPError` subclasses (`QPEPWireFormatError`, `QPEPKeyRingError`, `QPEPMacVerificationError`, `QPEPTruncationError`, `QPEPSuiteError`) and strict type/length/control-character bounds across `protocol.py`, `beyond_lwe_bridge.py` (blocking cross-suite material substitution), and `compat_server.py` (bounded-RAM flood eviction on `SlidingWindowRateLimiter`).
+- **100% `v1.0.0`–`v1.1.0` Interoperability:** Preserves complete Wire Format v5/v5.1, Stream v5, `kdf_version: 4`, and 10/10 Golden KAT bit-exact compatibility.
+
+---
 
 ## Official Release `v1.1.0` (2026-11-23) — Upgraded from Official Release `v1.0.2`
 

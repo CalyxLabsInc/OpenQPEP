@@ -1,8 +1,8 @@
 """
 Fiat-Shamir Non-Interactive Zero-Knowledge Sigma Protocol over Z_3329[X]/(X^256 + 1)
-(LatticeZKProof — Official Release 1.1.0).
+(LatticeZKProof — Official Release 1.1.1).
 
-Official Release 1.1.0 Hardening:
+Official Release 1.1.1 Hardening:
   - Samples 256 independent uniform masking coefficients in Z_3329 via rejection sampling
     from qSponge-XOF (eliminating the legacy 4x periodic masking vector).
   - Canonical 12-bit byte encoding of ALL three polynomials (a_hat, t_hat, w_hat) inside the
@@ -13,9 +13,10 @@ import os
 from typing import Dict, List
 
 from ..constants import QLX_Q
+from ..exceptions import OpenQPEPError
 from ..lattice.ntt_3329 import ntt_3329, ntt_base_mul_3329
 from ..lattice.poly_ring import byte_encode_12
-from ..primitives.consttime import ct_eq
+from ..primitives.consttime import ct_eq, ct_eq_int
 from ..primitives.qsponge import qsponge_512, qsponge_var
 
 
@@ -68,10 +69,10 @@ class LatticeZKProof:
             if any(not (isinstance(x, int) and 0 <= x < QLX_Q) for x in z_hat):
                 return False
             c_scalar = _zk_challenge(a_hat, t_hat, w_hat, context)
-            if c_scalar != proof.get("c_scalar"):
+            if not ct_eq_int(c_scalar, proof.get("c_scalar")):
                 return False
             lhs = ntt_base_mul_3329(a_hat, z_hat)
             rhs = [(w_hat[i] + c_scalar * t_hat[i]) % QLX_Q for i in range(256)]
             return ct_eq(byte_encode_12(lhs), byte_encode_12(rhs))
-        except Exception:
+        except (OpenQPEPError, ValueError, TypeError, KeyError, IndexError):
             return False

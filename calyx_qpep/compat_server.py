@@ -1,12 +1,12 @@
 """
-OpenQPEP Official Release 1.1.0 — Shared Server Compatibility & Security Adapter (`calyx_qpep.compat_server`).
+OpenQPEP Official Release 1.1.1 — Shared Server Compatibility & Security Adapter (`calyx_qpep.compat_server`).
 
 Provides a single canonical implementation of common server-side security primitives used across
 Directory_Server, Messenger_Server, CalyxMail_Backend, and Website_Server:
   1. Thread-safe sliding-window per-IP / per-key rate limiting (`SlidingWindowRateLimiter`).
   2. Strict Wire Format v5 (\\x89QPE\\x05\\x00) frame MAC & whitening verification.
   3. Canonical pre-release version-token rejection (`-rc`, `-pc`, `-beta`, `0.x`) while preserving
-     100% compatibility across all Official Stable Public Releases (`1.0.0`, `1.0.2`, `1.1.0`, ...).
+     100% compatibility across all Official Stable Public Releases (`1.0.0`, `1.0.2`, `1.1.0`, `1.1.1`, ...).
   4. Canonical CMT-4 Key-Committing CC-512 AEAD and `.qpkrf` directory verification helpers.
 """
 import threading
@@ -17,6 +17,8 @@ from typing import Any, Deque, Dict, Optional, Tuple
 from .constants import (
     ALL_LEGACY_WIRE_MAGICS,
     MANDATORY_KDF_VERSION,
+    MAX_ARMOR_BYTES,
+    MAX_WIRE_FRAME_BYTES,
     PROTOCOL_VERSION,
     UNIVERSAL_VERSION,
     UNIVERSAL_VERSION_LABEL,
@@ -40,8 +42,8 @@ class SlidingWindowRateLimiter:
     """
 
     def __init__(self, max_requests: int = 60, window_seconds: float = 60.0, max_buckets: int = 16384):
-        if max_requests <= 0 or window_seconds <= 0:
-            raise ValueError("max_requests and window_seconds must be positive.")
+        if max_requests <= 0 or window_seconds <= 0 or max_buckets <= 0:
+            raise ValueError("max_requests, window_seconds, and max_buckets must be positive.")
         self.max_requests = int(max_requests)
         self.window_seconds = float(window_seconds)
         self.max_buckets = int(max_buckets)
@@ -53,13 +55,19 @@ class SlidingWindowRateLimiter:
         Checks whether `key` may proceed.
         Returns `(allowed, remaining, retry_after_seconds)`.
         """
+        if not isinstance(key, str) or not key or len(key) > 256:
+            raise QPEPWireFormatError("Rate-limiter bucket key must be a non-empty string (<= 256 chars).")
         ts = time.monotonic() if now is None else float(now)
         cutoff = ts - self.window_seconds
         with self._lock:
-            if len(self._buckets) > self.max_buckets:
+            if len(self._buckets) >= self.max_buckets and key not in self._buckets:
                 stale = [k for k, dq in self._buckets.items() if not dq or dq[-1] <= cutoff]
                 for k in stale:
                     del self._buckets[k]
+                # Bounded-RAM flood defense: if all buckets are still active, evict oldest bucket
+                if len(self._buckets) >= self.max_buckets:
+                    oldest_key = min(self._buckets.items(), key=lambda kv: kv[1][-1] if kv[1] else -1.0)[0]
+                    del self._buckets[oldest_key]
             dq = self._buckets.get(key)
             if dq is None:
                 dq = deque()
@@ -84,9 +92,11 @@ class SlidingWindowRateLimiter:
 def is_legacy_prerelease_version(version_str: str) -> bool:
     """
     Returns True if `version_str` identifies a retired pre-release (`-rc`, `-pc`, `-beta`, `0.x`).
-    Official stable public releases (`1.0.0`, `1.0.1`, `1.0.2`, `1.1.0`, ...) return False.
+    Official stable public releases (`1.0.0`, `1.0.1`, `1.0.2`, `1.1.0`, `1.1.1`, ...) return False.
     """
-    low = (version_str or "").strip().lower()
+    if not isinstance(version_str, str):
+        return False
+    low = version_str.strip().lower()
     if not low:
         return False
     # Strip optional 'openqpep/' or 'v' prefix
@@ -119,7 +129,11 @@ def verify_wire_v5_frame_strict(frame: bytes, label: str) -> Tuple[bytes, int]:
     Compatible with all v1.0.x and v1.1.x frames; raises QPEPLegacyProtocolError for v1..v4
     and QPEPMacVerificationError on MAC mismatch.
     """
-    return unpack_wire_frame(frame, label)
+    if not isinstance(frame, (bytes, bytearray)) or len(frame) > MAX_WIRE_FRAME_BYTES:
+        raise QPEPWireFormatError("Wire v5 frame must be bytes within MAX_WIRE_FRAME_BYTES.")
+    if not isinstance(label, str) or not label.strip() or len(label) > 128:
+        raise QPEPWireFormatError("Wire v5 frame label must be a non-empty ASCII string (<= 128 chars).")
+    return unpack_wire_frame(bytes(frame), label)
 
 
 def verify_qpkrf_for_directory(public_qpkrf: str) -> Tuple[QPEPKeyRing, Dict[str, Any]]:
@@ -129,6 +143,8 @@ def verify_qpkrf_for_directory(public_qpkrf: str) -> Tuple[QPEPKeyRing, Dict[str
       - Rejects private key rings and legacy pre-release versions.
       - Verifies 512-bit integrity_mac and hybrid Ed448 + QVS self-certification signature.
     """
+    if not isinstance(public_qpkrf, str) or not public_qpkrf.strip() or len(public_qpkrf) > MAX_ARMOR_BYTES:
+        raise QPEPWireFormatError("Public .qpkrf input must be a non-empty armored string within MAX_ARMOR_BYTES.")
     kr = OpenQPEPProtocol.import_qpkrf(public_qpkrf)
     if kr.has_private_key:
         raise QPEPWireFormatError("Private .qpkrf key rings must NEVER be published to a public directory.")

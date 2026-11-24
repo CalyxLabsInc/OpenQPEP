@@ -1,5 +1,5 @@
 """
-Calyx Sovereign-Pentad (CSP-Omega — Five-Family Cryptographic Citadel) (Official Release 1.1.0).
+Calyx Sovereign-Pentad (CSP-Omega — Five-Family Cryptographic Citadel) (Official Release 1.1.1).
 
 Simultaneously fuses FIVE mathematically disjoint post-quantum families in parallel threads:
   Family 1 — Unstructured Plain-LWE (CULC-2048): zero ring symmetry, worst-case general lattice
@@ -9,13 +9,14 @@ Simultaneously fuses FIVE mathematically disjoint post-quantum families in paral
   Family 4 — Multivariate Quadratic Signatures (QMQ-512): UOV over GF(256)
   Family 5 — Stateless Hash-Based Hypertree (QHS-512): zero-trapdoor Keccak-f[1600] one-wayness
 
-Official Release 1.1.0:
+Official Release 1.1.1:
   - Strict Official Wire Format v5 (\\x89QPE\\x05\\x00, packet_type=0x06 PACKET_TYPE_PENTAD)
     with zero backwards compatibility for legacy -rc / -pc / -beta packets.
   - CMT-4 Key-Committing CC-512 AEAD and signer key_hash transcript binding.
   - Mandatory >= 12 GB RAM flagship hardware guardrail.
 """
 import base64
+import binascii
 import concurrent.futures
 import json
 import os
@@ -23,7 +24,8 @@ from typing import Any, Dict, Tuple
 
 from ..codes.goppa_8192 import BinaryGoppaKEM
 from ..constants import PACKET_TYPE_PENTAD, PROTOCOL_VERSION, UNIVERSAL_VERSION
-from ..exceptions import QPEPSuiteError
+from ..exceptions import OpenQPEPError, QPEPSuiteError
+from ..primitives.consttime import ct_eq_str
 from ..hashsig.qhs_512_hypertree import QHS512HypertreeEngine
 from ..isogeny.sqi_2d_512 import SupersingularIsogenyEngine
 from ..kdf.hardware_tuner import detect_system_ram_mib
@@ -232,7 +234,7 @@ class CalyxSovereignPentad:
             b64d = base64.b64decode
             message = b64d(bundle["message_b64"])
             key_hash = str(signer_pub.get("key_hash", ""))
-            if bundle.get("signer_key_hash") != key_hash:
+            if not ct_eq_str(bundle.get("signer_key_hash"), key_hash):
                 return False, b""
             bound_msg = b"CALYX-PENTAD-SIG-v1.0.0|" + key_hash.encode("ascii") + b"|" + message
 
@@ -241,5 +243,5 @@ class CalyxSovereignPentad:
             ok_sqi = SupersingularIsogenyEngine.verify(b64d(signer_pub["isogeny_pk_b64"]), bound_msg, b64d(bundle["sigma_sqi_512_b64"]))
             ok = bool(ok_qhs and ok_qmq and ok_sqi)
             return ok, (message if ok else b"")
-        except Exception:
+        except (OpenQPEPError, ValueError, TypeError, KeyError, binascii.Error, json.JSONDecodeError, UnicodeDecodeError):
             return False, b""

@@ -1,5 +1,5 @@
 """
-QPEP-Ratchet Stateful Session Machine (Official Release 1.1.0).
+QPEP-Ratchet Stateful Session Machine (Official Release 1.1.1).
 Implements:
   - Per-message symmetric CMT-4 CC-512 ratcheting (Forward Secrecy)
   - Periodic hybrid QLX + HGC-448 asymmetric re-encapsulation WITH ephemeral key rotation (true PCS)
@@ -9,12 +9,13 @@ Implements:
   - Bounded out-of-order skipped-key cache (MAX_SKIP = 256) with TTL expiration RAM scrubbing
 """
 import base64
+import binascii
 import json
 import time
 from typing import Any, Dict, List, Optional, Tuple
 
 from ..constants import PACKET_TYPE_RATCHET, PROTOCOL_VERSION, UNIVERSAL_VERSION
-from ..exceptions import QPEPMacVerificationError, QPEPWireFormatError
+from ..exceptions import OpenQPEPError, QPEPMacVerificationError, QPEPWireFormatError
 from ..primitives.cc512_aead import cc512_decrypt, cc512_encrypt
 from ..primitives.qsponge import qsponge_var
 from ..primitives.zeroize import SecretBuffer, zeroize_bytes
@@ -309,7 +310,7 @@ class QPEPRatchetSession:
                     final_next_ck = next_ck_try
                     final_staged = staged_skipped + cur_staged
                     break
-                except Exception:
+                except (OpenQPEPError, ValueError, TypeError, KeyError, binascii.Error):
                     continue
 
             if decrypted_pt is None:
@@ -346,7 +347,7 @@ class QPEPRatchetSession:
         try:
             with SecretBuffer(msg_key64) as mk_buf:
                 pt = cc512_decrypt(mk_buf.as_bytes(), nonce24, ct, aad)
-        except Exception:
+        except (OpenQPEPError, ValueError, TypeError):
             for _, mb, _, _ in staged_skipped:
                 zeroize_bytes(mb)
             raise

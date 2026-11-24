@@ -1,5 +1,5 @@
 """
-OpenQPEP Master Identity Key + Rotatable Operational Subkeys (Official Release 1.1.0 / kdf_version: 4).
+OpenQPEP Master Identity Key + Rotatable Operational Subkeys (Official Release 1.1.1 / kdf_version: 4).
 Separates a user's long-lived Master Identity Key (64-character Key Hash) from short-lived
 operational Encryption Subkeys (QLX + X448) and Signing Subkeys (QVS + Ed448) with explicit
 UTC expiration timestamps and conjunctive Master QVS + Ed448 certification.
@@ -17,6 +17,7 @@ from ..kdf.argon2id_cascade import derive_qpkrf_keys_v4
 from ..lattice.qlx_kem import QLXEngine
 from ..lattice.qvs_dsa import QVSEngine
 from ..primitives.cc512_aead import cc512_encrypt
+from ..primitives.consttime import ct_eq_str
 from ..primitives.hgc448 import ed448_keygen, ed448_sign, ed448_verify, x448_keygen
 from ..primitives.qsponge import qsponge_512
 from ..primitives.zeroize import SecretBuffer
@@ -175,7 +176,7 @@ def verify_subkey(
     *,
     now_utc: Optional[datetime.datetime] = None,
 ) -> Tuple[bool, str]:
-    if subkey.master_key_hash != master_public_keyring.key_hash:
+    if not ct_eq_str(subkey.master_key_hash, master_public_keyring.key_hash):
         return False, "Subkey master_key_hash does not match Master Identity Key."
 
     now = now_utc or datetime.datetime.now(datetime.timezone.utc)

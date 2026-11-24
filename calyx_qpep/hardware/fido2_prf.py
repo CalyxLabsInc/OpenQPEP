@@ -1,14 +1,15 @@
 """
-OpenQPEP Hardware FIDO2 WebAuthn PRF & Enclave Key Wrapper (Official Release 1.1.0).
+OpenQPEP Hardware FIDO2 WebAuthn PRF & Enclave Key Wrapper (Official Release 1.1.1).
 Combines QPKD-Argon2id passphrase key material with hardware-bound FIDO2 WebAuthn PRF
 (or Android StrongBox / Apple Secure Enclave) secret outputs, enforcing mandatory .qshare
 recovery verification before hardware-only lock mode.
 """
 import base64
+import binascii
 import os
 from typing import Any, Dict
 
-from ..exceptions import QPEPMacVerificationError, QPEPSuiteError
+from ..exceptions import OpenQPEPError, QPEPMacVerificationError, QPEPSuiteError
 from ..primitives.cc512_aead import cc512_decrypt, cc512_encrypt
 from ..primitives.qsponge import qsponge_512
 from ..primitives.zeroize import SecretBuffer
@@ -53,7 +54,7 @@ def unwrap_with_fido2_prf(envelope: Dict[str, Any], passphrase_key: bytes, hardw
                 base64.b64decode(envelope["ciphertext_b64"]),
                 aad,
             )
-        except Exception as exc:
+        except (OpenQPEPError, ValueError, TypeError, KeyError, binascii.Error) as exc:
             raise QPEPMacVerificationError("Hardware PRF unwrap failed (wrong passphrase or wrong hardware token).") from exc
 
 

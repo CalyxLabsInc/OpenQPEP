@@ -1,5 +1,5 @@
 """
-OpenQPEP Self-Authenticating .qrev Key Revocation Certificates (Official Release 1.1.0 / Wire v5).
+OpenQPEP Self-Authenticating .qrev Key Revocation Certificates (Official Release 1.1.1 / Wire v5).
 Supports offline revocation certificates signed conjunctively by the Master QVS + Ed448
 identity key with standardized reason codes: KEY_COMPROMISED, KEY_SUPERSEDED, KEY_RETIRED.
 """
@@ -11,6 +11,7 @@ from typing import Any, Dict, Optional, Tuple
 from ..constants import PACKET_TYPE_KEYRING, PROTOCOL_VERSION, UNIVERSAL_VERSION
 from ..exceptions import QPEPKeyRingError, QPEPWireFormatError
 from ..lattice.qvs_dsa import QVSEngine
+from ..primitives.consttime import ct_eq_str
 from ..primitives.hgc448 import ed448_sign, ed448_verify
 from ..primitives.qsponge import qsponge_512
 from ..primitives.zeroize import SecretBuffer
@@ -78,7 +79,7 @@ def verify_revocation_certificate(
     body = cert.get("body") or {}
     if body.get("type") != "openqpep-revocation-certificate":
         raise QPEPWireFormatError("Not a valid OpenQPEP .qrev revocation certificate.")
-    if body.get("key_hash") != master_public_keyring.key_hash:
+    if not ct_eq_str(body.get("key_hash"), master_public_keyring.key_hash):
         return False, {"error": "Revocation certificate key_hash does not match Master public key."}
     if body.get("reason") not in REVOCATION_REASONS:
         return False, {"error": "Unknown revocation reason code."}

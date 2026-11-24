@@ -1,5 +1,5 @@
 """
-OpenQPEP m-of-n Threshold Multi-Party Cosigning Bundles (Official Release 1.1.0 / Wire v5).
+OpenQPEP m-of-n Threshold Multi-Party Cosigning Bundles (Official Release 1.1.1 / Wire v5).
 Requires m-of-n independent conjunctive QVS + Ed448 signatures bound to the same canonical
 qSponge-512 payload digest and multisig policy.
 """
@@ -11,7 +11,7 @@ from typing import Any, Dict, List, Optional, Sequence, Tuple
 from ..constants import PACKET_TYPE_MULTISIG, PROTOCOL_VERSION, UNIVERSAL_VERSION
 from ..exceptions import QPEPKeyRingError, QPEPWireFormatError
 from ..lattice.qvs_dsa import QVSEngine
-from ..primitives.consttime import ct_eq
+from ..primitives.consttime import ct_eq, ct_eq_str
 from ..primitives.hgc448 import ed448_sign, ed448_verify
 from ..primitives.qsponge import qsponge_512
 from ..primitives.zeroize import SecretBuffer
@@ -71,9 +71,9 @@ def cosign_payload(
             raise QPEPWireFormatError("Existing armor is not a valid OpenQPEP multisig bundle.")
         if not ct_eq(bundle["payload_digest_sha3_512"].encode("ascii"), digest_hex.encode("ascii")):
             raise QPEPWireFormatError("Payload digest does not match existing multisig bundle.")
-        if bundle["policy"]["policy_id"] != policy["policy_id"]:
+        if not ct_eq_str(bundle["policy"].get("policy_id"), policy["policy_id"]):
             raise QPEPWireFormatError("Multisig policy_id mismatch.")
-        if any(s["signer_key_hash"] == signer_keyring.key_hash for s in bundle["signatures"]):
+        if any(ct_eq_str(s.get("signer_key_hash"), signer_keyring.key_hash) for s in bundle["signatures"]):
             raise QPEPKeyRingError(f"Signer {signer_keyring.key_hash[:12]} has already cosigned this bundle.")
     else:
         bundle = {

@@ -1,12 +1,13 @@
 """
 HGC-448 (448-bit Goldilocks X448 Diffie-Hellman & Ed448 Edwards Signatures) Hybrid Combiner
-(Official Release 1.1.0 / v1.1.0).
+(Official Release 1.1.1 / v1.1.1).
 Uses os.urandom(56)/os.urandom(57) so keygen is CSPRNG-secure in production and 100% deterministic
 under KAT DRBG, with SecretBuffer RAM scrubbing on every private-key operation.
 """
 import os
 from typing import Tuple
 
+from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed448 import Ed448PrivateKey, Ed448PublicKey
 from cryptography.hazmat.primitives.asymmetric.x448 import X448PrivateKey, X448PublicKey
@@ -54,9 +55,15 @@ def ed448_sign(priv_bytes: bytes, data: bytes) -> bytes:
 
 def ed448_verify(pub_bytes: bytes, signature: bytes, data: bytes) -> bool:
     try:
-        if len(pub_bytes) != 57 or len(signature) != 114:
+        if (
+            not isinstance(pub_bytes, (bytes, bytearray))
+            or not isinstance(signature, (bytes, bytearray))
+            or not isinstance(data, (bytes, bytearray))
+            or len(pub_bytes) != 57
+            or len(signature) != 114
+        ):
             return False
-        Ed448PublicKey.from_public_bytes(pub_bytes).verify(signature, data)
+        Ed448PublicKey.from_public_bytes(bytes(pub_bytes)).verify(bytes(signature), bytes(data))
         return True
-    except Exception:
+    except (InvalidSignature, ValueError, TypeError):
         return False

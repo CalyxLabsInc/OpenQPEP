@@ -1,5 +1,5 @@
 """
-Branchless Constant-Time Cryptographic Primitives (Official Release 1.1.0 / v1.1.0).
+Branchless Constant-Time Cryptographic Primitives (Official Release 1.1.1 / v1.1.1).
 Provides constant-time byte equality, branchless byte-array conditional move (ct_cmov)
 for Fujisaki-Okamoto implicit-rejection multiplexing, and Barrett/Montgomery reduction helpers.
 """
@@ -8,7 +8,23 @@ import hmac
 
 def ct_eq(a: bytes, b: bytes) -> bool:
     """Constant-time byte-string comparison."""
+    if not isinstance(a, (bytes, bytearray, memoryview)) or not isinstance(b, (bytes, bytearray, memoryview)):
+        return False
     return hmac.compare_digest(a, b)
+
+
+def ct_eq_str(a: object, b: object) -> bool:
+    """Constant-time UTF-8 string comparison for key hashes, digests, commitments, and tokens."""
+    if not isinstance(a, str) or not isinstance(b, str):
+        return False
+    return hmac.compare_digest(a.encode("utf-8"), b.encode("utf-8"))
+
+
+def ct_eq_int(a: object, b: object) -> bool:
+    """Constant-time bounded integer equality comparison."""
+    if not isinstance(a, int) or isinstance(a, bool) or not isinstance(b, int) or isinstance(b, bool):
+        return False
+    return hmac.compare_digest(str(a).encode("ascii"), str(b).encode("ascii"))
 
 
 def ct_select_int(cond: int, a: int, b: int) -> int:

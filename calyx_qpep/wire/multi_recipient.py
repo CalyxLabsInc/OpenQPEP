@@ -1,5 +1,5 @@
 """
-OpenQPEP Anonymous Mixed-Tier Multi-Recipient Broadcast Encryption (Official Release 1.1.0 / Wire v5).
+OpenQPEP Anonymous Mixed-Tier Multi-Recipient Broadcast Encryption (Official Release 1.1.1 / Wire v5).
 
 Features:
   1. Single-Pass CEK Encryption: Encrypts payload once with a fresh 512-bit CMT-4 Key-Committing
@@ -11,13 +11,14 @@ Features:
   4. Indistinguishable Dummy Slot Padding: Matches exact CMT-4 CC-512 wrapped CEK size (128 bytes).
 """
 import base64
+import binascii
 import json
 import os
 import secrets
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from ..constants import PACKET_TYPE_MULTI_RECIPIENT, PROTOCOL_VERSION, QLX_TIERS, UNIVERSAL_VERSION
-from ..exceptions import QPEPKeyRingError, QPEPMacVerificationError, QPEPWireFormatError
+from ..exceptions import OpenQPEPError, QPEPKeyRingError, QPEPMacVerificationError, QPEPWireFormatError
 from ..lattice.qlx_kem import QLXEngine
 from ..primitives.cc512_aead import CC512_OVERHEAD_BYTES, cc512_decrypt, cc512_encrypt
 from ..primitives.consttime import ct_eq
@@ -183,7 +184,7 @@ def decrypt_multi_recipient(
                     recovered_cek = cc512_decrypt(kek_buf.as_bytes(), wrap_nonce24, wrapped_cek, slot_aad)
                     matched_slot_idx = idx
                     break
-            except Exception:
+            except (OpenQPEPError, ValueError, TypeError, KeyError, binascii.Error):
                 continue
 
     if recovered_cek is None:

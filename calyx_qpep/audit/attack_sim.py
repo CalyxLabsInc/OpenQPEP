@@ -1,5 +1,5 @@
 """
-OpenQPEP Active Cryptographic Attack Simulator (Official Release 1.1.0).
+OpenQPEP Active Cryptographic Attack Simulator (Official Release 1.1.1).
 Simulates real-world adversarial attacks against OpenQPEP:
   1. Ciphertext malleability / chosen-ciphertext attacks against Fujisaki-Okamoto
   2. Rowhammer/glitch fault injection inside QVSEngine.sign (proving Fault-Guard aborts 100%)
@@ -14,6 +14,7 @@ from typing import Any, Dict
 from unittest.mock import patch
 
 from ..exceptions import (
+    OpenQPEPError,
     QPEPFaultGuardError,
     QPEPMacVerificationError,
     QPEPTruncationError,
@@ -98,7 +99,7 @@ def simulate_suite_downgrade_attack() -> Dict[str, Any]:
         doc = json.loads(raw.decode("utf-8"))
         doc["qlx_tier"] = "QLX-768"
         tampered_raw = json.dumps(doc).encode("utf-8")
-    except Exception:
+    except (json.JSONDecodeError, UnicodeDecodeError, ValueError, TypeError):
         tampered_raw = bytes([raw[0] ^ 0x01]) + raw[1:]
 
     tampered_b64 = base64.b64encode(tampered_raw).decode("ascii")
@@ -108,7 +109,7 @@ def simulate_suite_downgrade_attack() -> Dict[str, Any]:
     blocked = False
     try:
         OpenQPEPProtocol.import_qpkrf(tampered)
-    except Exception:
+    except (OpenQPEPError, ValueError, TypeError, KeyError, json.JSONDecodeError, UnicodeDecodeError):
         blocked = True
     return {"attack": "Suite_Downgrade", "trials": 1, "defended": 1 if blocked else 0, "passed": blocked}
 

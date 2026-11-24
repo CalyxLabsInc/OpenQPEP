@@ -1,5 +1,5 @@
 """
-Calyx-Cascade-512 (CC-512) Provably CMT-4 Key-Committing Dual-Stream AEAD (Official Release 1.1.0).
+Calyx-Cascade-512 (CC-512) Provably CMT-4 Key-Committing Dual-Stream AEAD (Official Release 1.1.1).
 
 Security Guarantees:
   - Dual-Algorithm Confidentiality & Integrity: AES-256-GCM nested inside ChaCha20-Poly1305
@@ -13,6 +13,7 @@ Security Guarantees:
 Wire overhead: 64 bytes (16 B AES-GCM tag + 16 B Poly1305 tag + 32 B CMT-4 commitment tag).
 """
 import struct
+from cryptography.exceptions import InvalidTag
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM, ChaCha20Poly1305
 
 from ..exceptions import QPEPMacVerificationError
@@ -84,5 +85,5 @@ def cc512_decrypt(key64: bytes, nonce24: bytes, ciphertext: bytes, aad: bytes) -
         try:
             ct_inner = ChaCha20Poly1305(k_chacha).decrypt(nonce24[12:24], ct_outer, aad)
             return AESGCM(k_aes).decrypt(nonce24[:12], ct_inner, aad)
-        except Exception as exc:
+        except (InvalidTag, ValueError, TypeError) as exc:
             raise QPEPMacVerificationError("CC-512 AEAD authentication tag verification failed.") from exc

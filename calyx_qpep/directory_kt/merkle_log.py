@@ -1,5 +1,5 @@
 """
-QPEP-KT: Append-Only qSponge-512 Merkle Transparency Log (Official Release 1.1.0).
+QPEP-KT: Append-Only qSponge-512 Merkle Transparency Log (Official Release 1.1.1).
 Features:
   - O(log N) Merkle Inclusion Proofs (RFC 6962 / RFC 9162 canonical binary tree structure)
   - O(log N) Merkle Consistency Proofs (`consistency_proof` & `verify_consistency_proof`) proving
@@ -11,7 +11,8 @@ import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
 from ..constants import PROTOCOL_VERSION, UNIVERSAL_VERSION
-from ..primitives.consttime import ct_eq
+from ..exceptions import OpenQPEPError
+from ..primitives.consttime import ct_eq, ct_eq_str
 from ..primitives.hgc448 import ed448_keygen, ed448_public_from_private, ed448_sign, ed448_verify
 from ..primitives.qsponge import qsponge_512, qsponge_var
 
@@ -169,7 +170,7 @@ def verify_sth(sth: Dict[str, Any], expected_log_public_key_hex: Optional[str] =
             f"CALYX-KT-STH-v1.0.0|{sth['protocol']}|{int(sth['tree_size'])}|{sth['root_hex']}|{sth['timestamp_utc']}"
         ).encode("utf-8")
         return ed448_verify(bytes.fromhex(pub_hex), bytes.fromhex(sth["sth_signature_hex"]), transcript)
-    except Exception:
+    except (OpenQPEPError, ValueError, TypeError, KeyError, UnicodeDecodeError):
         return False
 
 
@@ -181,7 +182,7 @@ def verify_inclusion_proof(key_hash: str, qpkrf_digest_hex: str, proof: List[Tup
             sib = bytes.fromhex(sib_hex)
             cur = _node_hash(cur, sib) if side == "R" else _node_hash(sib, cur)
         return ct_eq(cur, bytes.fromhex(expected_root_hex))
-    except Exception:
+    except (OpenQPEPError, ValueError, TypeError, KeyError, IndexError):
         return False
 
 
@@ -239,7 +240,7 @@ def verify_consistency_proof(
             sn >>= 1
 
         return sn == 0 and ct_eq(fr, first_root) and ct_eq(sr, second_root)
-    except Exception:
+    except (OpenQPEPError, ValueError, TypeError, KeyError, IndexError):
         return False
 
 
@@ -256,8 +257,8 @@ def verify_directory_ownership_proof(public_qpkrf: str, ownership_signature: Opt
             return False, "Self-certification signature failed verification."
         if ownership_signature:
             ok, _msg, matched = OpenQPEPProtocol.verify_signature(ownership_signature, signer_public_keyring=kr)
-            if not ok or matched is None or matched.key_hash != kr.key_hash:
+            if not ok or matched is None or not ct_eq_str(matched.key_hash, kr.key_hash):
                 return False, "Ownership challenge signature failed verification."
         return True, kr.key_hash
-    except Exception as exc:
+    except (OpenQPEPError, ValueError, TypeError, KeyError, UnicodeDecodeError) as exc:
         return False, str(exc)

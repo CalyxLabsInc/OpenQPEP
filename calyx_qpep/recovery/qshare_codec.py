@@ -1,5 +1,5 @@
 """
-OpenQPEP Verifiable .qshare Shamir Recovery Shard Codec (Official Release 1.1.0 / Wire v5).
+OpenQPEP Verifiable .qshare Shamir Recovery Shard Codec (Official Release 1.1.1 / Wire v5).
 Wraps GF(256) Shamir shares in whitened \\x89QPE\\x05\\x00 armor authenticated with per-shard
 qSponge-512 commitment MACs and a master secret commitment digest.
 """
@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Sequence, Tuple
 
 from ..constants import PACKET_TYPE_KEYRING, PROTOCOL_VERSION, UNIVERSAL_VERSION
 from ..exceptions import QPEPMacVerificationError, QPEPWireFormatError
-from ..primitives.consttime import ct_eq
+from ..primitives.consttime import ct_eq, ct_eq_str
 from ..primitives.qsponge import qsponge_512
 from ..primitives.zeroize import SecretBuffer
 from ..wire.armor import armor_unwrap, armor_wrap
@@ -86,7 +86,7 @@ def recover_secret_from_shards(armored_shards: Sequence[str]) -> Tuple[bytes, Di
     threshold = int(parsed[0]["threshold"])
     secret_commit = parsed[0]["secret_commitment_sha3_512"]
 
-    if any(p["group_id"] != group_id or p["secret_commitment_sha3_512"] != secret_commit for p in parsed):
+    if any(not ct_eq_str(p.get("group_id"), group_id) or not ct_eq_str(p.get("secret_commitment_sha3_512"), secret_commit) for p in parsed):
         raise QPEPMacVerificationError("Recovery shards belong to different key-recovery groups.")
     if len(parsed) < threshold:
         raise QPEPWireFormatError(f"Need at least {threshold} shards to reconstruct (got {len(parsed)}).")

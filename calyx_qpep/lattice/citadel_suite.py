@@ -1,12 +1,13 @@
 """
 Calyx Unstructured-Citadel: CULC-2048 + CGM-8192 (Zero-Ring Plain-LWE + Goppa — HIGH-TIER HARDWARE ONLY)
-OpenQPEP Official Release 1.1.0 (v1.1.0) — Calyx Labs Inc. (CPOSLS-1.0).
+OpenQPEP Official Release 1.1.1 (v1.1.1) — Calyx Labs Inc. (CPOSLS-1.0).
 
 Fuses Zero-Ring Unstructured Plain-LWE (CULC-2048) with Genuine Binary Goppa Patterson Codes (CGM-8192),
 Stateless qSponge-512 Hypertree signatures (QHS-512), and CMT-4 Key-Committing CC-512 over Official Wire Format v5.
 Enforces the >= 12 GB RAM flagship hardware guardrail.
 """
 import base64
+import binascii
 import concurrent.futures
 import json
 import os
@@ -14,7 +15,7 @@ from typing import Dict, Tuple
 
 from ..codes.goppa_8192 import BinaryGoppaKEM
 from ..constants import PACKET_TYPE_SIGNATURE, PACKET_TYPE_SINGLE, PROTOCOL_VERSION, UNIVERSAL_VERSION
-from ..exceptions import QPEPSuiteError
+from ..exceptions import OpenQPEPError, QPEPSuiteError
 from ..hashsig.qhs_512_hypertree import QHS512HypertreeEngine
 from ..kdf.hardware_tuner import detect_system_ram_mib
 from ..primitives.cc512_aead import cc512_decrypt, cc512_encrypt
@@ -141,5 +142,5 @@ class CalyxUnstructuredCitadelSuite:
                 base64.b64decode(bundle["sig_qhs_b64"]),
             )
             return bool(ok), (msg if ok else b"")
-        except Exception:
+        except (OpenQPEPError, ValueError, TypeError, KeyError, binascii.Error, json.JSONDecodeError, UnicodeDecodeError):
             return False, b""
