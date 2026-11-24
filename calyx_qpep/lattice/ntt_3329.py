@@ -1,4 +1,4 @@
-# OpenQPEP Official Release 1.1.4 (v1.1.4)
+# OpenQPEP Official Release 1.1.5 (v1.1.5)
 """
 7-Layer Cooley-Tukey / Gentleman-Sande Number Theoretic Transform over Z_3329[X]/(X^256+1).
 Automatically dispatches through libopenqpep (C99/AVX2/NEON) when available, with
@@ -13,6 +13,7 @@ from ..native.loader import (
     native_poly_add_3329,
     native_poly_sub_3329,
 )
+from ..primitives.consttime import barrett_reduce_3329, ct_caddq_3329, ct_csubq_3329
 
 def _bitrev7(x: int) -> int:
     r = 0
@@ -40,9 +41,10 @@ def ntt_3329(poly: List[int]) -> List[int]:
             zeta = _ZETAS_3329[k]
             k += 1
             for j in range(start, start + length):
-                t = (zeta * p[j + length]) % QLX_Q
-                p[j + length] = (p[j] - t) % QLX_Q
-                p[j] = (p[j] + t) % QLX_Q
+                t = barrett_reduce_3329(zeta * p[j + length])
+                u = p[j]
+                p[j + length] = ct_caddq_3329(u - t)
+                p[j] = ct_csubq_3329(u + t)
         length >>= 1
     return p
 
@@ -61,10 +63,11 @@ def inv_ntt_3329(poly_hat: List[int]) -> List[int]:
             k -= 1
             for j in range(start, start + length):
                 t = p[j]
-                p[j] = (t + p[j + length]) % QLX_Q
-                p[j + length] = (zeta * (t - p[j + length])) % QLX_Q
+                u = p[j + length]
+                p[j] = ct_csubq_3329(t + u)
+                p[j + length] = barrett_reduce_3329(zeta * ct_caddq_3329(t - u))
         length <<= 1
-    return [(x * _INV_128_3329) % QLX_Q for x in p]
+    return [barrett_reduce_3329(x * _INV_128_3329) for x in p]
 
 
 def ntt_base_mul_3329(a_hat: List[int], b_hat: List[int]) -> List[int]:
@@ -77,8 +80,8 @@ def ntt_base_mul_3329(a_hat: List[int], b_hat: List[int]) -> List[int]:
         a0, a1 = a_hat[2 * i], a_hat[2 * i + 1]
         b0, b1 = b_hat[2 * i], b_hat[2 * i + 1]
         gamma = _ZETAS_BASE_3329[i]
-        out[2 * i] = (a0 * b0 + a1 * b1 * gamma) % QLX_Q
-        out[2 * i + 1] = (a0 * b1 + a1 * b0) % QLX_Q
+        out[2 * i] = barrett_reduce_3329(a0 * b0 + barrett_reduce_3329(a1 * b1) * gamma)
+        out[2 * i + 1] = barrett_reduce_3329(a0 * b1 + a1 * b0)
     return out
 
 
@@ -86,11 +89,11 @@ def poly_add_3329(a: List[int], b: List[int]) -> List[int]:
     res = native_poly_add_3329(a, b)
     if res is not None:
         return res
-    return [(x + y) % QLX_Q for x, y in zip(a, b)]
+    return [ct_csubq_3329(x + y) for x, y in zip(a, b)]
 
 
 def poly_sub_3329(a: List[int], b: List[int]) -> List[int]:
     res = native_poly_sub_3329(a, b)
     if res is not None:
         return res
-    return [(x - y) % QLX_Q for x, y in zip(a, b)]
+    return [ct_caddq_3329(x - y) for x, y in zip(a, b)]

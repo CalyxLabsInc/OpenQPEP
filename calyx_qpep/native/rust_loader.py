@@ -1,4 +1,4 @@
-# OpenQPEP Official Release 1.1.4 (v1.1.4)
+# OpenQPEP Official Release 1.1.5 (v1.1.5)
 """Optional PyO3 Rust `openqpep_core` bridge with graceful fallback to C99/Python."""
 from typing import Any, Dict
 

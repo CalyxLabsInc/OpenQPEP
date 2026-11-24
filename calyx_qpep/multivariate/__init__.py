@@ -1,4 +1,4 @@
-# OpenQPEP Official Release 1.1.4 (v1.1.4)
+# OpenQPEP Official Release 1.1.5 (v1.1.5)
 """OpenQPEP Multivariate Quadratic Signature Plugin (QMQ-512 over GF(256))."""
 from .qmq_512 import MultivariateQuadraticEngine
 

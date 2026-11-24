@@ -1,4 +1,4 @@
-// OpenQPEP Official Release 1.1.4 (v1.1.4)
+// OpenQPEP Official Release 1.1.5 (v1.1.5)
 //! Bit-exact 7-layer NTT_3329 over Z_3329[X]/(X^256 + 1) matching OpenQPEP KATs.
 pub const QLX_Q: i32 = 3329;
 pub const INV_128_3329: i32 = 3303;
@@ -20,6 +20,15 @@ fn mod_pow(mut base: i32, mut exp: usize) -> i32 {
     res
 }
 
+#[inline]
+pub fn ct_barrett_3329(x: i64) -> i32 {
+    let t = (x * 20642678i64) >> 36;
+    let mut r = (x - t * (QLX_Q as i64)) as i32;
+    r += (r >> 31) & QLX_Q;
+    let d = r - QLX_Q;
+    d + ((d >> 31) & QLX_Q)
+}
+
 pub fn ntt_3329(p: &mut [i32; 256]) {
     let mut zetas = [0i32; 128];
     for i in 0..128 { zetas[i] = mod_pow(17, bitrev7(i)); }
@@ -31,7 +40,7 @@ pub fn ntt_3329(p: &mut [i32; 256]) {
             let zeta = zetas[k];
             k += 1;
             for j in start..(start + length) {
-                let t = (zeta * p[j + length]) % QLX_Q;
+                let t = ct_barrett_3329((zeta as i64) * (p[j + length] as i64));
                 let diff = p[j] - t;
                 let v = diff + ((diff >> 31) & QLX_Q);
                 let sum_m = (p[j] + t) - QLX_Q;

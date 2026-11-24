@@ -1,6 +1,19 @@
-"""OpenQPEP Low-Level Cryptographic Primitives (Official Release 1.1.4)."""
+"""OpenQPEP Low-Level Cryptographic Primitives (Official Release 1.1.5)."""
 from .qsponge import qsponge_512, qsponge_var
-from .consttime import ct_eq, ct_eq_str, ct_eq_int, ct_cmov, ct_select_int, barrett_reduce_3329, montgomery_reduce_3329, barrett_reduce_qvs
+from .consttime import (
+    barrett_reduce_3329,
+    barrett_reduce_qvs,
+    ct_caddq_3329,
+    ct_caddq_qvs,
+    ct_cmov,
+    ct_csubq_3329,
+    ct_csubq_qvs,
+    ct_eq,
+    ct_eq_int,
+    ct_eq_str,
+    ct_select_int,
+    montgomery_reduce_3329,
+)
 from .zeroize import (
     LockedMemoryBuffer,
     SecretBuffer,
@@ -32,7 +45,9 @@ from .hgc448 import x448_keygen, x448_exchange, ed448_keygen, ed448_sign, ed448_
 
 __all__ = [
     "qsponge_512", "qsponge_var",
-    "ct_eq", "ct_eq_str", "ct_eq_int", "ct_cmov", "ct_select_int", "barrett_reduce_3329", "montgomery_reduce_3329", "barrett_reduce_qvs",
+    "ct_eq", "ct_eq_str", "ct_eq_int", "ct_cmov", "ct_select_int",
+    "ct_caddq_3329", "ct_csubq_3329", "ct_caddq_qvs", "ct_csubq_qvs",
+    "barrett_reduce_3329", "montgomery_reduce_3329", "barrett_reduce_qvs",
     "zeroize_bytes", "zeroize_addr", "is_addr_zeroed", "zeroize_many", "zeroize_secret_dict",
     "SecretBuffer", "LockedMemoryBuffer",
     "disable_core_dumps", "harden_process_memory", "memory_security_status",

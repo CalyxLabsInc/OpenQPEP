@@ -1,4 +1,13 @@
-# OpenQPEP Core Protocol Changelog — Official Release `v1.1.4`
+# OpenQPEP Core Protocol Changelog — Official Release `v1.1.5`
+
+## Official Release `v1.1.5` (2026-11-24) — Constant-Time `poly_ring.py` Compression, Decompression & CBD Sampling (KyberSlash Closure)
+
+- **KyberSlash-Immune Branchless `poly_ring.py` (`calyx_qpep/lattice/poly_ring.py`):** Replaced variable-time `// QLX_Q` compression division with exact fixed-point multiply-and-shift (`(((x << d) + 1664) * 20642679) >> 36`, proven bit-exact for all `x in 0..3328` and `d in 1..12`), eliminated `% QLX_Q` / `% QVS_Q` divisions from `decompress_poly`, `byte_encode_12`, `byte_decode_12`, `sample_cbd1_3329`, `sample_cbd2_3329`, `sample_eta_qvs`, `sample_mask_y_qvs`, `pack_poly24_qvs`, and `unpack_poly24_qvs`, added `sample_cbd_eta_3329` + strict input-length bounds, and wrapped secret sampling buffers in `SecretBuffer`.
+- **Division-Free Branchless Barrett & QVS Decomposition (`consttime.py`, `ntt_3329.py`, `ntt_8380417.py`):** Upgraded `barrett_reduce_3329`, `montgomery_reduce_3329`, `barrett_reduce_qvs`, `center_qvs`, and `decompose_qvs` (exact `_QVS_ALPHA_M44 = 33587233` across all `8,380,417` residues) to zero-division branchless arithmetic, and aligned C99 `calyx_qpep/native/csrc/ntt_3329.c` and Rust `rust/openqpep-core/src/ntt.rs` on identical `ct_barrett_3329` reduction.
+- **Hardened `QLXEngine` (`calyx_qpep/lattice/qlx_kem.py`):** Added strict bytes-like type validation on `ek`/`dk`/`ct` (`QPEPSuiteError`) and deterministic `try/finally` scrubbing of ephemeral encryption noise vectors (`r_vec`, `e1_vec`, `e2_list`) and decapsulation intermediates (`su_hat`, `w_poly`).
+- **Verification:** Added 7-test regression suite `tests/test_v115_poly_ring_ct.py` including a permanent AST guard forbidding `//` and `%` inside secret lattice arithmetic, exhaustive `0..3328 x d=1..12` compression checks, Native C99 vs. Pure-Python parity tests, and 10/10 Golden KAT verification.
+
+---
 
 ## Official Release `v1.1.4` (2026-11-24) — FIPS 204-Style Hedged Deterministic Signatures & Universal Fault-Guard Across All 10 Suites
 

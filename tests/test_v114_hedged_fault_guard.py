@@ -27,10 +27,10 @@ from calyx_qpep.primitives.hgc448 import ed448_keygen, ed448_sign, ed448_verify
 class TestOpenQPEPv114HedgedAndFaultGuard(unittest.TestCase):
     PASS = "Calyx!@#$_2026v114Aa99"
 
-    def test_01_version_metadata_is_114(self):
-        self.assertEqual(UNIVERSAL_VERSION, "1.1.4")
-        self.assertEqual(UNIVERSAL_VERSION_LABEL, "Official Release 1.1.4")
-        self.assertEqual(PROTOCOL_VERSION, "OpenQPEP/1.1.4")
+    def test_01_version_metadata_format(self):
+        self.assertTrue(UNIVERSAL_VERSION.startswith("1.1."))
+        self.assertEqual(UNIVERSAL_VERSION_LABEL, f"Official Release {UNIVERSAL_VERSION}")
+        self.assertEqual(PROTOCOL_VERSION, f"OpenQPEP/{UNIVERSAL_VERSION}")
 
     def test_02_qvs_hedged_vs_deterministic_and_stuck_rng_resistance(self):
         witness = os.urandom(64)

@@ -1,4 +1,4 @@
-# OpenQPEP Official Release 1.1.4 (v1.1.4)
+# OpenQPEP Official Release 1.1.5 (v1.1.5)
 """
 QPEP-Vault: Zero-knowledge keyed qSponge-512 blind-indexed search over encrypted records.
 """

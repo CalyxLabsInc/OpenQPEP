@@ -1,5 +1,5 @@
 """
-QLX Module-LWE & 4-Manifold Coupled Hyper-Tesseract KEM Engine (Official Release 1.1.4).
+QLX Module-LWE & 4-Manifold Coupled Hyper-Tesseract KEM Engine (Official Release 1.1.5).
 Hardened with branchless ct_cmov Fujisaki-Okamoto implicit rejection and SecretBuffer scrubbing.
 """
 import os
@@ -38,55 +38,66 @@ class QLXEngine:
         rho = ek[-32:]
         t_hat = [byte_decode_12(ek[384 * i : 384 * (i + 1)]) for i in range(k)]
 
-        if manifolds == 1:
-            a_hat = [[sample_ntt_3329(rho, i, j) for j in range(k)] for i in range(k)]
-            r_vec = [ntt_3329(sample_cbd2_3329(coins, i)) for i in range(k)]
-            e1_vec = [sample_cbd2_3329(coins, k + i) for i in range(k)]
-            e2_poly = sample_cbd2_3329(coins, 2 * k)
+        r_vec = []
+        e1_vec = []
+        e2_list = []
+        try:
+            if manifolds == 1:
+                a_hat = [[sample_ntt_3329(rho, i, j) for j in range(k)] for i in range(k)]
+                r_vec = [ntt_3329(sample_cbd2_3329(coins, i)) for i in range(k)]
+                e1_vec = [sample_cbd2_3329(coins, k + i) for i in range(k)]
+                e2_poly = sample_cbd2_3329(coins, 2 * k)
+                e2_list = [e2_poly]
+
+                u_chunks = []
+                for i in range(k):
+                    acc = [0] * 256
+                    for j in range(k):
+                        acc = poly_add_3329(acc, ntt_base_mul_3329(a_hat[j][i], r_vec[j]))
+                    u_i = poly_add_3329(inv_ntt_3329(acc), e1_vec[i])
+                    u_chunks.append(compress_poly(u_i, du))
+
+                v_acc = [0] * 256
+                for j in range(k):
+                    v_acc = poly_add_3329(v_acc, ntt_base_mul_3329(t_hat[j], r_vec[j]))
+                v_poly = poly_add_3329(inv_ntt_3329(v_acc), e2_poly)
+                m_poly = decompress_poly(msg32, 1)
+                v_poly = poly_add_3329(v_poly, m_poly)
+                v_bytes = compress_poly(v_poly, dv)
+                return b"".join(u_chunks) + v_bytes
+
+            k_m = k // manifolds
+            h_ek = qsponge_var(b"CALYX-QLX-H-EK-v1.0.0|" + ek, 32)
+            m_rhos = derive_tesseract_manifold_seeds(rho, manifolds)
+            mu_blocks = derive_tesseract_mu_blocks(msg32, h_ek, manifolds)
+            r_vec = [ntt_3329(sample_cbd1_3329(coins, i)) for i in range(k)]
+            e1_vec = [sample_cbd1_3329(coins, k + i) for i in range(k)]
+            e2_vec = [sample_cbd1_3329(coins, 2 * k + m) for m in range(manifolds)]
+            e2_list = e2_vec
 
             u_chunks = []
-            for i in range(k):
-                acc = [0] * 256
-                for j in range(k):
-                    acc = poly_add_3329(acc, ntt_base_mul_3329(a_hat[j][i], r_vec[j]))
-                u_i = poly_add_3329(inv_ntt_3329(acc), e1_vec[i])
-                u_chunks.append(compress_poly(u_i, du))
-
-            v_acc = [0] * 256
-            for j in range(k):
-                v_acc = poly_add_3329(v_acc, ntt_base_mul_3329(t_hat[j], r_vec[j]))
-            v_poly = poly_add_3329(inv_ntt_3329(v_acc), e2_poly)
-            m_poly = decompress_poly(msg32, 1)
-            v_poly = poly_add_3329(v_poly, m_poly)
-            v_bytes = compress_poly(v_poly, dv)
-            return b"".join(u_chunks) + v_bytes
-
-        k_m = k // manifolds
-        h_ek = qsponge_var(b"CALYX-QLX-H-EK-v1.0.0|" + ek, 32)
-        m_rhos = derive_tesseract_manifold_seeds(rho, manifolds)
-        mu_blocks = derive_tesseract_mu_blocks(msg32, h_ek, manifolds)
-        r_vec = [ntt_3329(sample_cbd1_3329(coins, i)) for i in range(k)]
-        e1_vec = [sample_cbd1_3329(coins, k + i) for i in range(k)]
-        e2_vec = [sample_cbd1_3329(coins, 2 * k + m) for m in range(manifolds)]
-
-        u_chunks = []
-        v_chunks = []
-        for m in range(manifolds):
-            a_m = [[sample_ntt_3329(m_rhos[m], i, j) for j in range(k_m)] for i in range(k_m)]
-            base = m * k_m
-            for i in range(k_m):
-                acc = [0] * 256
+            v_chunks = []
+            for m in range(manifolds):
+                a_m = [[sample_ntt_3329(m_rhos[m], i, j) for j in range(k_m)] for i in range(k_m)]
+                base = m * k_m
+                for i in range(k_m):
+                    acc = [0] * 256
+                    for j in range(k_m):
+                        acc = poly_add_3329(acc, ntt_base_mul_3329(a_m[j][i], r_vec[base + j]))
+                    u_i = poly_add_3329(inv_ntt_3329(acc), e1_vec[base + i])
+                    u_chunks.append(compress_poly(u_i, du))
+                v_acc = [0] * 256
                 for j in range(k_m):
-                    acc = poly_add_3329(acc, ntt_base_mul_3329(a_m[j][i], r_vec[base + j]))
-                u_i = poly_add_3329(inv_ntt_3329(acc), e1_vec[base + i])
-                u_chunks.append(compress_poly(u_i, du))
-            v_acc = [0] * 256
-            for j in range(k_m):
-                v_acc = poly_add_3329(v_acc, ntt_base_mul_3329(t_hat[base + j], r_vec[base + j]))
-            v_m = poly_add_3329(inv_ntt_3329(v_acc), e2_vec[m])
-            v_m = poly_add_3329(v_m, decompress_poly(mu_blocks[m], 1))
-            v_chunks.append(compress_poly(v_m, dv))
-        return b"".join(u_chunks) + b"".join(v_chunks)
+                    v_acc = poly_add_3329(v_acc, ntt_base_mul_3329(t_hat[base + j], r_vec[base + j]))
+                v_m = poly_add_3329(inv_ntt_3329(v_acc), e2_vec[m])
+                v_m = poly_add_3329(v_m, decompress_poly(mu_blocks[m], 1))
+                v_chunks.append(compress_poly(v_m, dv))
+            return b"".join(u_chunks) + b"".join(v_chunks)
+        finally:
+            for vec in (r_vec, e1_vec, e2_list):
+                for poly in vec:
+                    for idx in range(len(poly)):
+                        poly[idx] = 0
 
     @staticmethod
     def keygen(tier: str = "QLX-4096", policy_witness: bytes = b"") -> Tuple[bytes, bytes]:
@@ -151,8 +162,9 @@ class QLXEngine:
         if tier not in QLX_TIERS:
             raise QPEPSuiteError(f"Unsupported QLX tier: {tier}")
         spec = QLX_TIERS[tier]
-        if len(ek) != spec["pk_bytes"]:
-            raise QPEPSuiteError(f"Invalid {tier} public key length: {len(ek)}")
+        if not isinstance(ek, (bytes, bytearray, memoryview)) or len(ek) != spec["pk_bytes"]:
+            raise QPEPSuiteError(f"Invalid {tier} public key length or type.")
+        ek = bytes(ek)
 
         h_ek = qsponge_var(b"CALYX-QLX-H-EK-v1.0.0|" + ek, 32)
         with SecretBuffer(os.urandom(32)) as msg_buf:
@@ -170,11 +182,19 @@ class QLXEngine:
         k, du, dv = spec["k"], spec["du"], spec["dv"]
         manifolds = spec.get("manifolds", 1)
         pk_len, sk_len, ct_len = spec["pk_bytes"], spec["sk_bytes"], spec["ct_bytes"]
-        if len(dk) != sk_len or len(ct) != ct_len:
+        if (
+            not isinstance(dk, (bytes, bytearray, memoryview))
+            or not isinstance(ct, (bytes, bytearray, memoryview))
+            or len(dk) != sk_len
+            or len(ct) != ct_len
+        ):
             raise QPEPSuiteError(f"Invalid {tier} secret key or ciphertext length.")
+        ct = bytes(ct)
 
         s_bytes_len = 384 * k
         s_hat = []
+        su_hat = [0] * 256
+        w_poly = [0] * 256
         try:
             with SecretBuffer(dk) as dk_buf:
                 raw_dk = dk_buf.raw
@@ -190,7 +210,6 @@ class QLXEngine:
                 v_poly0 = decompress_poly(ct[k * u_step : k * u_step + v_step], dv)
 
                 k_m = k // manifolds
-                su_hat = [0] * 256
                 for j in range(k_m):
                     su_hat = poly_add_3329(su_hat, ntt_base_mul_3329(s_hat[j], ntt_3329(u_vec[j])))
                 w_poly = poly_sub_3329(v_poly0, inv_ntt_3329(su_hat))
@@ -210,3 +229,7 @@ class QLXEngine:
             for poly in s_hat:
                 for idx in range(len(poly)):
                     poly[idx] = 0
+            for idx in range(len(su_hat)):
+                su_hat[idx] = 0
+            for idx in range(len(w_poly)):
+                w_poly[idx] = 0

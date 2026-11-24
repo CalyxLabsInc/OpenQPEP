@@ -1,5 +1,5 @@
 """
-OpenQPEP Anonymous Mixed-Tier Multi-Recipient Broadcast Encryption (Official Release 1.1.4 / Wire v5).
+OpenQPEP Anonymous Mixed-Tier Multi-Recipient Broadcast Encryption (Official Release 1.1.5 / Wire v5).
 
 Features:
   1. Single-Pass CEK Encryption: Encrypts payload once with a fresh 512-bit CMT-4 Key-Committing

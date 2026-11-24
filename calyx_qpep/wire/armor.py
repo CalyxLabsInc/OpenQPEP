@@ -1,5 +1,5 @@
 """
-OpenQPEP Zero-Metadata ASCII Armor Codec (Official Release 1.1.4 / Wire Format v5 \\x89QPE\\x05\\x00).
+OpenQPEP Zero-Metadata ASCII Armor Codec (Official Release 1.1.5 / Wire Format v5 \\x89QPE\\x05\\x00).
 
 Security Guarantees:
   - Zero cleartext identity metadata headers (never emits Sender/Recipient/Signer Key Hashes).
