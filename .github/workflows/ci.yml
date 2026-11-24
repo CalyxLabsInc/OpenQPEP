@@ -1,4 +1,4 @@
-# OpenQPEP Official Release 1.2.2 (v1.2.2) CI Verification Pipeline
+# OpenQPEP Official Release 1.2.3 (v1.2.3) CI Verification Pipeline
 name: OpenQPEP CI
 on: [push, pull_request]
 jobs:
@@ -11,7 +11,7 @@ jobs:
           python-version: "3.11"
       - name: Compile Native C99 libopenqpep SDK Shared + Static + pkg-config (-Wall -Wextra -Werror -Wpedantic)
         run: make -C calyx_qpep/native/csrc clean all
-      - name: Install OpenQPEP Official Release 1.2.2
+      - name: Install OpenQPEP Official Release 1.2.3
         run: pip install -e .
       - name: Verify 10/10 Deterministic Golden KAT Vectors (Native C99)
         run: python3 -m calyx_qpep.cli verify-vectors
@@ -21,5 +21,5 @@ jobs:
         run: python3 -m calyx_qpep.cli audit
       - name: Run Phase 1 Consolidation Security Gate (Pure-Python Reference)
         run: OPENQPEP_DISABLE_NATIVE=1 python3 -m unittest tests/test_v119_phase1_audit.py -v
-      - name: Run Full OpenQPEP Official Release 1.2.2 Test & Audit Suite
+      - name: Run Full OpenQPEP Official Release 1.2.3 Test & Audit Suite
         run: python3 -m unittest discover -s tests -v

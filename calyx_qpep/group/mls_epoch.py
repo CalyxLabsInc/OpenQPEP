@@ -1,6 +1,6 @@
 """
 QPEP-MLS: O(log N) Post-Quantum TreeKEM Group Key Agreement over QLX + HGC-448 + CMT-4 CC-512
-(Official Release 1.2.2 / v1.2.2).
+(Official Release 1.2.3 / v1.2.3).
 Supports member add, remove, epoch PCS commits, per-(epoch, sender) replay protection,
 and active SecretBuffer epoch-secret zeroization on rotation and destruction.
 """

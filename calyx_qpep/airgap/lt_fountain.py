@@ -1,4 +1,4 @@
-# OpenQPEP Official Release 1.2.2 (v1.2.2)
+# OpenQPEP Official Release 1.2.3 (v1.2.3)
 """
 Rateless Luby-Transform (LT) QR Fountain Codec for transferring 24–69 KB PQ keys/packets
 over air-gapped cameras with automatic drop resilience and qSponge-512 integrity check.

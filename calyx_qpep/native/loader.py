@@ -1,5 +1,5 @@
 """
-OpenQPEP Native C99 / SIMD Vectorized Acceleration Loader (libopenqpep) — Official Release 1.2.2.
+OpenQPEP Native C99 / SIMD Vectorized Acceleration Loader (libopenqpep) — Official Release 1.2.3.
 Loads libopenqpep.so / .dylib / .dll via ctypes with zero-copy array.array buffer marshaling.
 Seamlessly falls back to the bit-exact pure-Python reference engine when absent or disabled.
 """
@@ -204,6 +204,40 @@ def _configure_signatures(lib: ctypes.CDLL) -> None:
             ctypes.c_char_p, ctypes.c_uint32, ctypes.c_uint32, _c_void_p, _c_void_p, ctypes.c_int, _c_void_p
         ]
         lib.openqpep_qvs_matvec.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_plain_lwe_sample_noise"):
+        lib.openqpep_plain_lwe_sample_noise.argtypes = [
+            ctypes.c_char_p, ctypes.c_size_t, ctypes.c_char_p, ctypes.c_size_t, ctypes.c_size_t, _c_void_p
+        ]
+        lib.openqpep_plain_lwe_sample_noise.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_plain_lwe_expand_row"):
+        lib.openqpep_plain_lwe_expand_row.argtypes = [ctypes.c_char_p, ctypes.c_uint32, ctypes.c_uint32, _c_void_p]
+        lib.openqpep_plain_lwe_expand_row.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_plain_lwe_keygen_matrix"):
+        lib.openqpep_plain_lwe_keygen_matrix.argtypes = [
+            ctypes.c_char_p, _c_void_p, _c_void_p, ctypes.c_uint32, ctypes.c_uint32, _c_void_p
+        ]
+        lib.openqpep_plain_lwe_keygen_matrix.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_plain_lwe_keygen_from_seeds"):
+        lib.openqpep_plain_lwe_keygen_from_seeds.argtypes = [
+            ctypes.c_uint32, ctypes.c_uint32, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_char_p,
+            _c_void_p, ctypes.c_size_t, _c_void_p, ctypes.c_size_t,
+        ]
+        lib.openqpep_plain_lwe_keygen_from_seeds.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_plain_lwe_indcpa_enc"):
+        lib.openqpep_plain_lwe_indcpa_enc.argtypes = [
+            ctypes.c_char_p, ctypes.c_size_t, ctypes.c_char_p, ctypes.c_char_p, _c_void_p, ctypes.c_size_t
+        ]
+        lib.openqpep_plain_lwe_indcpa_enc.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_plain_lwe_encaps"):
+        lib.openqpep_plain_lwe_encaps.argtypes = [
+            ctypes.c_char_p, ctypes.c_size_t, ctypes.c_char_p, _c_void_p, ctypes.c_size_t, _c_void_p
+        ]
+        lib.openqpep_plain_lwe_encaps.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_plain_lwe_decaps"):
+        lib.openqpep_plain_lwe_decaps.argtypes = [
+            ctypes.c_char_p, ctypes.c_size_t, ctypes.c_char_p, ctypes.c_size_t, _c_void_p
+        ]
+        lib.openqpep_plain_lwe_decaps.restype = ctypes.c_int
 
 
 _try_load_library()
@@ -921,3 +955,167 @@ def native_qvs_matvec(
         if add_flat is not None:
             _wipe_i32_array(add_flat)
         _wipe_i32_array(out_flat)
+
+
+def _wipe_ctypes_buf(buf: ctypes.Array) -> None:
+    if _LIB is not None and hasattr(_LIB, "openqpep_explicit_bzero") and len(buf) > 0:
+        _LIB.openqpep_explicit_bzero(ctypes.addressof(buf), len(buf))
+
+
+def native_plain_lwe_sample_noise(domain: bytes, seed: bytes, count: int) -> Optional[List[int]]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_plain_lwe_sample_noise")):
+        return None
+    if count < 0:
+        raise ValueError("count must be non-negative.")
+    if count == 0:
+        return []
+    dom_b = domain if isinstance(domain, bytes) else bytes(domain)
+    seed_b = seed if isinstance(seed, bytes) else bytes(seed)
+    out = array.array("H", [0] * count)
+    try:
+        rc = int(
+            _LIB.openqpep_plain_lwe_sample_noise(
+                dom_b if dom_b else None,
+                len(dom_b),
+                seed_b if seed_b else None,
+                len(seed_b),
+                count,
+                out.buffer_info()[0],
+            )
+        )
+        if rc != 0:
+            raise ValueError(f"openqpep_plain_lwe_sample_noise failed with status {rc}.")
+        return out.tolist()
+    finally:
+        _wipe_i32_array(out)
+
+
+def native_plain_lwe_expand_row(seed_a: bytes, row_idx: int, n: int) -> Optional[List[int]]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_plain_lwe_expand_row")):
+        return None
+    raw_seed = seed_a if isinstance(seed_a, bytes) else bytes(seed_a)
+    if len(raw_seed) != 32 or n <= 0:
+        return None
+    out = array.array("H", [0] * n)
+    rc = int(_LIB.openqpep_plain_lwe_expand_row(raw_seed, row_idx & 0xFFFFFFFF, n, out.buffer_info()[0]))
+    if rc != 0:
+        raise ValueError(f"openqpep_plain_lwe_expand_row failed with status {rc}.")
+    return out.tolist()
+
+
+def native_plain_lwe_keygen_matrix(
+    seed_a: bytes,
+    s_flat: List[int],
+    e_flat: List[int],
+    n: int,
+    nbar: int,
+) -> Optional[List[int]]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_plain_lwe_keygen_matrix")):
+        return None
+    raw_seed = seed_a if isinstance(seed_a, bytes) else bytes(seed_a)
+    elems = n * nbar
+    if len(raw_seed) != 32 or n <= 0 or nbar <= 0 or len(s_flat) != elems or len(e_flat) != elems:
+        return None
+    s_arr = array.array("H", s_flat)
+    e_arr = array.array("H", e_flat)
+    b_arr = array.array("H", [0] * elems)
+    try:
+        rc = int(
+            _LIB.openqpep_plain_lwe_keygen_matrix(
+                raw_seed,
+                s_arr.buffer_info()[0],
+                e_arr.buffer_info()[0],
+                n,
+                nbar,
+                b_arr.buffer_info()[0],
+            )
+        )
+        if rc != 0:
+            raise ValueError(f"openqpep_plain_lwe_keygen_matrix failed with status {rc}.")
+        return b_arr.tolist()
+    finally:
+        _wipe_i32_array(s_arr)
+        _wipe_i32_array(e_arr)
+        _wipe_i32_array(b_arr)
+
+
+def native_plain_lwe_keygen_from_seeds(
+    n: int,
+    nbar: int,
+    seed_a: bytes,
+    seed_s: bytes,
+    seed_z: bytes,
+) -> Optional[Tuple[bytes, bytes]]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_plain_lwe_keygen_from_seeds")):
+        return None
+    sa = seed_a if isinstance(seed_a, bytes) else bytes(seed_a)
+    ss = seed_s if isinstance(seed_s, bytes) else bytes(seed_s)
+    sz = seed_z if isinstance(seed_z, bytes) else bytes(seed_z)
+    if len(sa) != 32 or len(ss) != 32 or len(sz) != 32 or n <= 0 or nbar <= 0:
+        return None
+    elems = n * nbar
+    pk_len = 36 + 2 * elems
+    sk_len = 36 + pk_len + 2 * elems
+    pk_buf = ctypes.create_string_buffer(pk_len)
+    sk_buf = ctypes.create_string_buffer(sk_len)
+    try:
+        rc = int(_LIB.openqpep_plain_lwe_keygen_from_seeds(n, nbar, sa, ss, sz, pk_buf, pk_len, sk_buf, sk_len))
+        if rc != 0:
+            raise ValueError(f"openqpep_plain_lwe_keygen_from_seeds failed with status {rc}.")
+        return pk_buf.raw, sk_buf.raw
+    finally:
+        _wipe_ctypes_buf(sk_buf)
+
+
+def native_plain_lwe_indcpa_enc(pk: bytes, msg16: bytes, coins32: bytes) -> Optional[bytes]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_plain_lwe_indcpa_enc")):
+        return None
+    pk_b = pk if isinstance(pk, bytes) else bytes(pk)
+    m_b = msg16 if isinstance(msg16, bytes) else bytes(msg16)
+    c_b = coins32 if isinstance(coins32, bytes) else bytes(coins32)
+    if len(pk_b) < 36 or len(m_b) != 16 or len(c_b) != 32:
+        return None
+    n = pk_b[0] | (pk_b[1] << 8)
+    nbar = pk_b[2] | (pk_b[3] << 8)
+    ct_len = 2 * nbar * n + 2 * nbar * nbar
+    ct_buf = ctypes.create_string_buffer(ct_len)
+    rc = int(_LIB.openqpep_plain_lwe_indcpa_enc(pk_b, len(pk_b), m_b, c_b, ct_buf, ct_len))
+    if rc != 0:
+        raise ValueError(f"openqpep_plain_lwe_indcpa_enc failed with status {rc}.")
+    return ct_buf.raw
+
+
+def native_plain_lwe_encaps(pk: bytes, msg16: bytes) -> Optional[Tuple[bytes, bytes]]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_plain_lwe_encaps")):
+        return None
+    pk_b = pk if isinstance(pk, bytes) else bytes(pk)
+    m_b = msg16 if isinstance(msg16, bytes) else bytes(msg16)
+    if len(pk_b) < 36 or len(m_b) != 16:
+        return None
+    n = pk_b[0] | (pk_b[1] << 8)
+    nbar = pk_b[2] | (pk_b[3] << 8)
+    ct_len = 2 * nbar * n + 2 * nbar * nbar
+    ct_buf = ctypes.create_string_buffer(ct_len)
+    ss_buf = ctypes.create_string_buffer(32)
+    try:
+        rc = int(_LIB.openqpep_plain_lwe_encaps(pk_b, len(pk_b), m_b, ct_buf, ct_len, ss_buf))
+        if rc != 0:
+            raise ValueError(f"openqpep_plain_lwe_encaps failed with status {rc}.")
+        return ct_buf.raw, ss_buf.raw
+    finally:
+        _wipe_ctypes_buf(ss_buf)
+
+
+def native_plain_lwe_decaps(sk: bytes, ct: bytes) -> Optional[bytes]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_plain_lwe_decaps")):
+        return None
+    sk_b = sk if isinstance(sk, bytes) else bytes(sk)
+    ct_b = ct if isinstance(ct, bytes) else bytes(ct)
+    ss_buf = ctypes.create_string_buffer(32)
+    try:
+        rc = int(_LIB.openqpep_plain_lwe_decaps(sk_b, len(sk_b), ct_b, len(ct_b), ss_buf))
+        if rc != 0:
+            raise ValueError(f"openqpep_plain_lwe_decaps failed with status {rc}.")
+        return ss_buf.raw
+    finally:
+        _wipe_ctypes_buf(ss_buf)

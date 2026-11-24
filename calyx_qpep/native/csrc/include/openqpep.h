@@ -1,5 +1,5 @@
 /*
- * OpenQPEP Official Release 1.2.2 (v1.2.2) — Public C99/SIMD SDK ABI Header
+ * OpenQPEP Official Release 1.2.3 (v1.2.3) — Public C99/SIMD SDK ABI Header
  * Project: OpenQPEP by Calyx Labs Inc. (Creator: Tristen Martinez)
  * Repository: https://github.com/CalyxLabsInc/OpenQPEP
  * License: Calyx Public Open Source Specifications v1.0 License (CPOSLS-1.0)
@@ -23,8 +23,8 @@ extern "C" {
 /* ------------------------------------------------------------------------- */
 #define OPENQPEP_VERSION_MAJOR 1
 #define OPENQPEP_VERSION_MINOR 2
-#define OPENQPEP_VERSION_PATCH 2
-#define OPENQPEP_VERSION_STRING "1.2.2"
+#define OPENQPEP_VERSION_PATCH 3
+#define OPENQPEP_VERSION_STRING "1.2.3"
 
 #define OPENQPEP_ABI_CURRENT  1
 #define OPENQPEP_ABI_REVISION 2
@@ -65,6 +65,9 @@ extern "C" {
 #define OPENQPEP_QLX_N 256
 #define OPENQPEP_QVS_Q 8380417
 #define OPENQPEP_QVS_N 256
+#define OPENQPEP_PLAIN_LWE_Q        65536U
+#define OPENQPEP_PLAIN_LWE_MAX_N    8192U
+#define OPENQPEP_PLAIN_LWE_MAX_NBAR 8U
 #define OPENQPEP_WIRE_V5_MAGIC_LEN 6
 
 /* Keccak-f[1600] / NIST FIPS 202 Sponge Constants */
@@ -282,6 +285,76 @@ OPENQPEP_API void openqpep_plain_lwe_keygen_row_u16(
     const uint16_t *s_flat,
     uint32_t n,
     uint32_t nbar
+);
+
+/** Samples `count` centered binomial CBD_2 noise values mod 65536 via SHAKE-256(domain || seed). */
+OPENQPEP_API int openqpep_plain_lwe_sample_noise(
+    const uint8_t *domain,
+    size_t domain_len,
+    const uint8_t *seed,
+    size_t seed_len,
+    size_t count,
+    uint16_t *out_u16
+);
+
+/** Expands row `row_idx` (length `n` uint16_t) of unstructured Plain-LWE matrix A from seed_a. */
+OPENQPEP_API int openqpep_plain_lwe_expand_row(
+    const uint8_t seed_a[32],
+    uint32_t row_idx,
+    uint32_t n,
+    uint16_t *out_row
+);
+
+/** Row-streamed O(1)-RAM Plain-LWE keygen matrix product B = A * S + E mod 65536. */
+OPENQPEP_API int openqpep_plain_lwe_keygen_matrix(
+    const uint8_t seed_a[32],
+    const uint16_t *s_flat,
+    const uint16_t *e_flat,
+    uint32_t n,
+    uint32_t nbar,
+    uint16_t *b_flat_out
+);
+
+/** Full one-shot C99 Plain-LWE keygen from 32-byte (seed_a, seed_s, seed_z) writing pk & sk. */
+OPENQPEP_API int openqpep_plain_lwe_keygen_from_seeds(
+    uint32_t n,
+    uint32_t nbar,
+    const uint8_t seed_a[32],
+    const uint8_t seed_s[32],
+    const uint8_t seed_z[32],
+    uint8_t *pk_out,
+    size_t pk_len,
+    uint8_t *sk_out,
+    size_t sk_len
+);
+
+/** Full one-shot C99 row-streamed Plain-LWE IND-CPA encryption writing ciphertext ct_out. */
+OPENQPEP_API int openqpep_plain_lwe_indcpa_enc(
+    const uint8_t *pk,
+    size_t pk_len,
+    const uint8_t msg16[16],
+    const uint8_t coins32[32],
+    uint8_t *ct_out,
+    size_t ct_len
+);
+
+/** Full one-shot C99 Plain-LWE Fujisaki-Okamoto IND-CCA2 encapsulation from 16-byte msg16. */
+OPENQPEP_API int openqpep_plain_lwe_encaps(
+    const uint8_t *pk,
+    size_t pk_len,
+    const uint8_t msg16[16],
+    uint8_t *ct_out,
+    size_t ct_len,
+    uint8_t ss_out[32]
+);
+
+/** Full one-shot constant-time C99 Plain-LWE Fujisaki-Okamoto IND-CCA2 decapsulation (ct_cmov). */
+OPENQPEP_API int openqpep_plain_lwe_decaps(
+    const uint8_t *sk,
+    size_t sk_len,
+    const uint8_t *ct,
+    size_t ct_len,
+    uint8_t ss_out[32]
 );
 
 /* ------------------------------------------------------------------------- */

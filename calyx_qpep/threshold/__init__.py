@@ -1,4 +1,4 @@
-"""OpenQPEP Official Release 1.2.2 — Distributed Proactive Threshold Decryption (t-of-n TKEM)."""
+"""OpenQPEP Official Release 1.2.3 — Distributed Proactive Threshold Decryption (t-of-n TKEM)."""
 from .tkem import ThresholdKEM
 
 __all__ = ["ThresholdKEM"]

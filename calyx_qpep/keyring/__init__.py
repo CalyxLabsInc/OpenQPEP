@@ -1,4 +1,4 @@
-"""OpenQPEP Key Lifecycle: .qpkrf Codec, Rotatable Subkeys, & .qrev Revocation (Official Release 1.2.2)."""
+"""OpenQPEP Key Lifecycle: .qpkrf Codec, Rotatable Subkeys, & .qrev Revocation (Official Release 1.2.3)."""
 from .qpkrf_model import QPEPKeyRing
 from .qpkrf_codec import export_qpkrf, import_qpkrf
 from .subkeys import VALID_SUBKEY_ROLES, QPEPSubkey, issue_subkey, verify_subkey

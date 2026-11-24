@@ -1,4 +1,4 @@
-# OpenQPEP Official Release 1.2.2 (v1.2.2)
+# OpenQPEP Official Release 1.2.3 (v1.2.3)
 """
 Constant-Time Polynomial Ring Sampling (NTT Rejection, CBD_1, CBD_2, Ball Challenge) &
 Division-Free Bit-Packing / Compression Codecs (KyberSlash-Free Barrett Arithmetic).

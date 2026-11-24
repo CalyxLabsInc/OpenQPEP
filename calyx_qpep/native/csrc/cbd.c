@@ -1,7 +1,6 @@
 /*
- * OpenQPEP Native C99 Centered Binomial Distribution (CBD_1 / CBD_2) Samplers,
- * Calyx Sovereign-Pentad Sovereign-Pentad Plain-LWE Matrix-Vector Accelerators, and ABI Probe.
- * Official Release 1.2.2 — Calyx Labs Inc. (CPOSLS-1.0)
+ * OpenQPEP Native C99 Centered Binomial Distribution (CBD_1 / CBD_2) Samplers and ABI Probe.
+ * Official Release 1.2.3 — Calyx Labs Inc. (CPOSLS-1.0)
  */
 #include "openqpep.h"
 
@@ -71,45 +70,5 @@ OPENQPEP_API void openqpep_cbd2_qvs(const uint8_t *buf, int32_t *out) {
         int32_t d1 = a1 - b1;
         out[2 * i] = ct_caddq_cbd(d0, QVS_Q);
         out[2 * i + 1] = ct_caddq_cbd(d1, QVS_Q);
-    }
-}
-
-/*
- * Calyx Sovereign-Pentad (CSP-Omega): Native C99 Unstructured Plain-LWE
- * row-accumulated matrix-vector multiply over Z_65536 (zero ring ideal / zero NTT).
- * Computes dst[j] = (dst[j] + scalar * row[j]) mod 65536 for j in [0, n).
- */
-OPENQPEP_API void openqpep_plain_lwe_row_accum_u16(
-    uint16_t *dst,
-    const uint16_t *row,
-    uint16_t scalar,
-    uint32_t n
-) {
-    if (!dst || !row) return;
-    for (uint32_t j = 0; j < n; j++) {
-        dst[j] = (uint16_t)(dst[j] + (uint16_t)(scalar * row[j]));
-    }
-}
-
-/*
- * Computes dot_out[j] = (e_row[j] + sum_{k=0}^{n-1} a_row[k] * s_flat[k * nbar + j]) mod 65536
- * for j in [0, nbar).
- */
-OPENQPEP_API void openqpep_plain_lwe_keygen_row_u16(
-    uint16_t *b_row,
-    const uint16_t *e_row,
-    const uint16_t *a_row,
-    const uint16_t *s_flat,
-    uint32_t n,
-    uint32_t nbar
-) {
-    if (!b_row || !e_row || !a_row || !s_flat) return;
-    for (uint32_t j = 0; j < nbar; j++) {
-        uint16_t acc = e_row[j];
-        for (uint32_t k = 0; k < n; k++) {
-            size_t idx = (size_t)k * (size_t)nbar + (size_t)j;
-            acc = (uint16_t)(acc + (uint16_t)(a_row[k] * s_flat[idx]));
-        }
-        b_row[j] = acc;
     }
 }

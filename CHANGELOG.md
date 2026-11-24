@@ -1,4 +1,15 @@
-# OpenQPEP Core Protocol Changelog — Official Release `v1.2.2`
+# OpenQPEP Core Protocol Changelog — Official Release `v1.2.3`
+
+## Official Release `v1.2.3` (2026-11-24) — Native C99 Plain-LWE Row-Streamed Matrix Accelerator (`CULC-2048` / `CSP-Omega`)
+
+- **Dedicated Native C99 Row-Streamed Unstructured Plain-LWE Engine (`calyx_qpep/native/csrc/plain_lwe_c.c`):**
+  - Implemented `plain_lwe_c.c` (and relocated preserved `openqpep_plain_lwe_row_accum_u16` / `openqpep_plain_lwe_keygen_row_u16` cleanly out of `cbd.c`) with 7 new `OPENQPEP_API` functions (`openqpep_plain_lwe_sample_noise`, `openqpep_plain_lwe_expand_row`, `openqpep_plain_lwe_keygen_matrix`, `openqpep_plain_lwe_keygen_from_seeds`, `openqpep_plain_lwe_indcpa_enc`, `openqpep_plain_lwe_encaps`, `openqpep_plain_lwe_decaps`), bumping `OPENQPEP_ABI_VERSION` to `0x00010203U` (`64` total exported `OPENQPEP_API` symbols across Makefile & CMake).
+  - Streams unstructured matrix `A` in 512-byte (256-uint16) tiles directly off C99 `SHAKE-256` (`keccak_f1600.c`) with unit-stride AVX2/NEON-vectorizable `uint16_t` multiply-accumulate loops, pthread-safe 4 KiB stack fast-path (`n <= 256`) with automatic heap fallback for larger `n`, constant-time `openqpep_ct_eq` + `openqpep_ct_cmov` Fujisaki-Okamoto implicit rejection, and compiler-barrier `openqpep_explicit_bzero` scrubbing of all secret intermediates.
+- **Transparent Dispatch & Bounds Hardening (`loader.py`, `plain_lwe.py`):**
+  - Wired all 7 new C99 Plain-LWE functions into `calyx_qpep/native/loader.py` and `calyx_qpep/lattice/plain_lwe.py`, adding strict `(n, nbar)` and key/ciphertext length bounds validation and `SecretBuffer` scrubbing while retaining 100% bit-exact Pure-Python fallback under `OPENQPEP_DISABLE_NATIVE=1`.
+- **Verification:** Added 6-test suite `tests/test_v123_c99_plain_lwe.py` verifying all 9 Plain-LWE dynamic exports, stack & multi-tile (`n=300`/`320`) parity, tampered FO implicit rejection, cross-backend `CULC-2048` & `CSP-Omega` round-trips, order-of-magnitude (`>= 10x`) C99 speedups, standalone `-Wpedantic` C99 static/shared consumers, 10/10 Native C99 + 10/10 Pure-Python Golden KATs, and 187/187 unit & AST tests.
+
+---
 
 ## Official Release `v1.2.2` (2026-11-24) — Native C99 Polynomial Ring & Matrix-Vector Engine (`QLX` + `QVS`)
 

@@ -1,7 +1,7 @@
 """
-OpenQPEP Official Release 1.2.2 (v1.2.2) Cryptographic Perfection & Security Regression Suite.
+OpenQPEP Official Release 1.2.3 (v1.2.3) Cryptographic Perfection & Security Regression Suite.
 Verifies EVERY cryptographic, protocol, parser, sub-protocol, native C99, CLI, and
-zero-backwards-compatibility guarantee introduced for Official Release 1.2.2:
+zero-backwards-compatibility guarantee introduced for Official Release 1.2.3:
   1. CMT-4 Key-Committing CC-512 AEAD
   2. Genuine Beyond-LWE engines (Goppa Patterson, LRPC Rank-Metric, UOV, CSIDH-512 Bimodal SeaSign, Module-SIS QVS-Ring)
   3. Keyring suite & Beyond-LWE key-hash binding + unified Beyond-LWE authenticated envelopes
@@ -335,7 +335,7 @@ class TestOpenQPEPv100OfficialReleasePerfection(unittest.TestCase):
             sig_p = td / "plain.txt.qsig"
             ext_p = td / "verified.txt"
             rev_p = td / "alice.qrev"
-            in_p.write_text("Official Release 1.2.2 CLI pipeline message!", encoding="utf-8")
+            in_p.write_text("Official Release 1.2.3 CLI pipeline message!", encoding="utf-8")
 
             self.assertEqual(cli_main([
                 "keygen", "--name", "Alice", "--email", "alice@calyxmail.org",
@@ -384,8 +384,8 @@ class TestOpenQPEPv100OfficialReleasePerfection(unittest.TestCase):
         self.assertFalse(native_ct_eq(b"OpenQPEP-CTEQ-A", b"OpenQPEP-CTEQ-B"))
 
     def test_08_zero_backwards_compatibility_all_legacy_prereleases_rejected(self):
-        self.assertEqual(UNIVERSAL_VERSION, "1.2.2")
-        self.assertEqual(PROTOCOL_VERSION, "OpenQPEP/1.2.2")
+        self.assertEqual(UNIVERSAL_VERSION, "1.2.3")
+        self.assertEqual(PROTOCOL_VERSION, "OpenQPEP/1.2.3")
         self.assertEqual(MANDATORY_KDF_VERSION, 4)
 
         # Reject ALL legacy -rc, -pc, and -beta wire magics

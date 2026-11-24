@@ -1,4 +1,4 @@
-"""OpenQPEP Official Binary Wire Framing v5, Compact TLV v5.1, Zero-Metadata Armor, Streaming & Multi-Recipient Engine (v1.2.2)."""
+"""OpenQPEP Official Binary Wire Framing v5, Compact TLV v5.1, Zero-Metadata Armor, Streaming & Multi-Recipient Engine (v1.2.3)."""
 from .framing import (
     BUCKET_SIZES,
     MAX_BUCKET_SIZE,
