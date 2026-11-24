@@ -34,7 +34,7 @@ class TestOpenQPEPv112MemoryLocking(unittest.TestCase):
     PASS = "Calyx!@#$_2026v112Aa99"
 
     def test_01_version_metadata_format(self):
-        self.assertTrue(UNIVERSAL_VERSION.startswith("1.1."))
+        self.assertTrue(UNIVERSAL_VERSION.startswith(("1.", "2.")))
         self.assertEqual(UNIVERSAL_VERSION_LABEL, f"Official Release {UNIVERSAL_VERSION}")
         self.assertEqual(PROTOCOL_VERSION, f"OpenQPEP/{UNIVERSAL_VERSION}")
 

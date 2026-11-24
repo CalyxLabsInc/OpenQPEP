@@ -1,5 +1,5 @@
 """
-OpenQPEP Native C99 / SIMD Vectorized Acceleration Loader (libopenqpep) — Official Release 1.1.9.
+OpenQPEP Native C99 / SIMD Vectorized Acceleration Loader (libopenqpep) — Official Release 1.2.0.
 Loads libopenqpep.so / .dylib / .dll via ctypes with zero-copy array.array buffer marshaling.
 Seamlessly falls back to the bit-exact pure-Python reference engine when absent or disabled.
 """
@@ -45,6 +45,13 @@ def _try_load_library() -> Optional[ctypes.CDLL]:
 
 
 def _configure_signatures(lib: ctypes.CDLL) -> None:
+    if hasattr(lib, "openqpep_abi_version"):
+        lib.openqpep_abi_version.argtypes = []
+        lib.openqpep_abi_version.restype = ctypes.c_uint32
+    if hasattr(lib, "openqpep_version_string"):
+        lib.openqpep_version_string.argtypes = []
+        lib.openqpep_version_string.restype = ctypes.c_char_p
+
     lib.openqpep_native_abi_info.argtypes = []
     lib.openqpep_native_abi_info.restype = ctypes.c_uint32
 
@@ -118,12 +125,27 @@ def set_native_enabled(enabled: bool) -> None:
     _NATIVE_ENABLED = bool(enabled)
 
 
+def native_abi_version() -> Optional[int]:
+    if _LIB is None or not hasattr(_LIB, "openqpep_abi_version"):
+        return None
+    return int(_LIB.openqpep_abi_version())
+
+
+def native_version_string() -> Optional[str]:
+    if _LIB is None or not hasattr(_LIB, "openqpep_version_string"):
+        return None
+    raw = _LIB.openqpep_version_string()
+    return raw.decode("ascii") if isinstance(raw, (bytes, bytearray)) else None
+
+
 def native_backend_info() -> Dict[str, Any]:
     if _LIB is None:
         return {
             "loaded": False,
             "enabled": False,
             "backend": "pure-python",
+            "abi_version": None,
+            "c_version": None,
             "simd": [],
             "arch": platform.machine(),
             "library_path": None,
@@ -140,6 +162,8 @@ def native_backend_info() -> Dict[str, Any]:
         "loaded": True,
         "enabled": _NATIVE_ENABLED,
         "backend": "libopenqpep-c99" if _NATIVE_ENABLED else "pure-python (native disabled)",
+        "abi_version": native_abi_version(),
+        "c_version": native_version_string(),
         "simd": simd,
         "arch": platform.machine(),
         "library_path": _LIB_PATH,

@@ -1,0 +1,11 @@
+prefix=@PREFIX@
+exec_prefix=${prefix}
+libdir=@LIBDIR@
+includedir=@INCLUDEDIR@
+
+Name: libopenqpep
+Description: OpenQPEP Official Release Post-Quantum Cryptographic C99/SIMD SDK by Calyx Labs Inc.
+URL: https://github.com/CalyxLabsInc/OpenQPEP
+Version: @VERSION@
+Cflags: -I${includedir}
+Libs: -L${libdir} -lopenqpep

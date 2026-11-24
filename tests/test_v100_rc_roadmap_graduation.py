@@ -1,6 +1,6 @@
 """
-OpenQPEP Official Release 1.1.9 (v1.1.9) Graduation & Clean-Slate Verification Suite.
-Verifies every milestone across the roadmap up through Official Release 1.1.9:
+OpenQPEP Official Release 1.2.0 (v1.2.0) Graduation & Clean-Slate Verification Suite.
+Verifies every milestone across the roadmap up through Official Release 1.2.0:
   - Cryptographic Key Transparency (QPEP-KT) Ed448 STH, inclusion & consistency proofs, signed ownership proof
   - QPEP-Ratchet rotating-ephemeral PCS, QPEP-MLS TreeKEM 256-member capacity & Sphinx-PQ Sealed Sender
   - Multi-recipient streaming attachments, BlindSearchVault & .qrev revocation
@@ -53,21 +53,21 @@ class TestOpenQPEPOfficialRelease100Graduation(unittest.TestCase):
     PASS = "Calyx!@#$_2026Rel100Aa99"
 
     def test_01_official_wire_v5_and_hard_legacy_prerelease_rejection(self):
-        self.assertEqual(UNIVERSAL_VERSION, "1.1.9")
-        self.assertEqual(UNIVERSAL_VERSION_LABEL, "Official Release 1.1.9")
-        self.assertEqual(PROTOCOL_VERSION, "OpenQPEP/1.1.9")
+        self.assertEqual(UNIVERSAL_VERSION, "1.2.0")
+        self.assertEqual(UNIVERSAL_VERSION_LABEL, "Official Release 1.2.0")
+        self.assertEqual(PROTOCOL_VERSION, "OpenQPEP/1.2.0")
 
         # Full Wire Format v5 (\x89QPE\x05\x00)
-        f5 = pack_wire_frame(b"Official-1.1.9 payload", "CALYX QPEP MESSAGE")
+        f5 = pack_wire_frame(b"Official-1.2.0 payload", "CALYX QPEP MESSAGE")
         self.assertTrue(f5.startswith(WIRE_MAGIC_V5))
         pt, _ = unpack_wire_frame(f5, "CALYX QPEP MESSAGE")
-        self.assertEqual(pt, b"Official-1.1.9 payload")
+        self.assertEqual(pt, b"Official-1.2.0 payload")
 
         # Compact TLV Wire Format v5.1 (\x89QPE\x05\x01)
-        c51 = pack_compact_v51({1: b"QLX-4096", 2: b"Official-1.1.9-TLV"}, "CALYX QPEP COMPACT")
+        c51 = pack_compact_v51({1: b"QLX-4096", 2: b"Official-1.2.0-TLV"}, "CALYX QPEP COMPACT")
         self.assertTrue(c51.startswith(WIRE_MAGIC_V5_1))
         fields, _, _ = unpack_compact_v51(c51, "CALYX QPEP COMPACT")
-        self.assertEqual(fields[2], b"Official-1.1.9-TLV")
+        self.assertEqual(fields[2], b"Official-1.2.0-TLV")
 
         # Hard Clean Break: ALL legacy -rc (v4/v4.1), -pc (v3/v3.1), and -beta wire magics MUST raise QPEPLegacyProtocolError
         for legacy_magic in ALL_LEGACY_WIRE_MAGICS:
@@ -105,7 +105,7 @@ class TestOpenQPEPOfficialRelease100Graduation(unittest.TestCase):
         hw_prf = os.urandom(32)
         k1_a, k2_a, km_a, params_a = derive_qpkrf_keys_v4(self.PASS, salt, qlx_tier="QLX-768")
         self.assertEqual(params_a["kdf_version"], 4)
-        self.assertEqual(params_a["personalization"], "OpenQPEP/1.1.9")
+        self.assertEqual(params_a["personalization"], "OpenQPEP/1.2.0")
         self.assertFalse(params_a["fido2_prf_bound"])
 
         k1_hw, k2_hw, km_hw, params_hw = derive_qpkrf_keys_v4(self.PASS, salt, qlx_tier="QLX-768", fido2_prf_secret=hw_prf)

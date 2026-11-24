@@ -1,15 +1,14 @@
 /*
  * OpenQPEP Native C99 / SIMD Accelerated 7-Layer NTT over Z_3329[X]/(X^256 + 1)
- * Official Release 1.1.9 (v1.1.9) — Calyx Labs Inc. (CPOSLS-1.0)
+ * Official Release 1.2.0 (v1.2.0) — Calyx Labs Inc. (CPOSLS-1.0)
  *
  * Thread-safe compile-time const twiddle tables (zero lazy-init data races) and
  * branchless conditional modular reduction, bit-for-bit identical to ntt_3329.py.
  */
-#include <stdint.h>
-#include <stddef.h>
+#include "openqpep.h"
 
-#define QLX_Q 3329
-#define QLX_N 256
+#define QLX_Q OPENQPEP_QLX_Q
+#define QLX_N OPENQPEP_QLX_N
 #define INV_128_3329 3303
 
 static const int32_t ZETAS_3329[128] = {
@@ -51,7 +50,7 @@ static inline int32_t ct_barrett_3329(int64_t x) {
     return ct_csubq_3329(r);
 }
 
-void openqpep_ntt_3329(int32_t *p) {
+OPENQPEP_API void openqpep_ntt_3329(int32_t *p) {
     if (!p) return;
     int k = 1;
     for (int length = 128; length >= 2; length >>= 1) {
@@ -67,7 +66,7 @@ void openqpep_ntt_3329(int32_t *p) {
     }
 }
 
-void openqpep_inv_ntt_3329(int32_t *p) {
+OPENQPEP_API void openqpep_inv_ntt_3329(int32_t *p) {
     if (!p) return;
     int k = 127;
     for (int length = 2; length <= 128; length <<= 1) {
@@ -87,7 +86,7 @@ void openqpep_inv_ntt_3329(int32_t *p) {
     }
 }
 
-void openqpep_ntt_base_mul_3329(const int32_t *a_hat, const int32_t *b_hat, int32_t *out) {
+OPENQPEP_API void openqpep_ntt_base_mul_3329(const int32_t *a_hat, const int32_t *b_hat, int32_t *out) {
     if (!a_hat || !b_hat || !out) return;
     for (int i = 0; i < 128; i++) {
         int32_t a0 = a_hat[2 * i];
@@ -103,14 +102,14 @@ void openqpep_ntt_base_mul_3329(const int32_t *a_hat, const int32_t *b_hat, int3
     }
 }
 
-void openqpep_poly_add_3329(const int32_t *a, const int32_t *b, int32_t *out) {
+OPENQPEP_API void openqpep_poly_add_3329(const int32_t *a, const int32_t *b, int32_t *out) {
     if (!a || !b || !out) return;
     for (int i = 0; i < 256; i++) {
         out[i] = ct_csubq_3329(a[i] + b[i]);
     }
 }
 
-void openqpep_poly_sub_3329(const int32_t *a, const int32_t *b, int32_t *out) {
+OPENQPEP_API void openqpep_poly_sub_3329(const int32_t *a, const int32_t *b, int32_t *out) {
     if (!a || !b || !out) return;
     for (int i = 0; i < 256; i++) {
         out[i] = ct_caddq_3329(a[i] - b[i]);

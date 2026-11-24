@@ -1,6 +1,7 @@
-"""OpenQPEP Native C99 / SIMD Acceleration Package (libopenqpep) — Official Release 1.1.9."""
+"""OpenQPEP Native C99 / SIMD Acceleration Package (libopenqpep) — Official Release 1.2.0."""
 from .loader import (
     is_native_available,
+    native_abi_version,
     native_backend_info,
     native_cbd1_3329,
     native_cbd2_3329,
@@ -15,12 +16,15 @@ from .loader import (
     native_plain_lwe_row_accum,
     native_poly_add_3329,
     native_poly_sub_3329,
+    native_version_string,
     set_native_enabled,
 )
 
 __all__ = [
     "is_native_available",
     "set_native_enabled",
+    "native_abi_version",
+    "native_version_string",
     "native_backend_info",
     "native_ntt_3329",
     "native_inv_ntt_3329",

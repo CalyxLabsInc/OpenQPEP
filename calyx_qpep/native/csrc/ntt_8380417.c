@@ -1,12 +1,11 @@
 /*
  * OpenQPEP Native C99 / SIMD Accelerated 8-Layer Complete NTT over Z_8380417[X]/(X^256 + 1)
- * Official Release 1.1.9 (v1.1.9) — Calyx Labs Inc. (CPOSLS-1.0)
+ * Official Release 1.2.0 (v1.2.0) — Calyx Labs Inc. (CPOSLS-1.0)
  *
  * Thread-safe compile-time const twiddle tables (zero lazy-init data races) and
  * branchless conditional modular reduction, bit-for-bit identical to ntt_8380417.py.
  */
-#include <stdint.h>
-#include <stddef.h>
+#include "openqpep.h"
 
 #define QVS_Q 8380417LL
 #define INV_256_QVS 8347681LL
@@ -55,7 +54,7 @@ static inline int64_t ct_csubq_qvs(int64_t a) {
     return d + ((d >> 63) & QVS_Q);
 }
 
-void openqpep_ntt_qvs(int32_t *p) {
+OPENQPEP_API void openqpep_ntt_qvs(int32_t *p) {
     if (!p) return;
     int k = 0;
     for (int length = 128; length >= 1; length >>= 1) {
@@ -71,7 +70,7 @@ void openqpep_ntt_qvs(int32_t *p) {
     }
 }
 
-void openqpep_inv_ntt_qvs(int32_t *p) {
+OPENQPEP_API void openqpep_inv_ntt_qvs(int32_t *p) {
     if (!p) return;
     int k = 256;
     for (int length = 1; length < 256; length <<= 1) {
@@ -91,7 +90,7 @@ void openqpep_inv_ntt_qvs(int32_t *p) {
     }
 }
 
-void openqpep_ntt_mul_qvs(const int32_t *a_hat, const int32_t *b_hat, int32_t *out) {
+OPENQPEP_API void openqpep_ntt_mul_qvs(const int32_t *a_hat, const int32_t *b_hat, int32_t *out) {
     if (!a_hat || !b_hat || !out) return;
     for (int i = 0; i < 256; i++) {
         out[i] = (int32_t)(((int64_t)a_hat[i] * (int64_t)b_hat[i]) % QVS_Q);

@@ -1,5 +1,5 @@
 """
-t-of-n Proactive Threshold Decryption (ThresholdKEM — Official Release 1.1.9).
+t-of-n Proactive Threshold Decryption (ThresholdKEM — Official Release 1.2.0).
 Features:
   - True Herzberg-Jarecki-Krawczyk-Yung ZERO-RECONSTRUCTION proactive share refresh:
     adds a fresh random degree-(t-1) zero-constant polynomial g(x) with g(0) = 0 over GF(256)

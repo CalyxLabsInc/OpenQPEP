@@ -1,4 +1,17 @@
-# OpenQPEP Core Protocol Changelog — Official Release `v1.1.9`
+# OpenQPEP Core Protocol Changelog — Official Release `v1.2.0`
+
+## Official Release `v1.2.0` (2026-11-24) — Public C99 ABI Header (`include/openqpep.h`) & Build System Overhaul (Phase 2 Kickoff)
+
+- **Public Versioned C99/C++ ABI Header (`calyx_qpep/native/csrc/include/openqpep.h`):**
+  - Created canonical public header `openqpep.h` defining semantic & monotonic ABI version macros (`OPENQPEP_VERSION_MAJOR/MINOR/PATCH`, `OPENQPEP_VERSION_STRING`, `OPENQPEP_ABI_VERSION = 0x00010200U`), cross-platform `OPENQPEP_API` / `OPENQPEP_LOCAL` symbol visibility macros (DLL import/export on Windows, GCC/Clang default/hidden visibility on POSIX), `extern "C"` C++ guards, cryptographic/wire constants, and complete declarations for all 23 exported C99 symbols.
+  - Added runtime ABI introspection (`openqpep_abi_version()`, `openqpep_version_string()`) in `cbd.c`, annotated all public C99 functions across `ntt_3329.c`, `ntt_8380417.c`, `cbd.c`, `pentad_accel.c`, and `openqpep_jni.c` with `OPENQPEP_API` and `#include "openqpep.h"`, and wired `native_abi_version()` / `native_version_string()` into `calyx_qpep/native/loader.py`, `calyx_qpep/native/__init__.py`, and `calyx_qpep/__init__.py`.
+- **Overhauled Cross-Platform Build System (`Makefile`, `CMakeLists.txt`, `openqpep.pc.in`):**
+  - Enforced strict ISO C99 compiler flags (`-std=c99 -Wall -Wextra -Werror -Wpedantic -Wstrict-prototypes -Wmissing-prototypes -fvisibility=hidden`, plus MSVC `/W4 /WX`) across both Makefile and CMake.
+  - Added static library (`libopenqpep.a`), shared library (`libopenqpep.so` + `libopenqpep.so.1` SONAME / `.dylib` / `.dll`), `pkg-config` manifest generation (`openqpep.pc.in` -> `openqpep.pc`), `install` targets, and Android NDK JNI target selection (`OPENQPEP_BUILD_JNI` / `ANDROID`).
+  - Updated `.gitignore` to ignore `*.a`, `*.so.*`, and generated `calyx_qpep/native/openqpep.pc`.
+- **Verification:** Added 7-test C99 ABI & build verification suite `tests/test_v120_c99_abi_build.py` verifying dynamic symbol visibility (`nm -D`), external `-Wpedantic` C99 static & shared linking, C++17 `extern "C"` linkage, out-of-source CMake build/install, `openqpep.pc`, 10/10 Native C99 + 10/10 Pure-Python Golden KATs, and 169/169 unit & AST tests.
+
+---
 
 ## Official Release `v1.1.9` (2026-11-24) — Phase 1 Security Regression Gate & `v1.1.x` Consolidation Audit
 

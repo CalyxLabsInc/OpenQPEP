@@ -1,5 +1,5 @@
 """
-OpenQPEP by Calyx Labs Inc. — Official Release 1.1.9 (v1.1.9, Modular Cryptographic Kernel)
+OpenQPEP by Calyx Labs Inc. — Official Release 1.2.0 (v1.2.0, Modular Cryptographic Kernel)
 Clean official API facade over calyx_qpep.primitives.*, calyx_qpep.lattice.*, compat_server, and protocol.
 """
 from .compat_server import SlidingWindowRateLimiter
@@ -40,7 +40,13 @@ from .kdf import (
     validate_kdf_params,
     verify_argon2id_backend_parity,
 )
-from .native.loader import is_native_available, native_backend_info, set_native_enabled
+from .native.loader import (
+    is_native_available,
+    native_abi_version,
+    native_backend_info,
+    native_version_string,
+    set_native_enabled,
+)
 from .passphrase import (
     PassphraseValidationResult,
     analyze_passphrase,
@@ -155,6 +161,8 @@ __all__ = [
     "QUANTUM_IMMUNITY_MATRIX",
     "detect_file_extension_and_mime",
     "is_native_available",
+    "native_abi_version",
+    "native_version_string",
     "native_backend_info",
     "set_native_enabled",
     "SlidingWindowRateLimiter",

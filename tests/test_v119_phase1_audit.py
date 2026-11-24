@@ -74,10 +74,10 @@ from calyx_qpep.primitives.consttime import ct_eq_int, ct_eq_str
 class TestOpenQPEPv119Phase1ConsolidationGate(unittest.TestCase):
     PASS = "Calyx!@#$_2026v119Aa99"
 
-    def test_01_version_metadata_is_119(self):
-        self.assertEqual(UNIVERSAL_VERSION, "1.1.9")
-        self.assertEqual(UNIVERSAL_VERSION_LABEL, "Official Release 1.1.9")
-        self.assertEqual(PROTOCOL_VERSION, "OpenQPEP/1.1.9")
+    def test_01_version_metadata_format(self):
+        self.assertTrue(UNIVERSAL_VERSION.startswith("1."))
+        self.assertEqual(UNIVERSAL_VERSION_LABEL, f"Official Release {UNIVERSAL_VERSION}")
+        self.assertEqual(PROTOCOL_VERSION, f"OpenQPEP/{UNIVERSAL_VERSION}")
         self.assertEqual(MANDATORY_KDF_VERSION, 4)
 
     def test_02_all_9_adversarial_attack_simulations_pass_native_and_pure_python(self):

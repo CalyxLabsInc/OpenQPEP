@@ -1,4 +1,4 @@
-# OpenQPEP Official Release 1.1.9 (v1.1.9)
+# OpenQPEP Official Release 1.2.0 (v1.2.0)
 __pycache__/
 *.py[cod]
 build/
@@ -7,8 +7,11 @@ dist/
 *.db
 *.sqlite*
 *.so
+*.so.*
 *.dylib
 *.dll
+*.a
 *.o
+calyx_qpep/native/openqpep.pc
 target/
 private/
