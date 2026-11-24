@@ -1,5 +1,5 @@
 """
-Branchless Constant-Time Cryptographic Primitives (Official Release 1.1.8 / v1.1.8).
+Branchless Constant-Time Cryptographic Primitives (Official Release 1.1.9 / v1.1.9).
 Provides constant-time byte/string/int equality, branchless byte-array conditional move (ct_cmov)
 for Fujisaki-Okamoto implicit-rejection multiplexing, and division-free Barrett/Montgomery modular
 reduction helpers aligned bit-for-bit across Python, C99, and Rust.

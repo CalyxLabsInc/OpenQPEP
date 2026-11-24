@@ -1,5 +1,5 @@
 """
-OpenQPEP m-of-n Threshold Multi-Party Cosigning Bundles (Official Release 1.1.8 / Wire v5).
+OpenQPEP m-of-n Threshold Multi-Party Cosigning Bundles (Official Release 1.1.9 / Wire v5).
 Requires m-of-n independent conjunctive QVS + Ed448 signatures bound to the same canonical
 qSponge-512 payload digest and multisig policy.
 """

@@ -1,6 +1,6 @@
 """
 OpenQPEP Zero-Metadata ASCII Armor, Canonical Base64, Strict JSON & Anti-Zip-Bomb Codec
-(Official Release 1.1.8 / Wire Format v5 \\x89QPE\\x05\\x00).
+(Official Release 1.1.9 / Wire Format v5 \\x89QPE\\x05\\x00).
 
 Security Guarantees:
   - Zero cleartext identity metadata headers (never emits Sender/Recipient/Signer Key Hashes).

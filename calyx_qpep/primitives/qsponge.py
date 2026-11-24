@@ -1,4 +1,4 @@
-# OpenQPEP Official Release 1.1.8 (v1.1.8)
+# OpenQPEP Official Release 1.1.9 (v1.1.9)
 """
 qSponge-512 (SHA3-512) and qSponge-XOF (SHAKE-256) 24-round Keccak-f[1600] primitives.
 """

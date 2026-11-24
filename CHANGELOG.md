@@ -1,4 +1,23 @@
-# OpenQPEP Core Protocol Changelog — Official Release `v1.1.8`
+# OpenQPEP Core Protocol Changelog — Official Release `v1.1.9`
+
+## Official Release `v1.1.9` (2026-11-24) — Phase 1 Security Regression Gate & `v1.1.x` Consolidation Audit
+
+- **Expanded 9-Threat Active Cryptographic Attack Simulator (`calyx_qpep/audit/attack_sim.py`, `calyx_qpep/audit/__init__.py`):**
+  - Expanded `run_all_attack_simulations()` from 4 to **9 adversarial simulations** covering the entire Phase 1 hardening surface:
+    1. `FO_CCA2_Malleability` (QLX Fujisaki-Okamoto ciphertext malleability)
+    2. `QVS_Fault_Injection` (QVS Rowhammer/glitch Verify-Before-Emit Fault-Guard)
+    3. `Stream_Truncation_Reorder_Injection` (stream truncation, reorder, trailing bytes, reserved flags & non-canonical `is_final`)
+    4. `Suite_And_Protocol_Downgrade` (`.qpkrf` suite downgrade + legacy `-rc`/`-pc`/`-beta` Wire v1–v4 & `kdf_version < 4` downgrade)
+    5. `Ed448_SmallOrder_And_X448_LowOrder` (all 4 small-order `E[4]` Ed448 `S=0` torsion forgeries, `S >= L` malleability & RFC 7748 X448 `{0, 1, p-1}` / `u >= p`)
+    6. `NonCanonical_Base64_Armor_And_TLV_DoS` (RFC 4648 §3.5 non-zero trailing-bit Base64, armor line/blank-line/duplicate-header/CRC DoS & TLV tag reordering)
+    7. `JSON_DuplicateKey_DepthBomb_And_Homograph_UID` (duplicate JSON keys, `NaN`/`Infinity`, 2,000-level JSON depth bombs, node bombs & mixed-script/Bidi UID spoofing)
+    8. `Replay_CMT4_KDFBomb_And_ZipBomb` (`QPEP-Ratchet`/`QPEP-MLS`/`Sphinx-PQ` replay, CMT-4 `CC-512`/`CC-512-SIV` cross-key forgery, 64 GiB KDF OOM-bombs & 1,000:1 zlib zip-bombs)
+    9. `Universal_MultiSuite_Fault_Injection` (Verify-Before-Emit Fault-Guard across `Ed448`, `QHS-512`, `QMQ-512`, and `CIF-SQI-512`)
+- **Phase 1 Consolidation Gate & Dual Native/Pure-Python CI (`.github/workflows/ci.yml`, `tests/test_v119_phase1_audit.py`):**
+  - Added 8-test consolidation suite `tests/test_v119_phase1_audit.py` cross-verifying all Phase 1 (`v1.1.1`–`v1.1.9`) invariants under BOTH Native C99 (`libopenqpep`) and Pure-Python (`OPENQPEP_DISABLE_NATIVE=1`) execution paths, including zero leaked `mlock` pages, bit-exact Native↔Pure-Python lattice parity, 5-language interop matrix, wire fuzzer, and CLI `openqpep audit` end-to-end exit status.
+  - Upgraded `.github/workflows/ci.yml` to run `python3 -m calyx_qpep.cli audit` and `OPENQPEP_DISABLE_NATIVE=1 python3 -m unittest tests/test_v119_phase1_audit.py -v` alongside 10/10 Native + 10/10 Pure-Python Golden KATs and the full 162-test suite—completing Phase 1 (`v1.1.1` → `v1.1.9`).
+
+---
 
 ## Official Release `v1.1.8` (2026-11-24) — Parser Resource Ceilings, Depth Limits & Zip-Bomb / Algorithmic-Complexity Defenses
 

@@ -1,5 +1,5 @@
 """
-Unit tests for OpenQPEP Official Release 1.1.8 Adversarial Audit Suite, Wire Fuzzer,
+Unit tests for OpenQPEP Official Release 1.1.9 Adversarial Audit Suite, Wire Fuzzer,
 Welch's t-Test Side-Channel Timing Audit & 6-Suite Benchmark Harness.
 """
 import unittest
@@ -25,7 +25,7 @@ class TestOpenQPEPv029AuditAndBenchmarks(unittest.TestCase):
     def test_02_active_cryptographic_attack_simulator_all_defended(self):
         rep = run_all_attack_simulations()
         self.assertTrue(rep["all_passed"])
-        self.assertEqual(len(rep["simulations"]), 4)
+        self.assertGreaterEqual(len(rep["simulations"]), 9)
 
     def test_03_welch_t_test_and_side_channel_timing_audit(self):
         self.assertAlmostEqual(welch_t_statistic([10, 11, 10, 11], [10, 11, 10, 11]), 0.0, places=5)

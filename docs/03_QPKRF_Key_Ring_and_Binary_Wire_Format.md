@@ -1,14 +1,14 @@
 # 03 — `.qpkrf` Key Ring, Official Wire Format v5 (`\x89QPE\x05\x00`), Compact TLV v5.1 (`\x89QPE\x05\x01`) & Stream v5 (`\x89QPS\x05\x00`)
 
-**Protocol:** `OpenQPEP/1.1.8` (`Official Release 1.1.8`)  
-**API Stability:** `v1.1.8-stable`  
+**Protocol:** `OpenQPEP/1.1.9` (`Official Release 1.1.9`)  
+**API Stability:** `v1.1.9-stable`  
 **License:** Calyx Public Open Source Specifications v1.0 License (`CPOSLS-1.0`)
 
 ---
 
-## 1. Strict Official Release 1.1.8 Wire Policy (Zero Pre-Release Compatibility)
+## 1. Strict Official Release 1.1.9 Wire Policy (Zero Pre-Release Compatibility)
 
-OpenQPEP Official Release `1.1.8` preserves 100% Wire Format v5 compatibility across all Official Public Stable Releases (`v1.0.x`–`v1.1.8`) and strictly accepts **only** Official Release v5 magics across Python, C99, Rust, WASM/JS, and Go:
+OpenQPEP Official Release `1.1.9` preserves 100% Wire Format v5 compatibility across all Official Public Stable Releases (`v1.0.x`–`v1.1.9`) and strictly accepts **only** Official Release v5 magics across Python, C99, Rust, WASM/JS, and Go:
 - **`WIRE_MAGIC_V5 = 0x89 0x51 0x50 0x45 0x05 0x00` (`\x89QPE\x05\x00`)** — Canonical Official Wire Format v5
 - **`WIRE_MAGIC_V5_1 = 0x89 0x51 0x50 0x45 0x05 0x01` (`\x89QPE\x05\x01`)** — Official Compact Binary TLV Wire Format v5.1
 - **`STREAM_MAGIC_V5 = 0x89 0x51 0x50 0x53 0x05 0x00` (`\x89QPS\x05\x00`)** — Official Streaming Chunked AEAD v5
@@ -50,7 +50,7 @@ Every `.qpkrf` key ring carries:
     "kdf_params": {
       "kdf_version": 4,
       "algorithm": "QPKD-Argon2id+qSponge-512",
-      "personalization": "OpenQPEP/1.1.8",
+      "personalization": "OpenQPEP/1.1.9",
       "m_kib": 65536,
       "t_cost": 3,
       "p_lanes": 4
@@ -66,7 +66,7 @@ Every `.qpkrf` key ring carries:
 - **`.qshare` Shamir Recovery Shards:** Verifiable $t$-of-$n$ $\text{GF}(256)$ secret-sharing shards with per-shard `qSponge-512` integrity commitments.
 - **Anonymous Multi-Recipient Slots:** Encrypt payload once with a 512-bit CMT-4 `CC-512` CEK, encapsulate into $N$ mixed-tier slots (across all 10 suites) using blinded 64-bit slot tags `H_slot` or pure trial-decapsulation, plus indistinguishable `128 B` CMT-4 dummy slots padded to a power of 2.
 
-## All 10 OpenQPEP Post-Quantum Suites (`v1.1.8`)
+## All 10 OpenQPEP Post-Quantum Suites (`v1.1.9`)
 
 Every OpenQPEP suite uses the canonical naming standard `"Calyx <Key-Name>: <KEM> + <SIG> (<Short Description>)"` paired with **CMT-4 CC-512 AEAD**, **RFC 9106 QPKD-Argon2id + qSponge-512 (`kdf_version: 4`)**, and **Official Wire Format v5 (`\x89QPE\x05\x00`) / Compact TLV v5.1 (`\x89QPE\x05\x01`)**.
 
