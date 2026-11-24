@@ -1,4 +1,18 @@
-# OpenQPEP Core Protocol Changelog — Official Release `v1.1.7`
+# OpenQPEP Core Protocol Changelog — Official Release `v1.1.8`
+
+## Official Release `v1.1.8` (2026-11-24) — Parser Resource Ceilings, Depth Limits & Zip-Bomb / Algorithmic-Complexity Defenses
+
+- **Strict Canonical Base64, Iterative JSON Depth/Complexity Limits & Zip-Bomb Defense (`calyx_qpep/wire/armor.py`, `protocol.py`, `beyond_lwe_bridge.py`, `wire/multi_recipient.py`):**
+  - Added RFC 4648 Section 3.5 canonical Base64 decoder `strict_b64decode` enforcing standard `[A-Za-z0-9+/]` alphabet, multiple-of-4 length, zero internal whitespace, and zero non-canonical trailing padding bits (closing Base64 malleability left open by Python's `base64.b64decode(..., validate=True)`) across armor bodies, 8-char `={crc}` checksums, `protocol.py`, `multi_recipient.py`, and `beyond_lwe_bridge.py`.
+  - Added iterative O(N) stack-free JSON pre-scanner inside `strict_json_loads` enforcing `MAX_JSON_DEPTH = 32`, `MAX_JSON_NODES = 250,000`, `MAX_JSON_BYTES = 64 MiB`, duplicate-key rejection, and `NaN`/`Infinity` rejection before invoking `json.loads` (preventing `RecursionError` crashes and algorithmic-complexity DoS), and eliminated remaining raw `json.loads` calls in `protocol.py`, `multi_recipient.py`, and `beyond_lwe_bridge.py`.
+  - Upgraded `safe_zlib_decompress` with dual zip-bomb protection: hard `MAX_DECOMPRESSED_BYTES` (`128 MiB`) ceiling PLUS upfront `MAX_DECOMPRESSION_RATIO = 200` ratio cap above `1 MiB` (terminating high-ratio zip bombs early before large allocations) and strict rejection of trailing smuggled bytes (`dobj.unused_data`).
+- **ASCII Armor, Wire v5, Compact TLV v5.1, Streaming & Packet Ceilings (`wire/armor.py`, `wire/framing.py`, `wire/compact_v51.py`, `wire/streaming.py`, `protocol.py`):**
+  - Enforced `MAX_ARMOR_BODY_LINE_LEN = 128`, `MAX_ARMOR_BLANK_LINES = 64`, `MAX_ARMOR_LINES = 1,500,000` (checked before `splitlines()`), post-CRC body-line rejection, and strict 8-char canonical Base64 CRC validation across `armor_unwrap` and `_armor_unwrap`.
+  - Enforced canonical ascending TLV tag ordering (`require_canonical_order=True`), `MAX_TLV_FIELDS = 256`, `MAX_TLV_PAYLOAD_BYTES`, and `bool`/label validation in `compact_v51.py`, plus `MAX_BUCKET_SIZE = 1 MiB` and printable ASCII label validation in `framing.py`.
+  - Added `max_chunks` (`MAX_STREAM_CHUNKS`), `max_total_bytes`, reserved header-flag rejection, and canonical `is_final_byte in (0, 1)` enforcement in `streaming.py`, plus `MAX_PACKET_CHUNKS = 2048` in `protocol.py` and `MAX_MULTI_RECIPIENT_SLOTS = 256` in `multi_recipient.py`.
+- **Verification:** Added 8-test security suite `tests/test_v118_parser_resource_ceilings.py` and verified 10/10 Native C99 + 10/10 Pure-Python Golden KATs + 154/154 tests.
+
+---
 
 ## Official Release `v1.1.7` (2026-11-24) — Hardened `QPKD-Argon2id` Pure-Python & C-Backend Parity + Auto-Calibration
 

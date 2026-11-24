@@ -1,4 +1,4 @@
-# OpenQPEP Official Release 1.1.7 (v1.1.7)
+# OpenQPEP Official Release 1.1.8 (v1.1.8)
 """
 Shamir Secret Sharing over GF(2^8) (AES Irreducible Polynomial x^8 + x^4 + x^3 + x + 1 = 0x11B).
 Information-theoretic security: any t shares reconstruct the exact secret; t-1 shares reveal 0 bits.

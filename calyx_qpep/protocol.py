@@ -1,9 +1,9 @@
 """
-OpenQPEP by Calyx Labs Inc. — Official Release 1.1.7 (v1.1.7)
+OpenQPEP by Calyx Labs Inc. — Official Release 1.1.8 (v1.1.8)
 Canonical Post-Quantum Hybrid Protocol Reference Engine.
 Licensed under Calyx Public Open Source Specifications v1.0 License (CPOSLS-1.0).
 
-Official Release 1.1.7 Architecture:
+Official Release 1.1.8 Architecture:
   - Wire Format: Strict Official Wire Format v5 (\\x89QPE\\x05\\x00) & Compact TLV v5.1 (\\x89QPE\\x05\\x01).
   - KDF Envelope: Mandatory kdf_version: 4 (RFC 9106 QPKD-Argon2id + qSponge-512, "OpenQPEP/1.0.0").
   - Symmetric AEAD: CMT-4 Key-Committing Calyx-Cascade-512 (AES-256-GCM + ChaCha20-Poly1305 + qSponge-512).
@@ -47,6 +47,7 @@ from .constants import (
     MANDATORY_KDF_VERSION,
     MAX_ARMOR_BYTES,
     MAX_DECOMPRESSED_BYTES,
+    MAX_WIRE_FRAME_BYTES,
     PACKET_TYPE_KEYRING,
     PACKET_TYPE_SIGNATURE,
     PACKET_TYPE_SINGLE,
@@ -87,16 +88,25 @@ from .primitives.zeroize import SecretBuffer, zeroize_bytes, zeroize_secret_dict
 from .qlx_lattice import QLX_TIERS, QVS_TIERS, QLXEngine, QVSEngine, qsponge_512, qsponge_var
 from .wire.armor import (
     FORBIDDEN_ARMOR_HEADERS,
+    MAX_ARMOR_BLANK_LINES,
+    MAX_ARMOR_BODY_LINE_LEN,
     MAX_ARMOR_HEADER_COUNT,
     MAX_ARMOR_HEADER_LINE_LEN,
+    MAX_ARMOR_LINES,
     _compute_armor_crc,
     _has_forbidden_control_or_bidi,
     _validate_header_token,
+    _verify_armor_crc_strict,
+    safe_zlib_decompress,
+    strict_b64decode,
+    strict_json_loads,
 )
 from .wire.file_registry import SUPPORTED_FILE_EXTENSIONS, detect_file_extension_and_mime
 from .wire.framing import pack_wire_frame, unpack_wire_frame
 
-# Hardened Post-Quantum & AI-Cryptanalysis Immunity Profile for OpenQPEP Official Release 1.1.7
+MAX_PACKET_CHUNKS = 2048  # 2048 x 64 KiB = 128 MiB max chunks per packet (CPU-DoS ceiling)
+
+# Hardened Post-Quantum & AI-Cryptanalysis Immunity Profile for OpenQPEP Official Release 1.1.8
 QUANTUM_IMMUNITY_MATRIX: Dict[str, Dict[str, str]] = {
     "JVG_AND_SHOR": {
         "threat": "Hybrid QNTT Factorization & Shor's Algorithm",
@@ -151,21 +161,12 @@ def _b64e(data: bytes) -> str:
 
 
 def _b64d(text: str) -> bytes:
-    return base64.b64decode(text.encode("ascii"))
+    return strict_b64decode(text)
 
 
 def _safe_zlib_decompress(data: bytes, max_bytes: int = MAX_DECOMPRESSED_BYTES) -> bytes:
-    """Decompresses zlib payload with a hard byte ceiling to defeat decompression-bomb DoS attacks."""
-    dobj = zlib.decompressobj()
-    out = dobj.decompress(data, max_bytes + 1)
-    if len(out) > max_bytes or dobj.unconsumed_tail:
-        raise QPEPWireFormatError(
-            f"Decompressed payload exceeds safety ceiling ({max_bytes:,} bytes); decompression bomb rejected."
-        )
-    tail = dobj.flush(max_bytes + 1 - len(out))
-    if len(out) + len(tail) > max_bytes or not dobj.eof:
-        raise QPEPWireFormatError("Corrupted or oversized compressed OpenQPEP payload.")
-    return out + tail
+    """Decompresses zlib payload with dual byte-ceiling and zip-bomb ratio defenses."""
+    return safe_zlib_decompress(data, max_bytes=max_bytes)
 
 
 def _canonical_blwe_digest(public_bundle: Dict[str, Any]) -> bytes:
@@ -256,9 +257,13 @@ def _armor_wrap(
 
 
 def _armor_unwrap(armored_text: str, expected_label: Optional[str] = None) -> Tuple[str, Dict[str, str], bytes]:
-    if not isinstance(armored_text, str) or len(armored_text) > MAX_ARMOR_BYTES:
+    if not isinstance(armored_text, str) or not armored_text or len(armored_text) > MAX_ARMOR_BYTES:
         raise QPEPWireFormatError("ASCII armor input missing or exceeds maximum allowed size.")
+    if armored_text.count("\n") > MAX_ARMOR_LINES:
+        raise QPEPWireFormatError(f"ASCII armor exceeds maximum allowed line count ({MAX_ARMOR_LINES}).")
     lines = [line.strip() for line in armored_text.strip().splitlines()]
+    if len(lines) > MAX_ARMOR_LINES:
+        raise QPEPWireFormatError(f"ASCII armor exceeds maximum allowed line count ({MAX_ARMOR_LINES}).")
     if not lines or not lines[0].startswith("-----BEGIN ") or not lines[-1].startswith("-----END "):
         raise QPEPWireFormatError("Invalid OpenQPEP armor header/footer.")
     begin_label = lines[0][len("-----BEGIN ") : -len("-----")]
@@ -273,61 +278,77 @@ def _armor_unwrap(armored_text: str, expected_label: Optional[str] = None) -> Tu
 
     metadata: Dict[str, str] = {}
     seen_meta_keys = set()
-    idx = 1
-    while idx < len(lines) - 1 and lines[idx] != "":
-        line = lines[idx]
-        if ":" in line:
-            if len(line) > MAX_ARMOR_HEADER_LINE_LEN:
-                raise QPEPWireFormatError("OpenQPEP armor header line exceeds maximum allowed length.")
-            k, v = line.split(":", 1)
-            ks, vs = k.strip(), v.strip()
-            _validate_header_token(ks, vs)
-            k_low = ks.lower()
-            if k_low in seen_meta_keys:
-                raise QPEPWireFormatError(f"Duplicate OpenQPEP armor header '{ks}' rejected.")
-            seen_meta_keys.add(k_low)
-            if len(seen_meta_keys) > MAX_ARMOR_HEADER_COUNT:
-                raise QPEPWireFormatError("Too many OpenQPEP armor header lines.")
-            metadata[ks] = vs
-        idx += 1
-    if idx < len(lines) - 1 and lines[idx] == "":
-        idx += 1
+    b64_chunks: List[str] = []
+    checksum_line: Optional[str] = None
+    in_body = False
+    blank_lines = 0
 
-    b64_chunks = []
-    checksum_line = None
-    for line in lines[idx:-1]:
-        if line.startswith("="):
+    for line in lines[1:-1]:
+        if not in_body:
+            if line == "":
+                in_body = True
+                blank_lines += 1
+                continue
+            if ":" in line:
+                if len(line) > MAX_ARMOR_HEADER_LINE_LEN:
+                    raise QPEPWireFormatError("OpenQPEP armor header line exceeds maximum allowed length.")
+                k, v = line.split(":", 1)
+                ks, vs = k.strip(), v.strip()
+                _validate_header_token(ks, vs)
+                k_low = ks.lower()
+                if k_low in seen_meta_keys:
+                    raise QPEPWireFormatError(f"Duplicate OpenQPEP armor header '{ks}' rejected.")
+                seen_meta_keys.add(k_low)
+                if len(seen_meta_keys) > MAX_ARMOR_HEADER_COUNT:
+                    raise QPEPWireFormatError("Too many OpenQPEP armor header lines.")
+                metadata[ks] = vs
+            else:
+                in_body = True
+                if line.startswith("="):
+                    checksum_line = line[1:].strip()
+                else:
+                    if len(line) > MAX_ARMOR_BODY_LINE_LEN:
+                        raise QPEPWireFormatError(
+                            f"OpenQPEP armor body line exceeds maximum allowed length ({MAX_ARMOR_BODY_LINE_LEN} chars)."
+                        )
+                    b64_chunks.append(line)
+        else:
+            if not line:
+                blank_lines += 1
+                if blank_lines > MAX_ARMOR_BLANK_LINES:
+                    raise QPEPWireFormatError("Excessive blank lines inside OpenQPEP ASCII armor payload.")
+                continue
+            if line.startswith("="):
+                if checksum_line is not None:
+                    raise QPEPWireFormatError("Duplicate OpenQPEP armor checksum line.")
+                checksum_line = line[1:].strip()
+                continue
             if checksum_line is not None:
-                raise QPEPWireFormatError("Duplicate OpenQPEP armor checksum line.")
-            checksum_line = line[1:].strip()
-        elif line:
+                raise QPEPWireFormatError("Unexpected Base64 body line after OpenQPEP armor checksum line.")
+            if len(line) > MAX_ARMOR_BODY_LINE_LEN:
+                raise QPEPWireFormatError(
+                    f"OpenQPEP armor body line exceeds maximum allowed length ({MAX_ARMOR_BODY_LINE_LEN} chars)."
+                )
             b64_chunks.append(line)
 
     if not b64_chunks:
         raise QPEPWireFormatError("Empty OpenQPEP ASCII armor payload.")
 
-    try:
-        raw_frame = base64.b64decode("".join(b64_chunks), validate=True)
-    except (binascii.Error, ValueError, TypeError) as exc:
-        raise QPEPWireFormatError("Corrupted Base64 encoding inside OpenQPEP ASCII armor.") from exc
+    raw_frame = strict_b64decode("".join(b64_chunks))
 
     # Reject ALL legacy pre-release magics (-rc, -pc, -beta) deterministically with QPEPLegacyProtocolError
     if len(raw_frame) >= 6 and raw_frame[:6] in ALL_LEGACY_WIRE_MAGICS:
         raise QPEPLegacyProtocolError(
             "Legacy pre-release (-rc / -pc / -beta) wire format is strictly rejected in "
-            "OpenQPEP Official Release 1.1.7 (zero backwards compatibility). Official Wire Format v5 (\\x89QPE\\x05\\x00) is required."
+            "OpenQPEP Official Release 1.1.8 (zero backwards compatibility). Official Wire Format v5 (\\x89QPE\\x05\\x00) is required."
         )
     if not raw_frame.startswith(WIRE_MAGIC):
         raise QPEPLegacyProtocolError(
-            "Unsupported or legacy wire format. OpenQPEP Official Release 1.1.7 requires Official Wire Format v5 (\\x89QPE\\x05\\x00)."
+            "Unsupported or legacy wire format. OpenQPEP Official Release 1.1.8 requires Official Wire Format v5 (\\x89QPE\\x05\\x00)."
         )
 
-    # Strictly enforce mandatory armor CRC verification in constant time
-    if not checksum_line:
-        raise QPEPMacVerificationError("Missing mandatory OpenQPEP ASCII armor checksum (=CRC).")
-    expected_crc = _compute_armor_crc(raw_frame)
-    if not ct_eq(checksum_line.encode("ascii", errors="ignore"), expected_crc.encode("ascii")):
-        raise QPEPMacVerificationError("OpenQPEP qSponge armor checksum mismatch (corrupted packet).")
+    # Strictly enforce mandatory canonical 8-char Base64 armor CRC verification in constant time
+    _verify_armor_crc_strict(checksum_line, raw_frame)
 
     payload_bytes, _ptype = unpack_wire_frame(raw_frame, begin_label)
     return begin_label, metadata, payload_bytes
@@ -370,32 +391,9 @@ _HEX_UPPER_CHARS = frozenset("0123456789ABCDEF")
 _CONFUSABLE_SCRIPTS = frozenset({"LATIN", "CYRILLIC", "GREEK"})
 
 
-def _reject_duplicate_json_keys(pairs: List[Tuple[str, Any]]) -> Dict[str, Any]:
-    obj: Dict[str, Any] = {}
-    for k, v in pairs:
-        if k in obj:
-            raise QPEPWireFormatError(f"Duplicate JSON key '{k}' rejected (anti-substitution defense).")
-        obj[k] = v
-    return obj
-
-
-def _reject_json_constant(token: str) -> Any:
-    raise QPEPWireFormatError(f"Non-standard JSON constant '{token}' rejected.")
-
-
 def _strict_json_loads(raw: bytes | str) -> Any:
-    """Parses JSON strictly, rejecting duplicate keys, NaN/Infinity constants, and invalid UTF-8."""
-    try:
-        text = raw.decode("utf-8") if isinstance(raw, (bytes, bytearray)) else str(raw)
-        return json.loads(
-            text,
-            object_pairs_hook=_reject_duplicate_json_keys,
-            parse_constant=_reject_json_constant,
-        )
-    except (json.JSONDecodeError, UnicodeDecodeError, ValueError) as exc:
-        if isinstance(exc, QPEPWireFormatError):
-            raise
-        raise QPEPWireFormatError("Malformed JSON payload inside OpenQPEP frame.") from exc
+    """Parses JSON strictly with recursion-depth, node-count, duplicate-key, and NaN/Infinity defenses."""
+    return strict_json_loads(raw)
 
 
 def _classify_confusable_script(ch: str) -> Optional[str]:
@@ -440,7 +438,7 @@ def _validate_identity_field(field_name: str, value: Any, max_len: int, allow_em
 
 class CalyxQPEPProtocol:
     """
-    Official Reference Implementation of OpenQPEP by Calyx Labs Inc. (Official Release 1.1.7).
+    Official Reference Implementation of OpenQPEP by Calyx Labs Inc. (Official Release 1.1.8).
     """
 
     @staticmethod
@@ -684,7 +682,7 @@ class CalyxQPEPProtocol:
         if kdf_version < MANDATORY_KDF_VERSION:
             raise QPEPLegacyProtocolError(
                 f"Legacy pre-release key ring (kdf_version: {kdf_version} from -rc / -pc / -beta) is strictly rejected "
-                f"in OpenQPEP Official Release 1.1.7 (zero backwards compatibility; mandatory kdf_version: {MANDATORY_KDF_VERSION})."
+                f"in OpenQPEP Official Release 1.1.8 (zero backwards compatibility; mandatory kdf_version: {MANDATORY_KDF_VERSION})."
             )
 
         k_s1, k_s2, k_mac, _ = derive_qpkrf_keys_v4(passphrase, kdf_salt, kdf_params=kdf_params)
@@ -837,7 +835,7 @@ class CalyxQPEPProtocol:
         low_ver = env_ver.lower()
         if "-rc" in low_ver or "-pc" in low_ver or "-beta" in low_ver or low_ver.startswith("0."):
             raise QPEPLegacyProtocolError(
-                f"Legacy pre-release .qpkrf key ring ({env_ver}) is strictly rejected in OpenQPEP Official Release 1.1.7 "
+                f"Legacy pre-release .qpkrf key ring ({env_ver}) is strictly rejected in OpenQPEP Official Release 1.1.8 "
                 f"(zero backwards compatibility)."
             )
         if not ct_eq_str(envelope.get("magic"), "QPKRF-v1.0.0"):
@@ -1042,7 +1040,9 @@ class CalyxQPEPProtocol:
                 raw_blwe = CalyxQPEPProtocol.decrypt_beyond_lwe_packet(armored_packet, recipient_private_keyring, passphrase)
                 prefix = b"QPEP-BLWE-ENV-v1.0.0|"
                 if raw_blwe.startswith(prefix):
-                    inner_envelope = json.loads(raw_blwe[len(prefix) :].decode("utf-8"))
+                    inner_envelope = _strict_json_loads(raw_blwe[len(prefix) :])
+                    if not isinstance(inner_envelope, dict):
+                        raise QPEPWireFormatError("Malformed Beyond-LWE inner envelope JSON structure.")
                     raw_data = _b64d(inner_envelope["data_b64"])
                     plaintext = _safe_zlib_decompress(raw_data) if inner_envelope.get("compressed") else raw_data
                     actual_hash = qsponge_512(plaintext).hex().upper()
@@ -1132,8 +1132,14 @@ class CalyxQPEPProtocol:
                             k_transcript_mac = bytes(okm_mv[64:128])
 
                         chunks = packet_obj.get("chunks", [])
-                        if not chunks:
-                            raise QPEPWireFormatError("Malformed OpenQPEP packet: empty chunk list.")
+                        if not isinstance(chunks, list) or not chunks:
+                            raise QPEPWireFormatError("Malformed OpenQPEP packet: missing or empty chunk list.")
+                        if len(chunks) > MAX_PACKET_CHUNKS:
+                            raise QPEPWireFormatError(
+                                f"OpenQPEP packet chunk count ({len(chunks)}) exceeds maximum allowed ({MAX_PACKET_CHUNKS})."
+                            )
+                        if any(not isinstance(ch, dict) for ch in chunks):
+                            raise QPEPWireFormatError("Malformed OpenQPEP packet: non-object chunk entry.")
                         if chunks[-1].get("final") != 1 or any(ch.get("final") != 0 for ch in chunks[:-1]):
                             raise QPEPTruncationError("Stream truncation or invalid final frame flag detected.")
 
@@ -1159,9 +1165,13 @@ class CalyxQPEPProtocol:
                                 n2=_b64d(ch["cc512_n2_b64"]),
                                 aad=aad,
                             )
+                            if len(reassembled) + len(pt_piece) > MAX_WIRE_FRAME_BYTES:
+                                raise QPEPWireFormatError("Reassembled OpenQPEP packet exceeds maximum allowed size.")
                             reassembled.extend(pt_piece)
 
-                inner_envelope = json.loads(bytes(reassembled).decode("utf-8"))
+                inner_envelope = _strict_json_loads(bytes(reassembled))
+                if not isinstance(inner_envelope, dict):
+                    raise QPEPWireFormatError("Malformed decrypted OpenQPEP inner envelope JSON structure.")
             finally:
                 zeroize_bytes(reassembled)
         finally:

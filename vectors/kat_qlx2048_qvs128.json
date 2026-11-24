@@ -1,8 +1,8 @@
 {
   "schema": "openqpep-kat-v3",
   "family": "structured_lattice",
-  "protocol_version": "OpenQPEP/1.1.7",
-  "universal_version": "1.1.7",
+  "protocol_version": "OpenQPEP/1.1.8",
+  "universal_version": "1.1.8",
   "suite_id": "QLX-2048",
   "suite_name": "Calyx Ultra-Grid: QLX-2048 + QVS-128 (2,048-Dim Lattice \u2014 All Devices)",
   "qlx_tier": "QLX-2048",
@@ -39,7 +39,7 @@
     "key_hash": "9BCFACA0231B2B276A483EF27532B3B45571F2D2E5C4A7A2F2D38388F674FBBD",
     "wire_magic_hex": "895150450500",
     "wire_frame_bytes": 17174,
-    "wire_frame_sha3_512": "24bf36c6a68114f3dcad18014abb4ce923b48a3bbbbea08f96536c2ff51d5d14b9765d31658bf8527cb01e8762fe25689670d758f9437f8edbb36ef6f79b5632",
+    "wire_frame_sha3_512": "181ebc9776fe12409fc7958677645edc96097b7cbdd1c3bc6c64c1f55072b096ca13a3b69c59dcdf693350e9c4e1baca391eae7cdc009e602111b45cc2759a22",
     "wire_frame_prefix_hex": "89515045050001006603699cd1cd3902c82e15d76353487b7c729c7af0dbd72c417577b37e4561ac1ca88e3514f7a2d8cb38336d52c36c7bce5b6a501e61fe44",
     "cleartext_identity_headers_present": false
   }

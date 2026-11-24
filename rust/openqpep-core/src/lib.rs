@@ -1,9 +1,9 @@
-//! OpenQPEP Memory-Safe Rust Core (`openqpep-core` v1.1.7, CPOSLS-1.0).
+//! OpenQPEP Memory-Safe Rust Core (`openqpep-core` v1.1.8, CPOSLS-1.0).
 #![forbid(unsafe_code)]
 pub mod ntt;
 pub mod wire_v5;
 
-/// Compiler-barrier slice zeroization for secret lattice vectors and session keys (v1.1.7).
+/// Compiler-barrier slice zeroization for secret lattice vectors and session keys (v1.1.8).
 pub fn zeroize_slice(buf: &mut [u8]) {
     for b in buf.iter_mut() {
         *b = 0;

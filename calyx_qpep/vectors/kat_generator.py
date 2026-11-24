@@ -1,5 +1,5 @@
 """
-OpenQPEP Known Answer Test (KAT) Generator (Official Release 1.1.7 / v1.1.7).
+OpenQPEP Known Answer Test (KAT) Generator (Official Release 1.1.8 / v1.1.8).
 Generates deterministic, byte-exact ACVP-style JSON test vectors across ALL 10 canonical suites:
   1. Calyx Velocity: QLX-768 + QVS-65 (High-Speed Mobile — All Devices)
   2. Calyx Sovereign-Hybrid: QLX-1024 + QVS-87 (Balanced Post-Quantum — All Devices)

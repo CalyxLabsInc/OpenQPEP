@@ -1,4 +1,4 @@
-// OpenQPEP Official Release 1.1.7 (v1.1.7) — Cryptol Formal Specification & Proofs
+// OpenQPEP Official Release 1.1.8 (v1.1.8) — Cryptol Formal Specification & Proofs
 // Target: Calyx Sovereign-Pentad (CSP-Omega) 5-Family Beyond-LWE Combiner
 // Theorem: Robust Multi-Assumption Split-Key PRF / Combiner Security:
 //   - IND-CCA2 confidentiality holds if ANY 1 of {Plain-LWE (CULC-2048), Binary Goppa Patterson (CGM-8192),

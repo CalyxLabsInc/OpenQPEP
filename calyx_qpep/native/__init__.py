@@ -1,4 +1,4 @@
-"""OpenQPEP Native C99 / SIMD Acceleration Package (libopenqpep) — Official Release 1.1.7."""
+"""OpenQPEP Native C99 / SIMD Acceleration Package (libopenqpep) — Official Release 1.1.8."""
 from .loader import (
     is_native_available,
     native_backend_info,

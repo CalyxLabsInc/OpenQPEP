@@ -1,5 +1,5 @@
 """
-OpenQPEP Anonymous Mixed-Tier Multi-Recipient Broadcast Encryption (Official Release 1.1.7 / Wire v5).
+OpenQPEP Anonymous Mixed-Tier Multi-Recipient Broadcast Encryption (Official Release 1.1.8 / Wire v5).
 
 Features:
   1. Single-Pass CEK Encryption: Encrypts payload once with a fresh 512-bit CMT-4 Key-Committing
@@ -25,10 +25,11 @@ from ..primitives.consttime import ct_eq
 from ..primitives.hgc448 import x448_exchange, x448_keygen
 from ..primitives.qsponge import qsponge_512, qsponge_var
 from ..primitives.zeroize import SecretBuffer
-from .armor import armor_unwrap, armor_wrap
+from .armor import armor_unwrap, armor_wrap, strict_b64decode, strict_json_loads
 from .framing import pad_to_bucket, unpad_from_bucket
 
 MULTI_RECIPIENT_ARMOR_LABEL = "CALYX QPEP MULTI-RECIPIENT PACKET"
+MAX_MULTI_RECIPIENT_SLOTS = 256
 _WRAPPED_CEK_BYTES = 64 + CC512_OVERHEAD_BYTES  # 64 B CEK + 64 B CMT-4 CC-512 overhead = 128 B
 
 
@@ -72,6 +73,8 @@ def encrypt_multi_recipient(
     """
     if not recipient_keyrings:
         raise QPEPKeyRingError("At least one recipient keyring is required for multi-recipient encryption.")
+    if len(recipient_keyrings) > MAX_MULTI_RECIPIENT_SLOTS:
+        raise QPEPWireFormatError(f"Multi-recipient count exceeds maximum allowed slots ({MAX_MULTI_RECIPIENT_SLOTS}).")
 
     slot_nonce = os.urandom(16)
     payload_nonce24 = os.urandom(24)
@@ -87,8 +90,8 @@ def encrypt_multi_recipient(
         for rkr in recipient_keyrings:
             qlx_tier = rkr.qlx_tier
             tier_pool.append(qlx_tier)
-            qlx_pk = base64.b64decode(rkr.public_bundle["qlx_public_b64"])
-            hgc_pk = base64.b64decode(rkr.public_bundle["hgc_448_public_b64"])
+            qlx_pk = strict_b64decode(rkr.public_bundle["qlx_public_b64"])
+            hgc_pk = strict_b64decode(rkr.public_bundle["hgc_448_public_b64"])
 
             ct_qlx, ss_qlx = QLXEngine.encaps(qlx_pk, qlx_tier)
             epk_hgc, esk_hgc = x448_keygen()
@@ -145,21 +148,32 @@ def decrypt_multi_recipient(
     from ..protocol import OpenQPEPProtocol
 
     raw_json, _headers = armor_unwrap(armored_packet, MULTI_RECIPIENT_ARMOR_LABEL)
-    envelope = json.loads(raw_json.decode("utf-8"))
-    if envelope.get("type") != "openqpep-multi-recipient":
+    envelope = strict_json_loads(raw_json)
+    if not isinstance(envelope, dict) or envelope.get("type") != "openqpep-multi-recipient":
         raise QPEPWireFormatError("Not a valid OpenQPEP multi-recipient packet.")
 
-    slot_nonce = base64.b64decode(envelope["slot_nonce_b64"])
+    raw_slots = envelope.get("slots")
+    if not isinstance(raw_slots, list) or not (1 <= len(raw_slots) <= MAX_MULTI_RECIPIENT_SLOTS):
+        raise QPEPWireFormatError(
+            f"Multi-recipient packet slots must be a list of 1..{MAX_MULTI_RECIPIENT_SLOTS} entries."
+        )
+
+    slot_nonce = strict_b64decode(envelope["slot_nonce_b64"])
+    if len(slot_nonce) != 16:
+        raise QPEPWireFormatError("Multi-recipient slot_nonce must be exactly 16 bytes.")
     my_tag_hex = compute_blinded_slot_tag(slot_nonce, recipient_keyring.key_hash).hex()
     priv_keys = OpenQPEPProtocol.unlock_private_keys(recipient_keyring, passphrase)
     my_tier = recipient_keyring.qlx_tier
 
     candidates = []
-    for idx, slot in enumerate(envelope["slots"]):
+    for idx, slot in enumerate(raw_slots):
+        if not isinstance(slot, dict):
+            raise QPEPWireFormatError("Malformed recipient slot object in multi-recipient packet.")
         if slot.get("qlx_tier") != my_tier:
             continue
         if envelope.get("blind_hint_enabled", True) and slot.get("slot_tag_hex"):
-            if ct_eq(slot["slot_tag_hex"].encode("ascii"), my_tag_hex.encode("ascii")):
+            tag_str = slot["slot_tag_hex"]
+            if isinstance(tag_str, str) and ct_eq(tag_str.encode("ascii", errors="ignore"), my_tag_hex.encode("ascii")):
                 candidates.append((idx, slot))
         else:
             candidates.append((idx, slot))
@@ -172,10 +186,10 @@ def decrypt_multi_recipient(
         my_hgc_sk = hgc_sb.as_bytes()
         for idx, slot in candidates:
             try:
-                ct_qlx = base64.b64decode(slot["ct_qlx_b64"])
-                epk_hgc = base64.b64decode(slot["epk_hgc_b64"])
-                wrap_nonce24 = base64.b64decode(slot["wrap_nonce24_b64"])
-                wrapped_cek = base64.b64decode(slot["wrapped_cek_b64"])
+                ct_qlx = strict_b64decode(slot["ct_qlx_b64"])
+                epk_hgc = strict_b64decode(slot["epk_hgc_b64"])
+                wrap_nonce24 = strict_b64decode(slot["wrap_nonce24_b64"])
+                wrapped_cek = strict_b64decode(slot["wrapped_cek_b64"])
 
                 ss_qlx = QLXEngine.decaps(my_qlx_sk, ct_qlx, my_tier)
                 ss_hgc = x448_exchange(my_hgc_sk, epk_hgc)
@@ -191,8 +205,8 @@ def decrypt_multi_recipient(
         raise QPEPMacVerificationError("No matching recipient slot could be decrypted with this key ring.")
 
     with SecretBuffer(recovered_cek) as cek_buf:
-        payload_nonce24 = base64.b64decode(envelope["payload_nonce24_b64"])
-        payload_ct = base64.b64decode(envelope["payload_ciphertext_b64"])
+        payload_nonce24 = strict_b64decode(envelope["payload_nonce24_b64"])
+        payload_ct = strict_b64decode(envelope["payload_ciphertext_b64"])
         payload_aad = b"CALYX-QPEP-MULTI-PAYLOAD-v1.0.0|" + slot_nonce
         body_plain = cc512_decrypt(cek_buf.as_bytes(), payload_nonce24, payload_ct, payload_aad)
 

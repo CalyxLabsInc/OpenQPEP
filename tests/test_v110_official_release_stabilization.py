@@ -36,14 +36,14 @@ class TestOpenQPEPv110Stabilization(unittest.TestCase):
     PASS = "Calyx!@#$_2026v110Aa99"
 
     def test_01_v10x_to_v110_wire_v5_keyring_interoperability(self):
-        self.assertEqual(UNIVERSAL_VERSION, "1.1.7")
-        self.assertEqual(UNIVERSAL_VERSION_LABEL, "Official Release 1.1.7")
-        self.assertEqual(PROTOCOL_VERSION, "OpenQPEP/1.1.7")
+        self.assertEqual(UNIVERSAL_VERSION, "1.1.8")
+        self.assertEqual(UNIVERSAL_VERSION_LABEL, "Official Release 1.1.8")
+        self.assertEqual(PROTOCOL_VERSION, "OpenQPEP/1.1.8")
         self.assertEqual(MANDATORY_KDF_VERSION, 4)
 
         kr = OpenQPEPProtocol.generate_keypair("InteropUser", "interop@calyxmail.org", self.PASS, qlx_tier="QLX-768")
-        # Simulate Official Release 1.0.0–1.1.6 .qpkrf envelopes imported under v1.1.7
-        for prev_official in ("1.0.0", "1.0.1", "1.0.2", "1.1.0", "1.1.1", "1.1.2", "1.1.3", "1.1.4", "1.1.5", "1.1.6"):
+        # Simulate Official Release 1.0.0–1.1.7 .qpkrf envelopes imported under v1.1.8
+        for prev_official in ("1.0.0", "1.0.1", "1.0.2", "1.1.0", "1.1.1", "1.1.2", "1.1.3", "1.1.4", "1.1.5", "1.1.6", "1.1.7"):
             env = {
                 "magic": "QPKRF-v1.0.0",
                 "protocol": "OpenQPEP by Calyx Labs Inc.",
@@ -93,7 +93,7 @@ class TestOpenQPEPv110Stabilization(unittest.TestCase):
         self.assertTrue(ok5)
 
     def test_03_compat_server_legacy_token_and_directory_validation(self):
-        for ok_ver in ("1.0.0", "1.0.2", "1.1.0", "OpenQPEP/1.0.2", "OpenQPEP/1.1.0", "v1.1.0", "1.1.1", "OpenQPEP/1.1.1", "v1.1.1", "1.1.2", "OpenQPEP/1.1.2", "v1.1.2", "1.1.3", "OpenQPEP/1.1.3", "v1.1.3", "1.1.4", "OpenQPEP/1.1.4", "v1.1.4", "1.1.5", "OpenQPEP/1.1.5", "v1.1.5", "1.1.6", "OpenQPEP/1.1.6", "v1.1.6", "1.1.7", "OpenQPEP/1.1.7", "v1.1.7"):
+        for ok_ver in ("1.0.0", "1.0.2", "1.1.0", "OpenQPEP/1.0.2", "OpenQPEP/1.1.0", "v1.1.0", "1.1.1", "OpenQPEP/1.1.1", "v1.1.1", "1.1.2", "OpenQPEP/1.1.2", "v1.1.2", "1.1.3", "OpenQPEP/1.1.3", "v1.1.3", "1.1.4", "OpenQPEP/1.1.4", "v1.1.4", "1.1.5", "OpenQPEP/1.1.5", "v1.1.5", "1.1.6", "OpenQPEP/1.1.6", "v1.1.6", "1.1.7", "OpenQPEP/1.1.7", "v1.1.7", "1.1.8", "OpenQPEP/1.1.8", "v1.1.8"):
             self.assertFalse(is_legacy_prerelease_version(ok_ver))
             reject_legacy_version_token(ok_ver)
         for bad_ver in ("1.0.0-rc", "1.2.0-pc", "0.2.9-beta", "OpenQPEP/1.0.0-rc", "0.1.9"):

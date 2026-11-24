@@ -1,5 +1,5 @@
 """
-OpenQPEP by Calyx Labs Inc. — Official Release 1.1.7 (v1.1.7, Modular Cryptographic Kernel)
+OpenQPEP by Calyx Labs Inc. — Official Release 1.1.8 (v1.1.8, Modular Cryptographic Kernel)
 Clean official API facade over calyx_qpep.primitives.*, calyx_qpep.lattice.*, compat_server, and protocol.
 """
 from .compat_server import SlidingWindowRateLimiter
@@ -80,6 +80,12 @@ from .protocol import (
     detect_file_extension_and_mime,
 )
 
+from .wire import (
+    safe_zlib_decompress,
+    strict_b64decode,
+    strict_json_loads,
+)
+
 __version__ = UNIVERSAL_VERSION
 __all__ = [
     "PROJECT_NAME",
@@ -139,6 +145,9 @@ __all__ = [
     "select_kdf_profile",
     "validate_kdf_params",
     "verify_argon2id_backend_parity",
+    "strict_b64decode",
+    "strict_json_loads",
+    "safe_zlib_decompress",
     "CalyxQPEPProtocol",
     "OpenQPEPProtocol",
     "QPEPKeyRing",

@@ -1,5 +1,5 @@
 """
-OpenQPEP Official Release 1.1.7 (v1.1.7) Beyond-LWE Native .qpkrf Persistence & Dispatch Bridge.
+OpenQPEP Official Release 1.1.8 (v1.1.8) Beyond-LWE Native .qpkrf Persistence & Dispatch Bridge.
 Provides unified Wire Format v5 keygen, encrypt, decrypt, sign, and verify dispatch for all 5 Beyond-LWE suites:
   - CIF-SQI-512  (Calyx Isogeny-Forge: CIF-SQI-512 + QHS-512)
   - CRT-RSD512   (Calyx Rank-Metric Tensor: CRT-RSD512 + QMQ-512)
@@ -15,7 +15,7 @@ from typing import Any, Dict, Tuple
 from .constants import MAX_ARMOR_BYTES, PACKET_TYPE_SIGNATURE, PROTOCOL_VERSION, UNIVERSAL_VERSION
 from .exceptions import OpenQPEPError, QPEPFaultGuardError, QPEPKeyRingError, QPEPSuiteError, QPEPWireFormatError
 from .primitives.consttime import ct_eq, ct_eq_str
-from .wire.armor import armor_unwrap, armor_wrap
+from .wire.armor import armor_unwrap, armor_wrap, strict_b64decode, strict_json_loads
 
 BEYOND_LWE_SUITES = ("CIF-SQI-512", "CRT-RSD512", "CGM-8192", "CULC-2048", "CSP-Omega")
 CRT_SIG_LABEL = "CALYX QPEP RANK-METRIC SIGNATURE"
@@ -79,7 +79,7 @@ def _b64e(b: bytes) -> str:
 
 
 def _b64d(s: str) -> bytes:
-    return base64.b64decode(s.encode("ascii"))
+    return strict_b64decode(s)
 
 
 def generate_beyond_lwe_material(suite_id: str, allow_low_ram_override: bool = True) -> Tuple[Dict[str, Any], Dict[str, Any]]:
@@ -216,7 +216,7 @@ def verify_beyond_lwe(suite_id: str, armored_sig: str, blwe_pub: Dict[str, Any])
         try:
             _validate_material(suite_id, blwe_pub, "sig_pk_b64", "public")
             raw, _ = armor_unwrap(armored_sig, CRT_SIG_LABEL)
-            bundle = json.loads(raw.decode("utf-8"))
+            bundle = strict_json_loads(raw)
             if not isinstance(bundle, dict) or not ct_eq_str(bundle.get("suite_id"), "CRT-RSD512"):
                 return False, b""
             msg = _b64d(bundle["message_b64"])
@@ -228,7 +228,7 @@ def verify_beyond_lwe(suite_id: str, armored_sig: str, blwe_pub: Dict[str, Any])
         try:
             _validate_material(suite_id, blwe_pub, "sig_pk_b64", "public")
             raw, _ = armor_unwrap(armored_sig, CGM_SIG_LABEL)
-            bundle = json.loads(raw.decode("utf-8"))
+            bundle = strict_json_loads(raw)
             if not isinstance(bundle, dict) or not ct_eq_str(bundle.get("suite_id"), "CGM-8192"):
                 return False, b""
             msg = _b64d(bundle["message_b64"])

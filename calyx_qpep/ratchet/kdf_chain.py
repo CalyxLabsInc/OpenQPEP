@@ -1,5 +1,5 @@
 """
-QPEP-Ratchet One-Way qSponge-XOF KDF Chains (Official Release 1.1.7).
+QPEP-Ratchet One-Way qSponge-XOF KDF Chains (Official Release 1.1.8).
 Evolves root keys and per-message CMT-4 CC-512 encryption keys irreversibly on every step,
 actively scrubbing intermediate key material via SecretBuffer for Forward Secrecy (FS).
 """

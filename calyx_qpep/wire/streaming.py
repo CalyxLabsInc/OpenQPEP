@@ -1,8 +1,8 @@
 """
-OpenQPEP O(1)-RAM Streaming Chunked AEAD & Seekable Merkle-Tree File Encryption (Official Release 1.1.7).
+OpenQPEP O(1)-RAM Streaming Chunked AEAD & Seekable Merkle-Tree File Encryption (Official Release 1.1.8).
 
 Features:
-  - Official Release 1.1.7 Stream Magic `STREAM_MAGIC = \\x89QPS\\x05\\x00` (hard-rejects legacy
+  - Official Release 1.1.8 Stream Magic `STREAM_MAGIC = \\x89QPS\\x05\\x00` (hard-rejects legacy
     pre-release `\\x89QPS\\x02\\x07` streams with QPEPLegacyProtocolError).
   - Constant ~256 KiB RAM streaming for arbitrary-sized files in 64 KiB CMT-4 CC-512 frames.
   - Deterministic chunk-bound nonces making chunk reordering, duplication, or mid-stream truncation impossible.
@@ -30,16 +30,17 @@ HEADER_STRUCT = struct.Struct(">6sII16s")  # magic(6), chunk_size(4), flags(4), 
 CHUNK_PREFIX_STRUCT = struct.Struct(">QBI")  # chunk_idx(8), is_final(1), ct_len(4) -> 13 bytes
 FLAG_MERKLE_SEEKABLE = 0x00000001
 MAX_STREAM_CHUNK_SIZE = 16 * 1024 * 1024  # 16 MiB max chunk ceiling
+MAX_STREAM_CHUNKS = 1_048_576             # 1M chunks max per stream (CPU/DoS ceiling)
 
 
 def _validate_stream_magic(magic: bytes) -> None:
     if magic in LEGACY_STREAM_MAGICS:
         raise QPEPLegacyProtocolError(
             "Legacy pre-release OpenQPEP stream magic (\\x89QPS\\x02\\x07) is strictly rejected in "
-            "Official Release 1.1.7 (zero backwards compatibility). Official stream magic \\x89QPS\\x05\\x00 is required."
+            "Official Release 1.1.8 (zero backwards compatibility). Official stream magic \\x89QPS\\x05\\x00 is required."
         )
     if magic != STREAM_MAGIC:
-        raise QPEPWireFormatError("Invalid OpenQPEP Official Release 1.1.7 streaming magic bytes.")
+        raise QPEPWireFormatError("Invalid OpenQPEP Official Release 1.1.8 streaming magic bytes.")
 
 
 def derive_chunk_nonce24(base_nonce: bytes, chunk_idx: int, is_final: bool) -> bytes:
@@ -179,7 +180,21 @@ class StreamingDecryptor:
             raise ValueError("StreamingDecryptor requires a 64-byte CC-512 key.")
         self._key_buf = SecretBuffer(key64)
 
-    def decrypt_stream(self, src: BinaryIO, dst: BinaryIO, *, expected_merkle_root: Optional[bytes] = None) -> Dict[str, object]:
+    def decrypt_stream(
+        self,
+        src: BinaryIO,
+        dst: BinaryIO,
+        *,
+        expected_merkle_root: Optional[bytes] = None,
+        max_chunks: int = MAX_STREAM_CHUNKS,
+        max_total_bytes: Optional[int] = None,
+    ) -> Dict[str, object]:
+        if isinstance(max_chunks, bool) or not isinstance(max_chunks, int) or max_chunks < 1:
+            raise QPEPWireFormatError("max_chunks must be a positive integer.")
+        if max_total_bytes is not None and (
+            isinstance(max_total_bytes, bool) or not isinstance(max_total_bytes, int) or max_total_bytes < 0
+        ):
+            raise QPEPWireFormatError("max_total_bytes must be a non-negative integer or None.")
         hdr = src.read(HEADER_STRUCT.size)
         if len(hdr) != HEADER_STRUCT.size:
             raise QPEPWireFormatError("Truncated OpenQPEP streaming header.")
@@ -187,6 +202,8 @@ class StreamingDecryptor:
         _validate_stream_magic(magic)
         if chunk_size <= 0 or chunk_size > MAX_STREAM_CHUNK_SIZE:
             raise QPEPWireFormatError("Invalid chunk_size in OpenQPEP streaming header.")
+        if flags & ~FLAG_MERKLE_SEEKABLE:
+            raise QPEPWireFormatError("Non-zero reserved flag bits in OpenQPEP streaming header.")
 
         expected_idx = 0
         saw_final = False
@@ -198,9 +215,13 @@ class StreamingDecryptor:
             prefix = src.read(CHUNK_PREFIX_STRUCT.size)
             if not prefix:
                 break
+            if expected_idx >= max_chunks:
+                raise QPEPWireFormatError(f"OpenQPEP stream exceeds maximum allowed chunk count ({max_chunks}).")
             if len(prefix) != CHUNK_PREFIX_STRUCT.size:
                 raise QPEPTruncationError("Truncated chunk header in OpenQPEP stream.")
             chunk_idx, is_final_byte, ct_len = CHUNK_PREFIX_STRUCT.unpack(prefix)
+            if is_final_byte not in (0, 1):
+                raise QPEPWireFormatError(f"Non-canonical is_final flag ({is_final_byte}) in chunk {chunk_idx}.")
             if chunk_idx != expected_idx:
                 raise QPEPMacVerificationError(f"Chunk reordering/duplication detected: expected {expected_idx}, got {chunk_idx}.")
             if ct_len < CC512_OVERHEAD_BYTES or ct_len > max_ct_len:
@@ -209,10 +230,14 @@ class StreamingDecryptor:
             if len(ct) != ct_len:
                 raise QPEPTruncationError(f"Truncated ciphertext in chunk {chunk_idx}.")
 
-            is_final = bool(is_final_byte)
+            is_final = (is_final_byte == 1)
             nonce24 = derive_chunk_nonce24(base_nonce, chunk_idx, is_final)
             aad = _chunk_aad(base_nonce, chunk_idx, is_final)
             pt = cc512_decrypt(self._key_buf.as_bytes(), nonce24, ct, aad)
+            if max_total_bytes is not None and (total_plain + len(pt) > max_total_bytes):
+                raise QPEPWireFormatError(
+                    f"Decrypted OpenQPEP stream exceeds maximum allowed total bytes ({max_total_bytes})."
+                )
             dst.write(pt)
             total_plain += len(pt)
 
@@ -256,26 +281,39 @@ class StreamingDecryptor:
             raise ValueError("Invalid byte range.")
         if start_byte == end_byte:
             return b""
+        if len(chunk_offsets) > MAX_STREAM_CHUNKS:
+            raise QPEPWireFormatError(f"Seekable chunk index exceeds maximum allowed chunks ({MAX_STREAM_CHUNKS}).")
 
         src.seek(0)
         hdr = src.read(HEADER_STRUCT.size)
         if len(hdr) != HEADER_STRUCT.size:
             raise QPEPWireFormatError("Truncated OpenQPEP streaming header.")
-        magic, chunk_size, _flags, base_nonce = HEADER_STRUCT.unpack(hdr)
+        magic, chunk_size, flags, base_nonce = HEADER_STRUCT.unpack(hdr)
         _validate_stream_magic(magic)
+        if chunk_size <= 0 or chunk_size > MAX_STREAM_CHUNK_SIZE:
+            raise QPEPWireFormatError("Invalid chunk_size in OpenQPEP streaming header.")
+        if flags & ~FLAG_MERKLE_SEEKABLE:
+            raise QPEPWireFormatError("Non-zero reserved flag bits in OpenQPEP streaming header.")
 
         first_chunk = start_byte // chunk_size
         last_chunk = (end_byte - 1) // chunk_size
         if last_chunk >= len(chunk_offsets):
             raise ValueError("Requested byte range exceeds encrypted stream length.")
 
+        max_ct_len = chunk_size + CC512_OVERHEAD_BYTES
         out = bytearray()
         for cidx in range(first_chunk, last_chunk + 1):
             src.seek(chunk_offsets[cidx])
             prefix = src.read(CHUNK_PREFIX_STRUCT.size)
+            if len(prefix) != CHUNK_PREFIX_STRUCT.size:
+                raise QPEPTruncationError(f"Truncated seeked chunk header {cidx}.")
             chunk_idx, is_final_byte, ct_len = CHUNK_PREFIX_STRUCT.unpack(prefix)
+            if is_final_byte not in (0, 1):
+                raise QPEPWireFormatError(f"Non-canonical is_final flag ({is_final_byte}) in seeked chunk {cidx}.")
             if chunk_idx != cidx:
                 raise QPEPMacVerificationError("Seeked chunk index mismatch.")
+            if ct_len < CC512_OVERHEAD_BYTES or ct_len > max_ct_len:
+                raise QPEPWireFormatError(f"Invalid seeked chunk ciphertext length {ct_len} in chunk {cidx}.")
             ct = src.read(ct_len)
             if len(ct) != ct_len:
                 raise QPEPTruncationError(f"Truncated seeked chunk {cidx}.")
@@ -284,7 +322,7 @@ class StreamingDecryptor:
             if not verify_merkle_proof(leaf, proof, merkle_root):
                 raise QPEPMacVerificationError(f"Merkle proof verification failed for seeked chunk {cidx}.")
 
-            is_final = bool(is_final_byte)
+            is_final = (is_final_byte == 1)
             nonce24 = derive_chunk_nonce24(base_nonce, cidx, is_final)
             aad = _chunk_aad(base_nonce, cidx, is_final)
             pt = cc512_decrypt(self._key_buf.as_bytes(), nonce24, ct, aad)

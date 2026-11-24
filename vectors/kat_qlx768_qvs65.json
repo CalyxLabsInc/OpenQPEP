@@ -1,8 +1,8 @@
 {
   "schema": "openqpep-kat-v3",
   "family": "structured_lattice",
-  "protocol_version": "OpenQPEP/1.1.7",
-  "universal_version": "1.1.7",
+  "protocol_version": "OpenQPEP/1.1.8",
+  "universal_version": "1.1.8",
   "suite_id": "QLX-768",
   "suite_name": "Calyx Velocity: QLX-768 + QVS-65 (High-Speed Mobile \u2014 All Devices)",
   "qlx_tier": "QLX-768",
@@ -39,7 +39,7 @@
     "key_hash": "37833B1D9939CA9B6D9542281D0D41FF5E8B90E1C5A28767EFA3BF66217FEB52",
     "wire_magic_hex": "895150450500",
     "wire_frame_bytes": 9021,
-    "wire_frame_sha3_512": "75f2c6690d1d15cbb881a074e0457066f522b89abf8b88207271ecaea1d91b4df4f5f4375dc43d346d5e8942239a5adae57828658b49f8ed1527295062716934",
+    "wire_frame_sha3_512": "5e91413b86416f54561348a9d58f20d942caf2ac0f9adfd3e4c0fffd2653e928ec7723f97c33990b2b8e7fcee118372c21fe117dd1ad640a586ee7472bbec9a0",
     "wire_frame_prefix_hex": "89515045050001003d0ef68d6b9ab6ccfd853bb237066281f43c66634e032d11ba6d34a9522bdc0c9b70d79ac479318f29ed0ad938bdf9978d0d96823f203ac1",
     "cleartext_identity_headers_present": false
   }

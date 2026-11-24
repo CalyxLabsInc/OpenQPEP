@@ -1,4 +1,4 @@
-"""OpenQPEP Official Release 1.1.7 — Standalone Calyx Goppa-Monolith (CGM-8192) Non-Lattice Suite."""
+"""OpenQPEP Official Release 1.1.8 — Standalone Calyx Goppa-Monolith (CGM-8192) Non-Lattice Suite."""
 import base64
 import json
 import os
