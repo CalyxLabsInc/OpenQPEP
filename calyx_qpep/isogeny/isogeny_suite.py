@@ -1,6 +1,6 @@
 """
 Calyx Isogeny-Forge: CIF-SQI-512 + QHS-512 (2D Supersingular Isogeny — All Devices)
-OpenQPEP Official Release 1.2.1 (v1.2.1) — Calyx Labs Inc. (CPOSLS-1.0).
+OpenQPEP Official Release 1.2.2 (v1.2.2) — Calyx Labs Inc. (CPOSLS-1.0).
 
 Combines genuine CSIDH-512 Supersingular Isogeny KEM (CIF-SQI-512) with Stateless Hash-Based
 Hypertree signatures (QHS-512) and CMT-4 Key-Committing CC-512 over Official Wire Format v5 (\\x89QPE\\x05\\x00).

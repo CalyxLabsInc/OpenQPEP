@@ -1,5 +1,5 @@
 """
-Unit tests for OpenQPEP Official Release 1.2.1 Deterministic KATs & Cross-Language Vectors.
+Unit tests for OpenQPEP Official Release 1.2.2 Deterministic KATs & Cross-Language Vectors.
 """
 import json
 import unittest

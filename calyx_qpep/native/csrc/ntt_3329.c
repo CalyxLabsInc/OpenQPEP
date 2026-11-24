@@ -1,6 +1,6 @@
 /*
  * OpenQPEP Native C99 / SIMD Accelerated 7-Layer NTT over Z_3329[X]/(X^256 + 1)
- * Official Release 1.2.1 (v1.2.1) — Calyx Labs Inc. (CPOSLS-1.0)
+ * Official Release 1.2.2 (v1.2.2) — Calyx Labs Inc. (CPOSLS-1.0)
  *
  * Thread-safe compile-time const twiddle tables (zero lazy-init data races) and
  * branchless conditional modular reduction, bit-for-bit identical to ntt_3329.py.
@@ -34,19 +34,21 @@ static const int32_t ZETAS_BASE_3329[128] = {
 };
 
 static inline int32_t ct_caddq_3329(int32_t a) {
-    return a + ((a >> 31) & QLX_Q);
+    int32_t mask = -(int32_t)((uint32_t)a >> 31);
+    return a + (mask & QLX_Q);
 }
 
 static inline int32_t ct_csubq_3329(int32_t a) {
     int32_t d = a - QLX_Q;
-    return d + ((d >> 31) & QLX_Q);
+    int32_t mask = -(int32_t)((uint32_t)d >> 31);
+    return d + (mask & QLX_Q);
 }
 
 static inline int32_t ct_barrett_3329(int64_t x) {
-    /* Division-free branchless Barrett mod 3329, bit-exact with Python & Rust (|x| <= 2^35) */
-    int64_t t = (x * 20642678LL) >> 36;
-    int32_t r = (int32_t)(x - t * QLX_Q);
-    r = ct_caddq_3329(r);
+    /* Division-free branchless Barrett mod 3329, exact for all |x| <= 2^35 with zero signed-shift UB. */
+    uint64_t u = (uint64_t)(x + (10400000LL * 3329LL));
+    uint64_t t = (u * 20642678ULL) >> 36;
+    int32_t r = (int32_t)(u - t * (uint64_t)QLX_Q);
     return ct_csubq_3329(r);
 }
 
@@ -99,6 +101,22 @@ OPENQPEP_API void openqpep_ntt_base_mul_3329(const int32_t *a_hat, const int32_t
         int64_t r1 = (int64_t)a0 * (int64_t)b1 + (int64_t)a1 * (int64_t)b0;
         out[2 * i] = ct_barrett_3329(r0);
         out[2 * i + 1] = ct_barrett_3329(r1);
+    }
+}
+
+OPENQPEP_API void openqpep_ntt_base_mul_acc_3329(int32_t *acc, const int32_t *a_hat, const int32_t *b_hat) {
+    if (!acc || !a_hat || !b_hat) return;
+    for (int i = 0; i < 128; i++) {
+        int32_t a0 = a_hat[2 * i];
+        int32_t a1 = a_hat[2 * i + 1];
+        int32_t b0 = b_hat[2 * i];
+        int32_t b1 = b_hat[2 * i + 1];
+        int32_t gamma = ZETAS_BASE_3329[i];
+        int64_t prod1 = (int64_t)ct_barrett_3329((int64_t)a1 * (int64_t)b1);
+        int64_t r0 = (int64_t)acc[2 * i] + (int64_t)a0 * (int64_t)b0 + prod1 * (int64_t)gamma;
+        int64_t r1 = (int64_t)acc[2 * i + 1] + (int64_t)a0 * (int64_t)b1 + (int64_t)a1 * (int64_t)b0;
+        acc[2 * i] = ct_barrett_3329(r0);
+        acc[2 * i + 1] = ct_barrett_3329(r1);
     }
 }
 

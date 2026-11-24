@@ -45,12 +45,12 @@ CSRC_DIR = NATIVE_DIR / "csrc"
 
 
 class TestOpenQPEPv121C99KeccakF1600(unittest.TestCase):
-    def test_01_version_metadata_is_121(self):
-        self.assertEqual(UNIVERSAL_VERSION, "1.2.1")
-        self.assertEqual(UNIVERSAL_VERSION_LABEL, "Official Release 1.2.1")
-        self.assertEqual(PROTOCOL_VERSION, "OpenQPEP/1.2.1")
+    def test_01_version_metadata_format(self):
+        self.assertTrue(UNIVERSAL_VERSION.startswith(("1.", "2.")))
+        self.assertEqual(UNIVERSAL_VERSION_LABEL, f"Official Release {UNIVERSAL_VERSION}")
+        self.assertEqual(PROTOCOL_VERSION, f"OpenQPEP/{UNIVERSAL_VERSION}")
         if is_native_available():
-            self.assertEqual(native_abi_version(), 0x00010201)
+            self.assertGreaterEqual(native_abi_version(), 0x00010201)
 
     def test_02_nist_fips202_official_test_vectors(self):
         if not is_native_available():

@@ -1,4 +1,18 @@
-# OpenQPEP Core Protocol Changelog — Official Release `v1.2.1`
+# OpenQPEP Core Protocol Changelog — Official Release `v1.2.2`
+
+## Official Release `v1.2.2` (2026-11-24) — Native C99 Polynomial Ring & Matrix-Vector Engine (`QLX` + `QVS`)
+
+- **Native C99 Polynomial Ring Codecs, Samplers & Streaming Matrix-Vector Engine (`calyx_qpep/native/csrc/poly_ring_c.c`):**
+  - Added KyberSlash-free fixed-point reciprocal compression/decompression (`openqpep_poly_compress_3329`, `openqpep_poly_decompress_3329`), branchless 12-bit packing (`openqpep_byte_encode_12`, `openqpep_byte_decode_12`), on-the-fly Keccak-backed QLX rejection sampling (`openqpep_qlx_sample_ntt_3329`), streaming zero-heap QLX NTT matrix-vector multiply (`openqpep_qlx_matvec_3329`, normal & transposed), and fused vector inner products (`openqpep_qlx_inner_prod_3329`).
+  - Added branchless QVS 24-bit polynomial packing/unpacking (`openqpep_qvs_pack_poly24`, `openqpep_qvs_unpack_poly24`), Keccak-backed QVS samplers (`openqpep_qvs_sample_ntt`, `openqpep_qvs_sample_mask_y`, `openqpep_qvs_sample_in_ball`), matrix expansion (`openqpep_qvs_expand_matrix`), precomputed matrix-vector multiply (`openqpep_qvs_matvec_precomputed`), and zero-heap streaming matrix-vector multiply (`openqpep_qvs_matvec`), wiping all stack secret scratch via `openqpep_explicit_bzero`.
+- **100% Division-Free Solinas-Barrett `ntt_8380417.c` & Fused `ntt_3329.c` (`calyx_qpep/native/csrc/ntt_8380417.c`, `ntt_3329.c`, `include/openqpep.h`):**
+  - Eliminated all `% QVS_Q` divisions from `ntt_8380417.c` using exact 64-bit branchless Solinas reduction modulo `8380417 = 2^23 - 2^13 + 1` (zero divisions, zero signed-shift UB) and added `openqpep_ntt_base_mul_8380417`, `openqpep_poly_add_qvs`, `openqpep_poly_sub_qvs`, and `openqpep_qvs_decompose_poly` (proven exact across all 8,380,417 residues).
+  - Added fused `openqpep_ntt_base_mul_acc_3329` in `ntt_3329.c`, upgraded `ct_barrett_3329` to signed-shift-UB-free unsigned Barrett across `|x| <= 2^35`, and bumped `OPENQPEP_ABI_VERSION` to `0x00010202U` (`57` exported `OPENQPEP_API` symbols across Makefile & CMake).
+- **Transparent Engine Dispatch (`loader.py`, `poly_ring.py`, `ntt_8380417.py`, `qlx_kem.py`, `qvs_dsa.py`):**
+  - Wired all 20 new C99 functions into `calyx_qpep/native/loader.py` (with explicit `openqpep_explicit_bzero` scrubbing of temporary marshaling arrays) and accelerated `poly_ring.py`, `ntt_8380417.py`, `QLXEngine` (`QLX-768`..`QLX-16384`), and `QVSEngine` (`QVS-65`..`QVS-1024`) while preserving 100% bit-exact Pure-Python fallback under `OPENQPEP_DISABLE_NATIVE=1`.
+- **Verification:** Added 6-test suite `tests/test_v122_c99_poly_ring_matvec.py` verifying all 20 new dynamic symbols, exhaustive 3,329-residue `d=1..12` compression & 8,380,417-residue QVS decomposition parity, cross-backend `QLX` (all 5 tiers) & deterministic `QVS` sign/verify parity, real wall-clock speedups on `QLX-4096` and `QVS-256`, external `-Wpedantic` C99 static/shared linking, 10/10 Native C99 + 10/10 Pure-Python Golden KATs, and 181/181 unit & AST tests.
+
+---
 
 ## Official Release `v1.2.1` (2026-11-24) — Native C99 Keccak-f[1600] (`qSponge-512` / `SHA3-512` / `SHAKE-256`)
 

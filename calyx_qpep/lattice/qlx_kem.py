@@ -1,5 +1,5 @@
 """
-QLX Module-LWE & 4-Manifold Coupled Hyper-Tesseract KEM Engine (Official Release 1.2.1).
+QLX Module-LWE & 4-Manifold Coupled Hyper-Tesseract KEM Engine (Official Release 1.2.2).
 Hardened with branchless ct_cmov Fujisaki-Okamoto implicit rejection and SecretBuffer scrubbing.
 """
 import os
@@ -7,6 +7,7 @@ from typing import Tuple
 
 from ..constants import QLX_TIERS
 from ..exceptions import QPEPSuiteError
+from ..native.loader import native_qlx_inner_prod_3329, native_qlx_matvec_3329
 from ..primitives.consttime import ct_cmov, ct_eq
 from ..primitives.qsponge import qsponge_512, qsponge_var
 from ..primitives.zeroize import SecretBuffer
@@ -43,23 +44,31 @@ class QLXEngine:
         e2_list = []
         try:
             if manifolds == 1:
-                a_hat = [[sample_ntt_3329(rho, i, j) for j in range(k)] for i in range(k)]
                 r_vec = [ntt_3329(sample_cbd2_3329(coins, i)) for i in range(k)]
                 e1_vec = [sample_cbd2_3329(coins, k + i) for i in range(k)]
                 e2_poly = sample_cbd2_3329(coins, 2 * k)
                 e2_list = [e2_poly]
 
-                u_chunks = []
-                for i in range(k):
-                    acc = [0] * 256
-                    for j in range(k):
-                        acc = poly_add_3329(acc, ntt_base_mul_3329(a_hat[j][i], r_vec[j]))
-                    u_i = poly_add_3329(inv_ntt_3329(acc), e1_vec[i])
-                    u_chunks.append(compress_poly(u_i, du))
+                u_hat_vec = native_qlx_matvec_3329(rho, k, True, r_vec)
+                if u_hat_vec is None:
+                    a_hat = [[sample_ntt_3329(rho, i, j) for j in range(k)] for i in range(k)]
+                    u_hat_vec = []
+                    for i in range(k):
+                        acc = [0] * 256
+                        for j in range(k):
+                            acc = poly_add_3329(acc, ntt_base_mul_3329(a_hat[j][i], r_vec[j]))
+                        u_hat_vec.append(acc)
 
-                v_acc = [0] * 256
-                for j in range(k):
-                    v_acc = poly_add_3329(v_acc, ntt_base_mul_3329(t_hat[j], r_vec[j]))
+                u_chunks = [
+                    compress_poly(poly_add_3329(inv_ntt_3329(u_hat_vec[i]), e1_vec[i]), du)
+                    for i in range(k)
+                ]
+
+                v_acc = native_qlx_inner_prod_3329(t_hat, r_vec)
+                if v_acc is None:
+                    v_acc = [0] * 256
+                    for j in range(k):
+                        v_acc = poly_add_3329(v_acc, ntt_base_mul_3329(t_hat[j], r_vec[j]))
                 v_poly = poly_add_3329(inv_ntt_3329(v_acc), e2_poly)
                 m_poly = decompress_poly(msg32, 1)
                 v_poly = poly_add_3329(v_poly, m_poly)
@@ -78,17 +87,27 @@ class QLXEngine:
             u_chunks = []
             v_chunks = []
             for m in range(manifolds):
-                a_m = [[sample_ntt_3329(m_rhos[m], i, j) for j in range(k_m)] for i in range(k_m)]
                 base = m * k_m
+                r_slice = r_vec[base : base + k_m]
+                t_slice = t_hat[base : base + k_m]
+                u_hat_m = native_qlx_matvec_3329(m_rhos[m], k_m, True, r_slice)
+                if u_hat_m is None:
+                    a_m = [[sample_ntt_3329(m_rhos[m], i, j) for j in range(k_m)] for i in range(k_m)]
+                    u_hat_m = []
+                    for i in range(k_m):
+                        acc = [0] * 256
+                        for j in range(k_m):
+                            acc = poly_add_3329(acc, ntt_base_mul_3329(a_m[j][i], r_slice[j]))
+                        u_hat_m.append(acc)
                 for i in range(k_m):
-                    acc = [0] * 256
-                    for j in range(k_m):
-                        acc = poly_add_3329(acc, ntt_base_mul_3329(a_m[j][i], r_vec[base + j]))
-                    u_i = poly_add_3329(inv_ntt_3329(acc), e1_vec[base + i])
+                    u_i = poly_add_3329(inv_ntt_3329(u_hat_m[i]), e1_vec[base + i])
                     u_chunks.append(compress_poly(u_i, du))
-                v_acc = [0] * 256
-                for j in range(k_m):
-                    v_acc = poly_add_3329(v_acc, ntt_base_mul_3329(t_hat[base + j], r_vec[base + j]))
+
+                v_acc = native_qlx_inner_prod_3329(t_slice, r_slice)
+                if v_acc is None:
+                    v_acc = [0] * 256
+                    for j in range(k_m):
+                        v_acc = poly_add_3329(v_acc, ntt_base_mul_3329(t_slice[j], r_slice[j]))
                 v_m = poly_add_3329(inv_ntt_3329(v_acc), e2_vec[m])
                 v_m = poly_add_3329(v_m, decompress_poly(mu_blocks[m], 1))
                 v_chunks.append(compress_poly(v_m, dv))
@@ -120,15 +139,17 @@ class QLXEngine:
                         rho, sigma = bytes(mv[:32]), bytes(mv[32:])
 
                     if manifolds == 1:
-                        a_hat = [[sample_ntt_3329(rho, i, j) for j in range(k)] for i in range(k)]
                         s_hat = [ntt_3329(sample_cbd2_3329(sigma, i)) for i in range(k)]
                         e_hat = [ntt_3329(sample_cbd2_3329(sigma, k + i)) for i in range(k)]
-                        t_hat = []
-                        for i in range(k):
-                            acc = [0] * 256
-                            for j in range(k):
-                                acc = poly_add_3329(acc, ntt_base_mul_3329(a_hat[i][j], s_hat[j]))
-                            t_hat.append(poly_add_3329(acc, e_hat[i]))
+                        t_hat = native_qlx_matvec_3329(rho, k, False, s_hat, e_hat)
+                        if t_hat is None:
+                            a_hat = [[sample_ntt_3329(rho, i, j) for j in range(k)] for i in range(k)]
+                            t_hat = []
+                            for i in range(k):
+                                acc = [0] * 256
+                                for j in range(k):
+                                    acc = poly_add_3329(acc, ntt_base_mul_3329(a_hat[i][j], s_hat[j]))
+                                t_hat.append(poly_add_3329(acc, e_hat[i]))
                     else:
                         k_m = k // manifolds
                         m_rhos = derive_tesseract_manifold_seeds(rho, manifolds)
@@ -136,13 +157,19 @@ class QLXEngine:
                         e_hat = [ntt_3329(sample_cbd1_3329(sigma, k + i)) for i in range(k)]
                         t_hat = []
                         for m in range(manifolds):
-                            a_m = [[sample_ntt_3329(m_rhos[m], i, j) for j in range(k_m)] for i in range(k_m)]
                             base = m * k_m
-                            for i in range(k_m):
-                                acc = [0] * 256
-                                for j in range(k_m):
-                                    acc = poly_add_3329(acc, ntt_base_mul_3329(a_m[i][j], s_hat[base + j]))
-                                t_hat.append(poly_add_3329(acc, e_hat[base + i]))
+                            s_slice = s_hat[base : base + k_m]
+                            e_slice = e_hat[base : base + k_m]
+                            t_m = native_qlx_matvec_3329(m_rhos[m], k_m, False, s_slice, e_slice)
+                            if t_m is not None:
+                                t_hat.extend(t_m)
+                            else:
+                                a_m = [[sample_ntt_3329(m_rhos[m], i, j) for j in range(k_m)] for i in range(k_m)]
+                                for i in range(k_m):
+                                    acc = [0] * 256
+                                    for j in range(k_m):
+                                        acc = poly_add_3329(acc, ntt_base_mul_3329(a_m[i][j], s_slice[j]))
+                                    t_hat.append(poly_add_3329(acc, e_slice[i]))
 
                 ek = b"".join(byte_encode_12(p) for p in t_hat) + rho
                 s_bytes = b"".join(byte_encode_12(p) for p in s_hat)
@@ -210,8 +237,13 @@ class QLXEngine:
                 v_poly0 = decompress_poly(ct[k * u_step : k * u_step + v_step], dv)
 
                 k_m = k // manifolds
-                for j in range(k_m):
-                    su_hat = poly_add_3329(su_hat, ntt_base_mul_3329(s_hat[j], ntt_3329(u_vec[j])))
+                u_hat_m = [ntt_3329(u_vec[j]) for j in range(k_m)]
+                su_native = native_qlx_inner_prod_3329(s_hat[:k_m], u_hat_m)
+                if su_native is not None:
+                    su_hat = su_native
+                else:
+                    for j in range(k_m):
+                        su_hat = poly_add_3329(su_hat, ntt_base_mul_3329(s_hat[j], u_hat_m[j]))
                 w_poly = poly_sub_3329(v_poly0, inv_ntt_3329(su_hat))
 
                 with SecretBuffer(compress_poly(w_poly, 1)) as m_prime_buf:

@@ -1,4 +1,4 @@
-# OpenQPEP Official Release 1.2.1 (v1.2.1)
+# OpenQPEP Official Release 1.2.2 (v1.2.2)
 """
 8-Layer Complete Number Theoretic Transform & HighBits/LowBits Decomposition over Z_8380417[X]/(X^256+1).
 Automatically dispatches through libopenqpep (C99/AVX2/NEON) when available, with
@@ -6,7 +6,14 @@ bit-exact pure-Python fallback.
 """
 from typing import List, Tuple
 from ..constants import QVS_Q, QVS_ZETA, QVS_GAMMA2, QVS_ALPHA
-from ..native.loader import native_inv_ntt_qvs, native_ntt_qvs
+from ..native.loader import (
+    native_inv_ntt_qvs,
+    native_ntt_mul_qvs,
+    native_ntt_qvs,
+    native_poly_add_qvs,
+    native_poly_sub_qvs,
+    native_qvs_decompose_poly,
+)
 from ..primitives.consttime import barrett_reduce_qvs, ct_caddq_qvs, ct_csubq_qvs
 
 _QVS_HALF_Q = QVS_Q >> 1  # 4190208
@@ -67,6 +74,30 @@ def inv_ntt_qvs(poly_hat: List[int]) -> List[int]:
     return [barrett_reduce_qvs(x * _INV_256_QVS) for x in p]
 
 
+def ntt_mul_qvs(a_hat: List[int], b_hat: List[int]) -> List[int]:
+    """Pointwise multiplication in Z_8380417 NTT domain (C99 Solinas-Barrett accelerated)."""
+    res = native_ntt_mul_qvs(a_hat, b_hat)
+    if res is not None:
+        return res
+    return [barrett_reduce_qvs(a * b) for a, b in zip(a_hat, b_hat)]
+
+
+def poly_add_qvs(a: List[int], b: List[int]) -> List[int]:
+    """Branchless polynomial addition mod 8380417 (C99 accelerated)."""
+    res = native_poly_add_qvs(a, b)
+    if res is not None:
+        return res
+    return [ct_csubq_qvs(barrett_reduce_qvs(x) + barrett_reduce_qvs(y)) for x, y in zip(a, b)]
+
+
+def poly_sub_qvs(a: List[int], b: List[int]) -> List[int]:
+    """Branchless polynomial subtraction mod 8380417 (C99 accelerated)."""
+    res = native_poly_sub_qvs(a, b)
+    if res is not None:
+        return res
+    return [ct_caddq_qvs(barrett_reduce_qvs(x) - barrett_reduce_qvs(y)) for x, y in zip(a, b)]
+
+
 def center_qvs(x: int) -> int:
     """Division-free branchless centered representative in [-(Q-1)/2, (Q-1)/2]."""
     r = barrett_reduce_qvs(x)
@@ -88,3 +119,15 @@ def decompose_qvs(r: int) -> Tuple[int, int]:
     r1 &= ~is16
     r0 += is16
     return r1, r0
+
+
+def decompose_poly_qvs(poly: List[int]) -> Tuple[List[int], List[int]]:
+    """Batch division-free HighBits/LowBits decomposition across all 256 coefficients (C99 accelerated)."""
+    res = native_qvs_decompose_poly(poly)
+    if res is not None:
+        return res
+    r1_out = [0] * 256
+    r0_out = [0] * 256
+    for i in range(256):
+        r1_out[i], r0_out[i] = decompose_qvs(poly[i])
+    return r1_out, r0_out

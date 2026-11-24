@@ -1,4 +1,4 @@
-# OpenQPEP Official Release 1.2.1 (v1.2.1)
+# OpenQPEP Official Release 1.2.2 (v1.2.2)
 """
 Constant-Time Polynomial Ring Sampling (NTT Rejection, CBD_1, CBD_2, Ball Challenge) &
 Division-Free Bit-Packing / Compression Codecs (KyberSlash-Free Barrett Arithmetic).
@@ -16,7 +16,21 @@ Security Guarantees:
 from typing import List
 
 from ..constants import QLX_Q, QVS_GAMMA1, QVS_Q
-from ..native.loader import native_cbd1_3329, native_cbd2_3329, native_cbd2_qvs
+from ..native.loader import (
+    native_byte_decode_12,
+    native_byte_encode_12,
+    native_cbd1_3329,
+    native_cbd2_3329,
+    native_cbd2_qvs,
+    native_poly_compress_3329,
+    native_poly_decompress_3329,
+    native_qlx_sample_ntt_3329,
+    native_qvs_pack_poly24,
+    native_qvs_sample_in_ball,
+    native_qvs_sample_mask_y,
+    native_qvs_sample_ntt,
+    native_qvs_unpack_poly24,
+)
 from ..primitives.consttime import (
     barrett_reduce_3329,
     barrett_reduce_qvs,
@@ -49,6 +63,9 @@ def decompress_coeff_3329(val: int, d: int) -> int:
 
 def sample_ntt_3329(rho: bytes, row: int, col: int) -> List[int]:
     """Rejection-samples a uniform public NTT-domain polynomial in R_3329 from seed rho || col || row."""
+    res = native_qlx_sample_ntt_3329(rho, row, col)
+    if res is not None:
+        return res
     stream = qsponge_var(b"CALYX-QLX-MAT-A|" + rho + bytes([col, row]), 840)
     coeffs: List[int] = []
     idx = 0
@@ -116,6 +133,9 @@ def byte_encode_12(poly: List[int]) -> bytes:
     """Division-free branchless packing of 256 12-bit coefficients in Z_3329 into 384 bytes."""
     if len(poly) != 256:
         raise ValueError(f"byte_encode_12 requires exactly 256 coefficients, got {len(poly)}.")
+    res = native_byte_encode_12(poly)
+    if res is not None:
+        return res
     out = bytearray(384)
     for i in range(128):
         c0 = barrett_reduce_3329(poly[2 * i])
@@ -130,6 +150,9 @@ def byte_decode_12(data: bytes) -> List[int]:
     """Division-free branchless unpacking of 384 bytes into 256 canonical coefficients in [0, 3328]."""
     if len(data) != 384:
         raise ValueError(f"byte_decode_12 requires exactly 384 bytes, got {len(data)}.")
+    res = native_byte_decode_12(data)
+    if res is not None:
+        return res
     poly = [0] * 256
     for i in range(128):
         b0, b1, b2 = data[3 * i], data[3 * i + 1], data[3 * i + 2]
@@ -147,6 +170,9 @@ def compress_poly(poly: List[int], d: int) -> bytes:
         raise ValueError(f"compress_poly requires exactly 256 coefficients, got {len(poly)}.")
     if d < 1 or d > 12:
         raise ValueError(f"compress_poly bit width d must be in 1..12, got {d}.")
+    res = native_poly_compress_3329(poly, d)
+    if res is not None:
+        return res
     mask = (1 << d) - 1
     bits = 0
     bit_len = 0
@@ -174,6 +200,9 @@ def decompress_poly(data: bytes, d: int) -> List[int]:
         raise ValueError(f"decompress_poly bit width d must be in 1..12, got {d}.")
     if len(data) != 32 * d:
         raise ValueError(f"decompress_poly requires exactly {32 * d} bytes for d={d}, got {len(data)}.")
+    res = native_poly_decompress_3329(data, d)
+    if res is not None:
+        return res
     mask = (1 << d) - 1
     half = 1 << (d - 1)
     bits = 0
@@ -194,6 +223,9 @@ def decompress_poly(data: bytes, d: int) -> List[int]:
 
 def sample_ntt_qvs(rho: bytes, row: int, col: int) -> List[int]:
     """Rejection-samples a uniform public NTT-domain polynomial in R_Q (Q = 8380417)."""
+    res = native_qvs_sample_ntt(rho, row, col)
+    if res is not None:
+        return res
     stream = qsponge_var(b"CALYX-QVS-MAT-A|" + rho + bytes([row, col]), 1024)
     coeffs: List[int] = []
     idx = 0
@@ -226,6 +258,9 @@ def sample_eta_qvs(seed: bytes, nonce: int) -> List[int]:
 
 def sample_mask_y_qvs(seed: bytes, nonce: int) -> List[int]:
     """Branchless masking polynomial y sampler with coefficients in [-gamma_1 + 1, gamma_1] mod QVS_Q."""
+    res = native_qvs_sample_mask_y(seed, nonce)
+    if res is not None:
+        return res
     with SecretBuffer(qsponge_var(b"CALYX-QVS-MASK-Y|" + seed + nonce.to_bytes(2, "little"), 768)) as buf_sb:
         raw_buf = buf_sb.as_bytes()
         coeffs = [0] * 256
@@ -237,6 +272,9 @@ def sample_mask_y_qvs(seed: bytes, nonce: int) -> List[int]:
 
 def sample_in_ball_qvs(c_tilde: bytes, tau: int) -> List[int]:
     """Samples sparse public challenge polynomial c in R_Q with exactly tau coefficients in {-1, +1}."""
+    res = native_qvs_sample_in_ball(c_tilde, tau)
+    if res is not None:
+        return res
     stream = qsponge_var(b"CALYX-QVS-BALL|" + c_tilde, 256)
     sign_bits = int.from_bytes(stream[:8], "little")
     idx = 8
@@ -258,6 +296,9 @@ def pack_poly24_qvs(poly: List[int]) -> bytes:
     """Division-free branchless packing of 256 QVS coefficients mod 8380417 into 768 bytes."""
     if len(poly) != 256:
         raise ValueError(f"pack_poly24_qvs requires exactly 256 coefficients, got {len(poly)}.")
+    res = native_qvs_pack_poly24(poly)
+    if res is not None:
+        return res
     out = bytearray(768)
     for i, c in enumerate(poly):
         v = barrett_reduce_qvs(c)
@@ -271,6 +312,9 @@ def unpack_poly24_qvs(data: bytes) -> List[int]:
     """Division-free branchless unpacking of 768 bytes into 256 canonical QVS coefficients in [0, 8380416]."""
     if len(data) != 768:
         raise ValueError(f"unpack_poly24_qvs requires exactly 768 bytes, got {len(data)}.")
+    res = native_qvs_unpack_poly24(data)
+    if res is not None:
+        return res
     poly = [0] * 256
     for i in range(256):
         raw = data[3 * i] | (data[3 * i + 1] << 8) | (data[3 * i + 2] << 16)

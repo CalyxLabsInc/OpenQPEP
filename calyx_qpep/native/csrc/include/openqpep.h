@@ -1,5 +1,5 @@
 /*
- * OpenQPEP Official Release 1.2.1 (v1.2.1) — Public C99/SIMD SDK ABI Header
+ * OpenQPEP Official Release 1.2.2 (v1.2.2) — Public C99/SIMD SDK ABI Header
  * Project: OpenQPEP by Calyx Labs Inc. (Creator: Tristen Martinez)
  * Repository: https://github.com/CalyxLabsInc/OpenQPEP
  * License: Calyx Public Open Source Specifications v1.0 License (CPOSLS-1.0)
@@ -23,8 +23,8 @@ extern "C" {
 /* ------------------------------------------------------------------------- */
 #define OPENQPEP_VERSION_MAJOR 1
 #define OPENQPEP_VERSION_MINOR 2
-#define OPENQPEP_VERSION_PATCH 1
-#define OPENQPEP_VERSION_STRING "1.2.1"
+#define OPENQPEP_VERSION_PATCH 2
+#define OPENQPEP_VERSION_STRING "1.2.2"
 
 #define OPENQPEP_ABI_CURRENT  1
 #define OPENQPEP_ABI_REVISION 2
@@ -134,6 +134,9 @@ OPENQPEP_API void openqpep_inv_ntt_3329(int32_t *p);
 /** Base-ring degree-2 multiplication in Z_3329 NTT domain (256-coeff a_hat, b_hat -> out). */
 OPENQPEP_API void openqpep_ntt_base_mul_3329(const int32_t *a_hat, const int32_t *b_hat, int32_t *out);
 
+/** Fused base-ring degree-2 multiply-accumulate in Z_3329 NTT domain: acc += a_hat * b_hat. */
+OPENQPEP_API void openqpep_ntt_base_mul_acc_3329(int32_t *acc, const int32_t *a_hat, const int32_t *b_hat);
+
 /** Branchless polynomial addition mod 3329 (256 coefficients). */
 OPENQPEP_API void openqpep_poly_add_3329(const int32_t *a, const int32_t *b, int32_t *out);
 
@@ -144,14 +147,111 @@ OPENQPEP_API void openqpep_poly_sub_3329(const int32_t *a, const int32_t *b, int
 /* QVS Module-SIS/LWE 8-Layer Complete NTT over Z_8380417[X]/(X^256+1)       */
 /* ------------------------------------------------------------------------- */
 
-/** Forward 8-layer complete NTT mod 8380417 (in-place on 256 int32_t coefficients). */
+/** Forward 8-layer division-free complete NTT mod 8380417 (in-place on 256 int32_t coeffs). */
 OPENQPEP_API void openqpep_ntt_qvs(int32_t *p);
 
-/** Inverse 8-layer complete NTT mod 8380417 (in-place on 256 int32_t coefficients). */
+/** Inverse 8-layer division-free complete NTT mod 8380417 (in-place on 256 int32_t coeffs). */
 OPENQPEP_API void openqpep_inv_ntt_qvs(int32_t *p);
 
-/** Pointwise multiplication in Z_8380417 NTT domain (256 coefficients). */
+/** Pointwise division-free multiplication in Z_8380417 NTT domain (256 coefficients). */
 OPENQPEP_API void openqpep_ntt_mul_qvs(const int32_t *a_hat, const int32_t *b_hat, int32_t *out);
+
+/** Canonical alias for pointwise multiplication in Z_8380417 NTT domain (256 coefficients). */
+OPENQPEP_API void openqpep_ntt_base_mul_8380417(const int32_t *a_hat, const int32_t *b_hat, int32_t *out);
+
+/** Branchless polynomial addition mod 8380417 (256 coefficients). */
+OPENQPEP_API void openqpep_poly_add_qvs(const int32_t *a, const int32_t *b, int32_t *out);
+
+/** Branchless polynomial subtraction mod 8380417 (256 coefficients). */
+OPENQPEP_API void openqpep_poly_sub_qvs(const int32_t *a, const int32_t *b, int32_t *out);
+
+/** Division-free branchless HighBits/LowBits decomposition across 256 QVS coefficients. */
+OPENQPEP_API int openqpep_qvs_decompose_poly(const int32_t *poly, int32_t *r1_out, int32_t *r0_out);
+
+/* ------------------------------------------------------------------------- */
+/* Native C99 Polynomial Ring Codecs, Samplers & Matrix-Vector Engine        */
+/* ------------------------------------------------------------------------- */
+
+/** Division-free branchless 12-bit encoding of 256 Z_3329 coefficients into 384 bytes. */
+OPENQPEP_API int openqpep_byte_encode_12(const int32_t *poly, uint8_t out384[384]);
+
+/** Division-free branchless 12-bit decoding of 384 bytes into 256 canonical Z_3329 coeffs. */
+OPENQPEP_API int openqpep_byte_decode_12(const uint8_t in384[384], int32_t out_poly[256]);
+
+/** KyberSlash-free fixed-point compression of 256 Z_3329 coeffs to d bits (1<=d<=12, out_len=32*d). */
+OPENQPEP_API int openqpep_poly_compress_3329(const int32_t *poly, uint32_t d, uint8_t *out, size_t out_len);
+
+/** Division-free decompression of 32*d bytes (1<=d<=12) into 256 canonical Z_3329 coeffs. */
+OPENQPEP_API int openqpep_poly_decompress_3329(const uint8_t *in, size_t in_len, uint32_t d, int32_t out_poly[256]);
+
+/** Rejection-samples a uniform public NTT polynomial A_hat[row][col] in R_3329 from rho. */
+OPENQPEP_API int openqpep_qlx_sample_ntt_3329(const uint8_t rho[32], uint8_t row, uint8_t col, int32_t out_poly[256]);
+
+/**
+ * Streaming zero-heap QLX NTT matrix-vector multiply over R_3329:
+ *   transpose == 0: out_hat[i] = sum_j (A_hat[i][j] * vec_hat[j]) + (add_hat ? add_hat[i] : 0)
+ *   transpose != 0: out_hat[i] = sum_j (A_hat[j][i] * vec_hat[j]) + (add_hat ? add_hat[i] : 0)
+ * Buffers hold k contiguous 256-coefficient int32_t polynomials (k * 256 elements).
+ */
+OPENQPEP_API int openqpep_qlx_matvec_3329(
+    const uint8_t rho[32],
+    uint32_t k,
+    int transpose,
+    const int32_t *vec_hat,
+    const int32_t *add_hat,
+    int32_t *out_hat
+);
+
+/** Fused QLX NTT vector inner product: out_poly = sum_{j=0}^{k-1} (a_vec_hat[j] * b_vec_hat[j]). */
+OPENQPEP_API int openqpep_qlx_inner_prod_3329(
+    const int32_t *a_vec_hat,
+    const int32_t *b_vec_hat,
+    uint32_t k,
+    int32_t out_poly[256]
+);
+
+/** Division-free branchless 24-bit packing of 256 Z_8380417 coefficients into 768 bytes. */
+OPENQPEP_API int openqpep_qvs_pack_poly24(const int32_t *poly, uint8_t out768[768]);
+
+/** Division-free branchless 24-bit unpacking of 768 bytes into 256 canonical Z_8380417 coeffs. */
+OPENQPEP_API int openqpep_qvs_unpack_poly24(const uint8_t in768[768], int32_t out_poly[256]);
+
+/** Rejection-samples a uniform public NTT polynomial A_hat[row][col] in R_8380417 from rho. */
+OPENQPEP_API int openqpep_qvs_sample_ntt(const uint8_t rho[32], uint8_t row, uint8_t col, int32_t out_poly[256]);
+
+/** Branchless QVS masking polynomial y sampler with compiler-barrier scratch wiping. */
+OPENQPEP_API int openqpep_qvs_sample_mask_y(const uint8_t *seed, size_t seed_len, uint16_t nonce, int32_t out_poly[256]);
+
+/** Sparse QVS Fiat-Shamir challenge ball sampler (tau <= 64 coefficients in {-1, +1} mod Q). */
+OPENQPEP_API int openqpep_qvs_sample_in_ball(const uint8_t *c_tilde, size_t c_tilde_len, uint32_t tau, int32_t out_poly[256]);
+
+/** Expands full k x l QVS NTT matrix A_hat into flat row-major buffer (k * l * 256 int32_t). */
+OPENQPEP_API int openqpep_qvs_expand_matrix(const uint8_t rho[32], uint32_t k, uint32_t l, int32_t *a_hat_flat);
+
+/** Computes out_hat[i] = sum_{j=0}^{l-1} A_hat[i][j] * vec_hat[j] mod 8380417 from precomputed A_hat. */
+OPENQPEP_API int openqpep_qvs_matvec_precomputed(
+    const int32_t *a_hat_flat,
+    uint32_t k,
+    uint32_t l,
+    const int32_t *vec_hat,
+    int32_t *out_hat
+);
+
+/**
+ * Streaming zero-heap QVS matrix-vector multiply over R_8380417:
+ *   acc[i] = sum_{j=0}^{l-1} A_hat[i][j] * vec_hat[j] mod Q
+ *   If apply_inv_ntt != 0: out_vec[i] = inv_ntt_qvs(acc[i]) + (add_vec ? add_vec[i] : 0) mod Q
+ *   If apply_inv_ntt == 0: out_vec[i] = acc[i] + (add_vec ? add_vec[i] : 0) mod Q
+ */
+OPENQPEP_API int openqpep_qvs_matvec(
+    const uint8_t rho[32],
+    uint32_t k,
+    uint32_t l,
+    const int32_t *vec_hat,
+    const int32_t *add_vec,
+    int apply_inv_ntt,
+    int32_t *out_vec
+);
 
 /* ------------------------------------------------------------------------- */
 /* Centered Binomial Distribution (CBD) & Plain-LWE Accelerators             */

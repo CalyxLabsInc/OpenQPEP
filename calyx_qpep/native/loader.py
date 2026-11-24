@@ -1,5 +1,5 @@
 """
-OpenQPEP Native C99 / SIMD Vectorized Acceleration Loader (libopenqpep) — Official Release 1.2.1.
+OpenQPEP Native C99 / SIMD Vectorized Acceleration Loader (libopenqpep) — Official Release 1.2.2.
 Loads libopenqpep.so / .dylib / .dll via ctypes with zero-copy array.array buffer marshaling.
 Seamlessly falls back to the bit-exact pure-Python reference engine when absent or disabled.
 """
@@ -8,7 +8,7 @@ import ctypes
 import os
 import platform
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 _NATIVE_DIR = Path(__file__).resolve().parent
 _LIB: Optional[ctypes.CDLL] = None
@@ -138,6 +138,72 @@ def _configure_signatures(lib: ctypes.CDLL) -> None:
     if hasattr(lib, "openqpep_keccak_wipe"):
         lib.openqpep_keccak_wipe.argtypes = [_c_void_p]
         lib.openqpep_keccak_wipe.restype = None
+    if hasattr(lib, "openqpep_ntt_base_mul_acc_3329"):
+        lib.openqpep_ntt_base_mul_acc_3329.argtypes = [_c_void_p, _c_void_p, _c_void_p]
+        lib.openqpep_ntt_base_mul_acc_3329.restype = None
+    if hasattr(lib, "openqpep_ntt_base_mul_8380417"):
+        lib.openqpep_ntt_base_mul_8380417.argtypes = [_c_void_p, _c_void_p, _c_void_p]
+        lib.openqpep_ntt_base_mul_8380417.restype = None
+    if hasattr(lib, "openqpep_poly_add_qvs"):
+        lib.openqpep_poly_add_qvs.argtypes = [_c_void_p, _c_void_p, _c_void_p]
+        lib.openqpep_poly_add_qvs.restype = None
+    if hasattr(lib, "openqpep_poly_sub_qvs"):
+        lib.openqpep_poly_sub_qvs.argtypes = [_c_void_p, _c_void_p, _c_void_p]
+        lib.openqpep_poly_sub_qvs.restype = None
+    if hasattr(lib, "openqpep_qvs_decompose_poly"):
+        lib.openqpep_qvs_decompose_poly.argtypes = [_c_void_p, _c_void_p, _c_void_p]
+        lib.openqpep_qvs_decompose_poly.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_byte_encode_12"):
+        lib.openqpep_byte_encode_12.argtypes = [_c_void_p, _c_void_p]
+        lib.openqpep_byte_encode_12.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_byte_decode_12"):
+        lib.openqpep_byte_decode_12.argtypes = [ctypes.c_char_p, _c_void_p]
+        lib.openqpep_byte_decode_12.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_poly_compress_3329"):
+        lib.openqpep_poly_compress_3329.argtypes = [_c_void_p, ctypes.c_uint32, _c_void_p, ctypes.c_size_t]
+        lib.openqpep_poly_compress_3329.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_poly_decompress_3329"):
+        lib.openqpep_poly_decompress_3329.argtypes = [ctypes.c_char_p, ctypes.c_size_t, ctypes.c_uint32, _c_void_p]
+        lib.openqpep_poly_decompress_3329.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_qlx_sample_ntt_3329"):
+        lib.openqpep_qlx_sample_ntt_3329.argtypes = [ctypes.c_char_p, ctypes.c_uint8, ctypes.c_uint8, _c_void_p]
+        lib.openqpep_qlx_sample_ntt_3329.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_qlx_matvec_3329"):
+        lib.openqpep_qlx_matvec_3329.argtypes = [
+            ctypes.c_char_p, ctypes.c_uint32, ctypes.c_int, _c_void_p, _c_void_p, _c_void_p
+        ]
+        lib.openqpep_qlx_matvec_3329.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_qlx_inner_prod_3329"):
+        lib.openqpep_qlx_inner_prod_3329.argtypes = [_c_void_p, _c_void_p, ctypes.c_uint32, _c_void_p]
+        lib.openqpep_qlx_inner_prod_3329.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_qvs_pack_poly24"):
+        lib.openqpep_qvs_pack_poly24.argtypes = [_c_void_p, _c_void_p]
+        lib.openqpep_qvs_pack_poly24.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_qvs_unpack_poly24"):
+        lib.openqpep_qvs_unpack_poly24.argtypes = [ctypes.c_char_p, _c_void_p]
+        lib.openqpep_qvs_unpack_poly24.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_qvs_sample_ntt"):
+        lib.openqpep_qvs_sample_ntt.argtypes = [ctypes.c_char_p, ctypes.c_uint8, ctypes.c_uint8, _c_void_p]
+        lib.openqpep_qvs_sample_ntt.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_qvs_sample_mask_y"):
+        lib.openqpep_qvs_sample_mask_y.argtypes = [ctypes.c_char_p, ctypes.c_size_t, ctypes.c_uint16, _c_void_p]
+        lib.openqpep_qvs_sample_mask_y.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_qvs_sample_in_ball"):
+        lib.openqpep_qvs_sample_in_ball.argtypes = [ctypes.c_char_p, ctypes.c_size_t, ctypes.c_uint32, _c_void_p]
+        lib.openqpep_qvs_sample_in_ball.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_qvs_expand_matrix"):
+        lib.openqpep_qvs_expand_matrix.argtypes = [ctypes.c_char_p, ctypes.c_uint32, ctypes.c_uint32, _c_void_p]
+        lib.openqpep_qvs_expand_matrix.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_qvs_matvec_precomputed"):
+        lib.openqpep_qvs_matvec_precomputed.argtypes = [
+            _c_void_p, ctypes.c_uint32, ctypes.c_uint32, _c_void_p, _c_void_p
+        ]
+        lib.openqpep_qvs_matvec_precomputed.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_qvs_matvec"):
+        lib.openqpep_qvs_matvec.argtypes = [
+            ctypes.c_char_p, ctypes.c_uint32, ctypes.c_uint32, _c_void_p, _c_void_p, ctypes.c_int, _c_void_p
+        ]
+        lib.openqpep_qvs_matvec.restype = ctypes.c_int
 
 
 _try_load_library()
@@ -478,3 +544,380 @@ class NativeKeccakSponge:
 
     def __del__(self) -> None:
         self.wipe()
+
+
+def _wipe_i32_array(arr: array.array) -> None:
+    if _LIB is not None and hasattr(_LIB, "openqpep_explicit_bzero") and len(arr) > 0:
+        addr, count = arr.buffer_info()
+        _LIB.openqpep_explicit_bzero(addr, count * arr.itemsize)
+
+
+def native_ntt_base_mul_acc_3329(acc: List[int], a_hat: List[int], b_hat: List[int]) -> Optional[List[int]]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_ntt_base_mul_acc_3329")):
+        return None
+    acc_arr = array.array("i", acc)
+    a_arr = array.array("i", a_hat)
+    b_arr = array.array("i", b_hat)
+    try:
+        _LIB.openqpep_ntt_base_mul_acc_3329(acc_arr.buffer_info()[0], a_arr.buffer_info()[0], b_arr.buffer_info()[0])
+        return acc_arr.tolist()
+    finally:
+        _wipe_i32_array(acc_arr)
+        _wipe_i32_array(a_arr)
+        _wipe_i32_array(b_arr)
+
+
+def native_poly_add_qvs(a: List[int], b: List[int]) -> Optional[List[int]]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_poly_add_qvs")):
+        return None
+    a_arr = array.array("i", a)
+    b_arr = array.array("i", b)
+    out = array.array("i", _ZERO_256_I32)
+    try:
+        _LIB.openqpep_poly_add_qvs(a_arr.buffer_info()[0], b_arr.buffer_info()[0], out.buffer_info()[0])
+        return out.tolist()
+    finally:
+        _wipe_i32_array(a_arr)
+        _wipe_i32_array(b_arr)
+        _wipe_i32_array(out)
+
+
+def native_poly_sub_qvs(a: List[int], b: List[int]) -> Optional[List[int]]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_poly_sub_qvs")):
+        return None
+    a_arr = array.array("i", a)
+    b_arr = array.array("i", b)
+    out = array.array("i", _ZERO_256_I32)
+    try:
+        _LIB.openqpep_poly_sub_qvs(a_arr.buffer_info()[0], b_arr.buffer_info()[0], out.buffer_info()[0])
+        return out.tolist()
+    finally:
+        _wipe_i32_array(a_arr)
+        _wipe_i32_array(b_arr)
+        _wipe_i32_array(out)
+
+
+def native_qvs_decompose_poly(poly: List[int]) -> Optional[Tuple[List[int], List[int]]]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_qvs_decompose_poly")):
+        return None
+    p_arr = array.array("i", poly)
+    r1_arr = array.array("i", _ZERO_256_I32)
+    r0_arr = array.array("i", _ZERO_256_I32)
+    try:
+        rc = int(_LIB.openqpep_qvs_decompose_poly(p_arr.buffer_info()[0], r1_arr.buffer_info()[0], r0_arr.buffer_info()[0]))
+        if rc != 0:
+            raise ValueError(f"openqpep_qvs_decompose_poly failed with status {rc}.")
+        return r1_arr.tolist(), r0_arr.tolist()
+    finally:
+        _wipe_i32_array(p_arr)
+        _wipe_i32_array(r1_arr)
+        _wipe_i32_array(r0_arr)
+
+
+def native_byte_encode_12(poly: List[int]) -> Optional[bytes]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_byte_encode_12")):
+        return None
+    p_arr = array.array("i", poly)
+    out = ctypes.create_string_buffer(384)
+    try:
+        rc = int(_LIB.openqpep_byte_encode_12(p_arr.buffer_info()[0], out))
+        if rc != 0:
+            raise ValueError(f"openqpep_byte_encode_12 failed with status {rc}.")
+        return out.raw
+    finally:
+        _wipe_i32_array(p_arr)
+
+
+def native_byte_decode_12(data: bytes) -> Optional[List[int]]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_byte_decode_12")):
+        return None
+    raw = data if isinstance(data, bytes) else bytes(data)
+    if len(raw) != 384:
+        raise ValueError(f"byte_decode_12 requires exactly 384 bytes, got {len(raw)}.")
+    out = array.array("i", _ZERO_256_I32)
+    try:
+        rc = int(_LIB.openqpep_byte_decode_12(raw, out.buffer_info()[0]))
+        if rc != 0:
+            raise ValueError(f"openqpep_byte_decode_12 failed with status {rc}.")
+        return out.tolist()
+    finally:
+        _wipe_i32_array(out)
+
+
+def native_poly_compress_3329(poly: List[int], d: int) -> Optional[bytes]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_poly_compress_3329")):
+        return None
+    if d < 1 or d > 12:
+        raise ValueError(f"compress_poly bit width d must be in 1..12, got {d}.")
+    p_arr = array.array("i", poly)
+    out_len = 32 * d
+    out = ctypes.create_string_buffer(out_len)
+    try:
+        rc = int(_LIB.openqpep_poly_compress_3329(p_arr.buffer_info()[0], d, out, out_len))
+        if rc != 0:
+            raise ValueError(f"openqpep_poly_compress_3329 failed with status {rc}.")
+        return out.raw
+    finally:
+        _wipe_i32_array(p_arr)
+
+
+def native_poly_decompress_3329(data: bytes, d: int) -> Optional[List[int]]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_poly_decompress_3329")):
+        return None
+    if d < 1 or d > 12:
+        raise ValueError(f"decompress_poly bit width d must be in 1..12, got {d}.")
+    raw = data if isinstance(data, bytes) else bytes(data)
+    if len(raw) != 32 * d:
+        raise ValueError(f"decompress_poly requires exactly {32 * d} bytes for d={d}, got {len(raw)}.")
+    out = array.array("i", _ZERO_256_I32)
+    try:
+        rc = int(_LIB.openqpep_poly_decompress_3329(raw, len(raw), d, out.buffer_info()[0]))
+        if rc != 0:
+            raise ValueError(f"openqpep_poly_decompress_3329 failed with status {rc}.")
+        return out.tolist()
+    finally:
+        _wipe_i32_array(out)
+
+
+def native_qlx_sample_ntt_3329(rho: bytes, row: int, col: int) -> Optional[List[int]]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_qlx_sample_ntt_3329")):
+        return None
+    raw_rho = rho if isinstance(rho, bytes) else bytes(rho)
+    if len(raw_rho) != 32:
+        return None
+    out = array.array("i", _ZERO_256_I32)
+    rc = int(_LIB.openqpep_qlx_sample_ntt_3329(raw_rho, row & 0xFF, col & 0xFF, out.buffer_info()[0]))
+    if rc != 0:
+        raise ValueError(f"openqpep_qlx_sample_ntt_3329 failed with status {rc}.")
+    return out.tolist()
+
+
+def native_qlx_matvec_3329(
+    rho: bytes,
+    k: int,
+    transpose: bool,
+    vec_hat: List[List[int]],
+    add_hat: Optional[List[List[int]]] = None,
+) -> Optional[List[List[int]]]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_qlx_matvec_3329")):
+        return None
+    raw_rho = rho if isinstance(rho, bytes) else bytes(rho)
+    if len(raw_rho) != 32 or k <= 0 or len(vec_hat) != k:
+        return None
+    vec_flat = array.array("i")
+    for p in vec_hat:
+        vec_flat.extend(p)
+    add_flat: Optional[array.array] = None
+    add_ptr = None
+    if add_hat is not None:
+        if len(add_hat) != k:
+            raise ValueError(f"add_hat length {len(add_hat)} does not match k={k}.")
+        add_flat = array.array("i")
+        for p in add_hat:
+            add_flat.extend(p)
+        add_ptr = add_flat.buffer_info()[0]
+    out_flat = array.array("i", [0] * (k * 256))
+    try:
+        rc = int(
+            _LIB.openqpep_qlx_matvec_3329(
+                raw_rho,
+                k,
+                1 if transpose else 0,
+                vec_flat.buffer_info()[0],
+                add_ptr,
+                out_flat.buffer_info()[0],
+            )
+        )
+        if rc != 0:
+            raise ValueError(f"openqpep_qlx_matvec_3329 failed with status {rc}.")
+        return [out_flat[256 * i : 256 * (i + 1)].tolist() for i in range(k)]
+    finally:
+        _wipe_i32_array(vec_flat)
+        if add_flat is not None:
+            _wipe_i32_array(add_flat)
+        _wipe_i32_array(out_flat)
+
+
+def native_qlx_inner_prod_3329(a_vec_hat: List[List[int]], b_vec_hat: List[List[int]]) -> Optional[List[int]]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_qlx_inner_prod_3329")):
+        return None
+    k = len(a_vec_hat)
+    if k == 0 or len(b_vec_hat) != k:
+        return None
+    a_flat = array.array("i")
+    for p in a_vec_hat:
+        a_flat.extend(p)
+    b_flat = array.array("i")
+    for p in b_vec_hat:
+        b_flat.extend(p)
+    out = array.array("i", _ZERO_256_I32)
+    try:
+        rc = int(_LIB.openqpep_qlx_inner_prod_3329(a_flat.buffer_info()[0], b_flat.buffer_info()[0], k, out.buffer_info()[0]))
+        if rc != 0:
+            raise ValueError(f"openqpep_qlx_inner_prod_3329 failed with status {rc}.")
+        return out.tolist()
+    finally:
+        _wipe_i32_array(a_flat)
+        _wipe_i32_array(b_flat)
+        _wipe_i32_array(out)
+
+
+def native_qvs_pack_poly24(poly: List[int]) -> Optional[bytes]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_qvs_pack_poly24")):
+        return None
+    p_arr = array.array("i", poly)
+    out = ctypes.create_string_buffer(768)
+    try:
+        rc = int(_LIB.openqpep_qvs_pack_poly24(p_arr.buffer_info()[0], out))
+        if rc != 0:
+            raise ValueError(f"openqpep_qvs_pack_poly24 failed with status {rc}.")
+        return out.raw
+    finally:
+        _wipe_i32_array(p_arr)
+
+
+def native_qvs_unpack_poly24(data: bytes) -> Optional[List[int]]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_qvs_unpack_poly24")):
+        return None
+    raw = data if isinstance(data, bytes) else bytes(data)
+    if len(raw) != 768:
+        raise ValueError(f"unpack_poly24_qvs requires exactly 768 bytes, got {len(raw)}.")
+    out = array.array("i", _ZERO_256_I32)
+    try:
+        rc = int(_LIB.openqpep_qvs_unpack_poly24(raw, out.buffer_info()[0]))
+        if rc != 0:
+            raise ValueError(f"openqpep_qvs_unpack_poly24 failed with status {rc}.")
+        return out.tolist()
+    finally:
+        _wipe_i32_array(out)
+
+
+def native_qvs_sample_ntt(rho: bytes, row: int, col: int) -> Optional[List[int]]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_qvs_sample_ntt")):
+        return None
+    raw_rho = rho if isinstance(rho, bytes) else bytes(rho)
+    if len(raw_rho) != 32:
+        return None
+    out = array.array("i", _ZERO_256_I32)
+    rc = int(_LIB.openqpep_qvs_sample_ntt(raw_rho, row & 0xFF, col & 0xFF, out.buffer_info()[0]))
+    if rc != 0:
+        raise ValueError(f"openqpep_qvs_sample_ntt failed with status {rc}.")
+    return out.tolist()
+
+
+def native_qvs_sample_mask_y(seed: bytes, nonce: int) -> Optional[List[int]]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_qvs_sample_mask_y")):
+        return None
+    raw_seed = seed if isinstance(seed, bytes) else bytes(seed)
+    out = array.array("i", _ZERO_256_I32)
+    try:
+        rc = int(_LIB.openqpep_qvs_sample_mask_y(raw_seed if raw_seed else None, len(raw_seed), nonce & 0xFFFF, out.buffer_info()[0]))
+        if rc != 0:
+            raise ValueError(f"openqpep_qvs_sample_mask_y failed with status {rc}.")
+        return out.tolist()
+    finally:
+        _wipe_i32_array(out)
+
+
+def native_qvs_sample_in_ball(c_tilde: bytes, tau: int) -> Optional[List[int]]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_qvs_sample_in_ball")):
+        return None
+    raw = c_tilde if isinstance(c_tilde, bytes) else bytes(c_tilde)
+    out = array.array("i", _ZERO_256_I32)
+    rc = int(_LIB.openqpep_qvs_sample_in_ball(raw if raw else None, len(raw), tau, out.buffer_info()[0]))
+    if rc != 0:
+        raise ValueError(f"openqpep_qvs_sample_in_ball failed with status {rc}.")
+    return out.tolist()
+
+
+def native_qvs_expand_matrix(rho: bytes, k: int, l: int) -> Optional[array.array]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_qvs_expand_matrix")):
+        return None
+    raw_rho = rho if isinstance(rho, bytes) else bytes(rho)
+    if len(raw_rho) != 32 or k <= 0 or l <= 0:
+        return None
+    a_flat = array.array("i", [0] * (k * l * 256))
+    rc = int(_LIB.openqpep_qvs_expand_matrix(raw_rho, k, l, a_flat.buffer_info()[0]))
+    if rc != 0:
+        raise ValueError(f"openqpep_qvs_expand_matrix failed with status {rc}.")
+    return a_flat
+
+
+def native_qvs_matvec_precomputed(
+    a_hat_flat: array.array,
+    k: int,
+    l: int,
+    vec_hat: List[List[int]],
+) -> Optional[List[List[int]]]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_qvs_matvec_precomputed")):
+        return None
+    if k <= 0 or l <= 0 or len(vec_hat) != l or len(a_hat_flat) != k * l * 256:
+        return None
+    vec_flat = array.array("i")
+    for p in vec_hat:
+        vec_flat.extend(p)
+    out_flat = array.array("i", [0] * (k * 256))
+    try:
+        rc = int(
+            _LIB.openqpep_qvs_matvec_precomputed(
+                a_hat_flat.buffer_info()[0],
+                k,
+                l,
+                vec_flat.buffer_info()[0],
+                out_flat.buffer_info()[0],
+            )
+        )
+        if rc != 0:
+            raise ValueError(f"openqpep_qvs_matvec_precomputed failed with status {rc}.")
+        return [out_flat[256 * i : 256 * (i + 1)].tolist() for i in range(k)]
+    finally:
+        _wipe_i32_array(vec_flat)
+        _wipe_i32_array(out_flat)
+
+
+def native_qvs_matvec(
+    rho: bytes,
+    k: int,
+    l: int,
+    vec_hat: List[List[int]],
+    add_vec: Optional[List[List[int]]] = None,
+    apply_inv_ntt: bool = False,
+) -> Optional[List[List[int]]]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_qvs_matvec")):
+        return None
+    raw_rho = rho if isinstance(rho, bytes) else bytes(rho)
+    if len(raw_rho) != 32 or k <= 0 or l <= 0 or len(vec_hat) != l:
+        return None
+    vec_flat = array.array("i")
+    for p in vec_hat:
+        vec_flat.extend(p)
+    add_flat: Optional[array.array] = None
+    add_ptr = None
+    if add_vec is not None:
+        if len(add_vec) != k:
+            raise ValueError(f"add_vec length {len(add_vec)} does not match k={k}.")
+        add_flat = array.array("i")
+        for p in add_vec:
+            add_flat.extend(p)
+        add_ptr = add_flat.buffer_info()[0]
+    out_flat = array.array("i", [0] * (k * 256))
+    try:
+        rc = int(
+            _LIB.openqpep_qvs_matvec(
+                raw_rho,
+                k,
+                l,
+                vec_flat.buffer_info()[0],
+                add_ptr,
+                1 if apply_inv_ntt else 0,
+                out_flat.buffer_info()[0],
+            )
+        )
+        if rc != 0:
+            raise ValueError(f"openqpep_qvs_matvec failed with status {rc}.")
+        return [out_flat[256 * i : 256 * (i + 1)].tolist() for i in range(k)]
+    finally:
+        _wipe_i32_array(vec_flat)
+        if add_flat is not None:
+            _wipe_i32_array(add_flat)
+        _wipe_i32_array(out_flat)

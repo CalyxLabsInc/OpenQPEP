@@ -1,8 +1,8 @@
-# OpenQPEP Official Release 1.2.1 (v1.2.1) — Cross-Platform C99 / SIMD SDK CMakeLists.txt
+# OpenQPEP Official Release 1.2.2 (v1.2.2) — Cross-Platform C99 / SIMD SDK CMakeLists.txt
 # Builds both shared (libopenqpep.so/.dylib/.dll) and static (libopenqpep.a) libraries,
 # Android NDK JNI target, public header include/openqpep.h, and pkg-config openqpep.pc.
 cmake_minimum_required(VERSION 3.16)
-project(openqpep VERSION 1.2.1 LANGUAGES C)
+project(openqpep VERSION 1.2.2 LANGUAGES C)
 
 include(GNUInstallDirs)
 
@@ -17,6 +17,7 @@ set(OPENQPEP_CORE_SRCS
     cbd.c
     pentad_accel.c
     keccak_f1600.c
+    poly_ring_c.c
 )
 
 set(OPENQPEP_SHARED_SRCS ${OPENQPEP_CORE_SRCS})

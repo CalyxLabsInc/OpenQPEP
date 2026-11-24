@@ -1,5 +1,5 @@
 """
-OpenQPEP by Calyx Labs Inc. — Official Release 1.2.1 (v1.2.1, Modular Cryptographic Kernel)
+OpenQPEP by Calyx Labs Inc. — Official Release 1.2.2 (v1.2.2, Modular Cryptographic Kernel)
 Clean official API facade over calyx_qpep.primitives.*, calyx_qpep.lattice.*, compat_server, and protocol.
 """
 from .compat_server import SlidingWindowRateLimiter

@@ -1,5 +1,5 @@
 """
-OpenQPEP Active Cryptographic Attack Simulator (Official Release 1.2.1 — Phase 1 Consolidation).
+OpenQPEP Active Cryptographic Attack Simulator (Official Release 1.2.2 — Phase 1 Consolidation).
 Simulates real-world adversarial attacks across the full Phase 1 security surface:
   1. Ciphertext malleability / chosen-ciphertext attacks against Fujisaki-Okamoto (`QLX`)
   2. Rowhammer/glitch fault injection inside `QVSEngine.sign` (`QPEPFaultGuardError`)

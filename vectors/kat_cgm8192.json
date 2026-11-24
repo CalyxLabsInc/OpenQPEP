@@ -1,8 +1,8 @@
 {
   "schema": "openqpep-kat-v3",
   "family": "beyond_lwe",
-  "protocol_version": "OpenQPEP/1.2.1",
-  "universal_version": "1.2.1",
+  "protocol_version": "OpenQPEP/1.2.2",
+  "universal_version": "1.2.2",
   "suite_id": "CGM-8192",
   "suite_name": "Calyx Goppa-Monolith: CGM-8192 + QHS-512 (Binary Goppa Code-Based \u2014 HIGH-TIER HARDWARE ONLY)",
   "qlx_tier": "CGM-8192",
@@ -17,9 +17,9 @@
     "public_material_bytes": 37748,
     "public_material_sha3_512": "3549c34b7633ffd3f1014ee3b2a1c4961964ce9a0131d8f79b3cb1a7374cbd665f8b3249cdce74d31504bc5878c0b24c23fde3deec43a641dc706e8b48a8eba3",
     "ct_bytes": 996,
-    "ct_sha3_512": "bded3f3778e2cee0f0fa5bad110bfe69d4b02f3ec6efa924976e8f8a6577e77e197bb101b1083168c711ef824efa04c7d4b8ada1d4bfe316d9fbf617518e1526",
+    "ct_sha3_512": "cd78a8b88abd6a15ccf7c5d18b549dc46341de3a75647c648e36c60e4482f11c121ebef99026c093d8a1aee4ad42ee20703fb41760b37bb38d2d39bda5ca38e4",
     "sig_bytes": 4756,
-    "sig_sha3_512": "7066d8218401faf11d3388a07925efd614e6172c8370661b5c723ef33a912a5f2a45328a744819ccca046c54785b678926098a20d18b889346024e076bb98bb9",
+    "sig_sha3_512": "0315988c4b931ff1e00f56ec90091e66f7c1e47b4b418cf567522def77055d6c87cc8b46f27488e2828649aa1a6596b5ee3eef0fcb1082a3eaa0e5852e3d5b85",
     "qpkrf_roundtrip_verified": true,
     "decrypt_verified": true,
     "signature_verified": true

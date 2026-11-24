@@ -1,5 +1,5 @@
 """
-QVS Lattice Fiat-Shamir with Aborts Signature Engine over Z_8380417[X]/(X^256+1) (Official Release 1.2.1).
+QVS Lattice Fiat-Shamir with Aborts Signature Engine over Z_8380417[X]/(X^256+1) (Official Release 1.2.2).
 Hardened with Verify-Before-Emit Fault-Guard (QPEPFaultGuardError) and SecretBuffer scrubbing.
 """
 import os
@@ -7,10 +7,24 @@ from typing import Optional, Tuple
 
 from ..constants import QVS_GAMMA1, QVS_GAMMA2, QVS_Q, QVS_TIERS
 from ..exceptions import QPEPFaultGuardError
+from ..native.loader import (
+    native_qvs_expand_matrix,
+    native_qvs_matvec,
+    native_qvs_matvec_precomputed,
+)
 from ..primitives.consttime import ct_eq
 from ..primitives.qsponge import qsponge_var
 from ..primitives.zeroize import SecretBuffer
-from .ntt_8380417 import center_qvs, decompose_qvs, inv_ntt_qvs, ntt_qvs
+from .ntt_8380417 import (
+    center_qvs,
+    decompose_poly_qvs,
+    decompose_qvs,
+    inv_ntt_qvs,
+    ntt_mul_qvs,
+    ntt_qvs,
+    poly_add_qvs,
+    poly_sub_qvs,
+)
 from .poly_ring import (
     pack_poly24_qvs,
     sample_eta_qvs,
@@ -45,18 +59,20 @@ class QVSEngine:
                     with exp_buf.view() as mv:
                         rho, rho_prime, k_sign = bytes(mv[:32]), bytes(mv[32:96]), bytes(mv[96:128])
 
-                    a_hat = [[sample_ntt_qvs(rho, i, j) for j in range(l)] for i in range(k)]
                     s1 = [sample_eta_qvs(rho_prime, j) for j in range(l)]
                     s2 = [sample_eta_qvs(rho_prime, l + i) for i in range(k)]
                     s1_hat = [ntt_qvs(p) for p in s1]
 
-                    t_vec = []
-                    for i in range(k):
-                        acc = [0] * 256
-                        for j in range(l):
-                            acc = [(acc[m] + a_hat[i][j][m] * s1_hat[j][m]) % QVS_Q for m in range(256)]
-                        t_i = [(inv_ntt_qvs(acc)[m] + s2[i][m]) % QVS_Q for m in range(256)]
-                        t_vec.append(t_i)
+                    t_vec = native_qvs_matvec(rho, k, l, s1_hat, add_vec=s2, apply_inv_ntt=True)
+                    if t_vec is None:
+                        a_hat = [[sample_ntt_qvs(rho, i, j) for j in range(l)] for i in range(k)]
+                        t_vec = []
+                        for i in range(k):
+                            acc = [0] * 256
+                            for j in range(l):
+                                acc = [(acc[m] + a_hat[i][j][m] * s1_hat[j][m]) % QVS_Q for m in range(256)]
+                            t_i = [(inv_ntt_qvs(acc)[m] + s2[i][m]) % QVS_Q for m in range(256)]
+                            t_vec.append(t_i)
 
                     t_bytes = b"".join(pack_poly24_qvs(p) for p in t_vec)
                     pk = rho + t_bytes
@@ -124,7 +140,8 @@ class QVSEngine:
                 if not ct_eq(pk, rho + t_bytes):
                     raise ValueError(f"{tier} secret key does not match public key.")
 
-                a_hat = [[sample_ntt_qvs(rho, i, j) for j in range(l)] for i in range(k)]
+                a_hat_flat = native_qvs_expand_matrix(rho, k, l)
+                a_hat = None if a_hat_flat is not None else [[sample_ntt_qvs(rho, i, j) for j in range(l)] for i in range(k)]
                 s1_hat = [ntt_qvs(p) for p in s1]
                 s2_hat = [ntt_qvs(p) for p in s2]
 
@@ -148,15 +165,26 @@ class QVSEngine:
 
                     w_vec = []
                     w1_bytes = bytearray()
-                    for i in range(k):
-                        acc = [0] * 256
-                        for j in range(l):
-                            acc = [(acc[m] + a_hat[i][j][m] * y_hat[j][m]) % QVS_Q for m in range(256)]
-                        w_i = inv_ntt_qvs(acc)
-                        w_vec.append(w_i)
-                        for coeff in w_i:
-                            w1_c, _ = decompose_qvs(coeff)
-                            w1_bytes.append(w1_c & 0xFF)
+                    if a_hat_flat is not None:
+                        w_hat_vec = native_qvs_matvec_precomputed(a_hat_flat, k, l, y_hat)
+                    else:
+                        w_hat_vec = None
+                    if w_hat_vec is not None:
+                        for i in range(k):
+                            w_i = inv_ntt_qvs(w_hat_vec[i])
+                            w_vec.append(w_i)
+                            r1_i, _ = decompose_poly_qvs(w_i)
+                            w1_bytes.extend(r1_i)
+                    else:
+                        for i in range(k):
+                            acc = [0] * 256
+                            for j in range(l):
+                                acc = [(acc[m] + a_hat[i][j][m] * y_hat[j][m]) % QVS_Q for m in range(256)]
+                            w_i = inv_ntt_qvs(acc)
+                            w_vec.append(w_i)
+                            for coeff in w_i:
+                                w1_c, _ = decompose_qvs(coeff)
+                                w1_bytes.append(w1_c & 0xFF)
 
                     c_tilde = qsponge_var(b"CALYX-QVS-CHALLENGE-v1.0.0|" + mu + bytes(w1_bytes), 64)
                     c_poly = sample_in_ball_qvs(c_tilde, tau)
@@ -165,8 +193,8 @@ class QVSEngine:
                     z_vec = []
                     reject = False
                     for j in range(l):
-                        cs1 = inv_ntt_qvs([(c_hat[m] * s1_hat[j][m]) % QVS_Q for m in range(256)])
-                        z_j = [(y_vec[j][m] + cs1[m]) % QVS_Q for m in range(256)]
+                        cs1 = inv_ntt_qvs(ntt_mul_qvs(c_hat, s1_hat[j]))
+                        z_j = poly_add_qvs(y_vec[j], cs1)
                         for coeff in z_j:
                             if abs(center_qvs(coeff)) >= QVS_GAMMA1 - beta:
                                 reject = True
@@ -179,11 +207,11 @@ class QVSEngine:
 
                     w1_idx = 0
                     for i in range(k):
-                        cs2 = inv_ntt_qvs([(c_hat[m] * s2_hat[i][m]) % QVS_Q for m in range(256)])
+                        cs2 = inv_ntt_qvs(ntt_mul_qvs(c_hat, s2_hat[i]))
+                        diff_poly = poly_sub_qvs(w_vec[i], cs2)
+                        r1_list, r0_list = decompose_poly_qvs(diff_poly)
                         for m in range(256):
-                            diff = (w_vec[i][m] - cs2[m]) % QVS_Q
-                            r1, r0 = decompose_qvs(diff)
-                            if abs(r0) >= QVS_GAMMA2 - beta or r1 != w1_bytes[w1_idx]:
+                            if abs(r0_list[m]) >= QVS_GAMMA2 - beta or r1_list[m] != w1_bytes[w1_idx]:
                                 reject = True
                                 break
                             w1_idx += 1
@@ -220,22 +248,29 @@ class QVSEngine:
                 if abs(center_qvs(coeff)) >= QVS_GAMMA1 - beta:
                     return False
 
-        a_hat = [[sample_ntt_qvs(rho, i, j) for j in range(l)] for i in range(k)]
         z_hat = [ntt_qvs(p) for p in z_vec]
         t_hat = [ntt_qvs(p) for p in t_vec]
         c_poly = sample_in_ball_qvs(c_tilde, tau)
         c_hat = ntt_qvs(c_poly)
 
+        az_hat_vec = native_qvs_matvec(rho, k, l, z_hat, add_vec=None, apply_inv_ntt=False)
         w1_prime_bytes = bytearray()
-        for i in range(k):
-            az_hat = [0] * 256
-            for j in range(l):
-                az_hat = [(az_hat[m] + a_hat[i][j][m] * z_hat[j][m]) % QVS_Q for m in range(256)]
-            ct_hat = [(c_hat[m] * t_hat[i][m]) % QVS_Q for m in range(256)]
-            w_prime_i = inv_ntt_qvs([(az_hat[m] - ct_hat[m]) % QVS_Q for m in range(256)])
-            for coeff in w_prime_i:
-                r1, _ = decompose_qvs(coeff)
-                w1_prime_bytes.append(r1 & 0xFF)
+        if az_hat_vec is not None:
+            for i in range(k):
+                ct_hat = ntt_mul_qvs(c_hat, t_hat[i])
+                w_prime_i = inv_ntt_qvs(poly_sub_qvs(az_hat_vec[i], ct_hat))
+                r1_i, _ = decompose_poly_qvs(w_prime_i)
+                w1_prime_bytes.extend(r1_i)
+        else:
+            a_hat = [[sample_ntt_qvs(rho, i, j) for j in range(l)] for i in range(k)]
+            for i in range(k):
+                az_hat = [0] * 256
+                for j in range(l):
+                    az_hat = [(az_hat[m] + a_hat[i][j][m] * z_hat[j][m]) % QVS_Q for m in range(256)]
+                ct_hat = ntt_mul_qvs(c_hat, t_hat[i])
+                w_prime_i = inv_ntt_qvs(poly_sub_qvs(az_hat, ct_hat))
+                r1_i, _ = decompose_poly_qvs(w_prime_i)
+                w1_prime_bytes.extend(r1_i)
 
         tr = qsponge_var(b"CALYX-QVS-TR-v1.0.0|" + pk, 64)
         mu = qsponge_var(b"CALYX-QVS-MU-v1.0.0|" + tr + message, 64)
