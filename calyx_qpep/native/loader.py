@@ -1,5 +1,5 @@
 """
-OpenQPEP Native C99 / SIMD Vectorized Acceleration Loader (libopenqpep) — Official Release 1.2.0.
+OpenQPEP Native C99 / SIMD Vectorized Acceleration Loader (libopenqpep) — Official Release 1.2.1.
 Loads libopenqpep.so / .dylib / .dll via ctypes with zero-copy array.array buffer marshaling.
 Seamlessly falls back to the bit-exact pure-Python reference engine when absent or disabled.
 """
@@ -111,6 +111,33 @@ def _configure_signatures(lib: ctypes.CDLL) -> None:
     if hasattr(lib, "openqpep_ct_cmov"):
         lib.openqpep_ct_cmov.argtypes = [ctypes.c_int, _c_void_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_size_t]
         lib.openqpep_ct_cmov.restype = None
+    if hasattr(lib, "openqpep_qsponge_512"):
+        lib.openqpep_qsponge_512.argtypes = [ctypes.c_char_p, ctypes.c_size_t, _c_void_p]
+        lib.openqpep_qsponge_512.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_sha3_256"):
+        lib.openqpep_sha3_256.argtypes = [ctypes.c_char_p, ctypes.c_size_t, _c_void_p]
+        lib.openqpep_sha3_256.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_qsponge_var"):
+        lib.openqpep_qsponge_var.argtypes = [ctypes.c_char_p, ctypes.c_size_t, _c_void_p, ctypes.c_size_t]
+        lib.openqpep_qsponge_var.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_shake128"):
+        lib.openqpep_shake128.argtypes = [ctypes.c_char_p, ctypes.c_size_t, _c_void_p, ctypes.c_size_t]
+        lib.openqpep_shake128.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_keccak_init"):
+        lib.openqpep_keccak_init.argtypes = [_c_void_p, ctypes.c_uint32, ctypes.c_uint8]
+        lib.openqpep_keccak_init.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_keccak_absorb"):
+        lib.openqpep_keccak_absorb.argtypes = [_c_void_p, ctypes.c_char_p, ctypes.c_size_t]
+        lib.openqpep_keccak_absorb.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_keccak_finalize"):
+        lib.openqpep_keccak_finalize.argtypes = [_c_void_p]
+        lib.openqpep_keccak_finalize.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_keccak_squeeze"):
+        lib.openqpep_keccak_squeeze.argtypes = [_c_void_p, _c_void_p, ctypes.c_size_t]
+        lib.openqpep_keccak_squeeze.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_keccak_wipe"):
+        lib.openqpep_keccak_wipe.argtypes = [_c_void_p]
+        lib.openqpep_keccak_wipe.restype = None
 
 
 _try_load_library()
@@ -313,3 +340,141 @@ def native_ct_eq(a: bytes, b: bytes) -> Optional[bool]:
     if len(a) != len(b):
         return False
     return bool(_LIB.openqpep_ct_eq(a, b, len(a)))
+
+
+def native_qsponge_512(data: bytes) -> Optional[bytes]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_qsponge_512")):
+        return None
+    raw = data if isinstance(data, bytes) else bytes(data)
+    out = ctypes.create_string_buffer(64)
+    rc = int(_LIB.openqpep_qsponge_512(raw if raw else None, len(raw), out))
+    if rc != 0:
+        raise ValueError(f"openqpep_qsponge_512 failed with status {rc}.")
+    return out.raw
+
+
+def native_sha3_256(data: bytes) -> Optional[bytes]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_sha3_256")):
+        return None
+    raw = data if isinstance(data, bytes) else bytes(data)
+    out = ctypes.create_string_buffer(32)
+    rc = int(_LIB.openqpep_sha3_256(raw if raw else None, len(raw), out))
+    if rc != 0:
+        raise ValueError(f"openqpep_sha3_256 failed with status {rc}.")
+    return out.raw
+
+
+def native_qsponge_var(data: bytes, out_len: int) -> Optional[bytes]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_qsponge_var")):
+        return None
+    if out_len < 0:
+        raise ValueError("out_len must be non-negative.")
+    if out_len == 0:
+        return b""
+    raw = data if isinstance(data, bytes) else bytes(data)
+    out = ctypes.create_string_buffer(out_len)
+    rc = int(_LIB.openqpep_qsponge_var(raw if raw else None, len(raw), out, out_len))
+    if rc != 0:
+        raise ValueError(f"openqpep_qsponge_var failed with status {rc}.")
+    return out.raw
+
+
+def native_shake128(data: bytes, out_len: int) -> Optional[bytes]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_shake128")):
+        return None
+    if out_len < 0:
+        raise ValueError("out_len must be non-negative.")
+    if out_len == 0:
+        return b""
+    raw = data if isinstance(data, bytes) else bytes(data)
+    out = ctypes.create_string_buffer(out_len)
+    rc = int(_LIB.openqpep_shake128(raw if raw else None, len(raw), out, out_len))
+    if rc != 0:
+        raise ValueError(f"openqpep_shake128 failed with status {rc}.")
+    return out.raw
+
+
+class _CKeccakCtx(ctypes.Structure):
+    _fields_ = [
+        ("state", ctypes.c_uint64 * 25),
+        ("rate", ctypes.c_uint32),
+        ("pos", ctypes.c_uint32),
+        ("domain_sep", ctypes.c_uint8),
+        ("squeezing", ctypes.c_uint8),
+        ("reserved", ctypes.c_uint8 * 2),
+    ]
+
+
+_KECCAK_MODES = {
+    "sha3-512": (72, 0x06),
+    "qsponge-512": (72, 0x06),
+    "sha3-256": (136, 0x06),
+    "shake256": (136, 0x1F),
+    "qsponge-xof": (136, 0x1F),
+    "shake128": (168, 0x1F),
+}
+
+
+class NativeKeccakSponge:
+    """
+    Incremental native C99 Keccak-f[1600] sponge context manager (`openqpep_keccak_ctx_t`).
+    Supports streaming `.absorb()`, `.finalize()`, multi-call `.squeeze()`, and automatic
+    compiler-barrier zeroization (`openqpep_keccak_wipe`) on close/exit.
+    """
+
+    def __init__(self, mode: str = "shake256"):
+        if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_keccak_init")):
+            raise RuntimeError("Native C99 Keccak-f[1600] backend is not available or disabled.")
+        key = str(mode).lower()
+        if key not in _KECCAK_MODES:
+            raise ValueError(f"Unsupported Keccak mode '{mode}'. Expected one of {sorted(_KECCAK_MODES)}.")
+        rate, domain_sep = _KECCAK_MODES[key]
+        self._ctx = _CKeccakCtx()
+        self._wiped = False
+        rc = int(_LIB.openqpep_keccak_init(ctypes.byref(self._ctx), rate, domain_sep))
+        if rc != 0:
+            raise ValueError(f"openqpep_keccak_init failed with status {rc}.")
+
+    def absorb(self, data: bytes) -> "NativeKeccakSponge":
+        if self._wiped:
+            raise RuntimeError("Cannot absorb into a wiped NativeKeccakSponge.")
+        raw = data if isinstance(data, bytes) else bytes(data)
+        rc = int(_LIB.openqpep_keccak_absorb(ctypes.byref(self._ctx), raw if raw else None, len(raw)))
+        if rc != 0:
+            raise ValueError(f"openqpep_keccak_absorb failed with status {rc} (already finalized?).")
+        return self
+
+    def finalize(self) -> "NativeKeccakSponge":
+        if self._wiped:
+            raise RuntimeError("Cannot finalize a wiped NativeKeccakSponge.")
+        rc = int(_LIB.openqpep_keccak_finalize(ctypes.byref(self._ctx)))
+        if rc != 0:
+            raise ValueError(f"openqpep_keccak_finalize failed with status {rc}.")
+        return self
+
+    def squeeze(self, out_len: int) -> bytes:
+        if self._wiped:
+            raise RuntimeError("Cannot squeeze from a wiped NativeKeccakSponge.")
+        if out_len < 0:
+            raise ValueError("out_len must be non-negative.")
+        if out_len == 0:
+            return b""
+        out = ctypes.create_string_buffer(out_len)
+        rc = int(_LIB.openqpep_keccak_squeeze(ctypes.byref(self._ctx), out, out_len))
+        if rc != 0:
+            raise ValueError(f"openqpep_keccak_squeeze failed with status {rc}.")
+        return out.raw
+
+    def wipe(self) -> None:
+        if not self._wiped and _LIB is not None and hasattr(_LIB, "openqpep_keccak_wipe"):
+            _LIB.openqpep_keccak_wipe(ctypes.byref(self._ctx))
+        self._wiped = True
+
+    def __enter__(self) -> "NativeKeccakSponge":
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+        self.wipe()
+
+    def __del__(self) -> None:
+        self.wipe()

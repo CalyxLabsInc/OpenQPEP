@@ -1,8 +1,8 @@
-# OpenQPEP Official Release 1.2.0 (v1.2.0) — Native C99 / SIMD SDK Makefile
+# OpenQPEP Official Release 1.2.1 (v1.2.1) — Native C99 / SIMD SDK Makefile
 # Builds shared libopenqpep (.so/.dylib/.dll), static libopenqpep.a, and pkg-config openqpep.pc
 # with strict ISO C99 conformance (-Wall -Wextra -Werror -Wpedantic -fvisibility=hidden).
 
-VERSION := 1.2.0
+VERSION := 1.2.1
 ABI_MAJOR := 1
 
 CC ?= cc
@@ -45,7 +45,7 @@ else
   SHARED_LDFLAGS := -shared -Wl,-soname,libopenqpep.so.$(ABI_MAJOR)
 endif
 
-SRCS := ntt_3329.c ntt_8380417.c cbd.c pentad_accel.c
+SRCS := ntt_3329.c ntt_8380417.c cbd.c pentad_accel.c keccak_f1600.c
 HEADER := include/openqpep.h
 
 BUILD_DIR := build

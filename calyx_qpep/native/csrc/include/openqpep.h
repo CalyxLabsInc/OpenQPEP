@@ -1,5 +1,5 @@
 /*
- * OpenQPEP Official Release 1.2.0 (v1.2.0) — Public C99/SIMD SDK ABI Header
+ * OpenQPEP Official Release 1.2.1 (v1.2.1) — Public C99/SIMD SDK ABI Header
  * Project: OpenQPEP by Calyx Labs Inc. (Creator: Tristen Martinez)
  * Repository: https://github.com/CalyxLabsInc/OpenQPEP
  * License: Calyx Public Open Source Specifications v1.0 License (CPOSLS-1.0)
@@ -23,8 +23,8 @@ extern "C" {
 /* ------------------------------------------------------------------------- */
 #define OPENQPEP_VERSION_MAJOR 1
 #define OPENQPEP_VERSION_MINOR 2
-#define OPENQPEP_VERSION_PATCH 0
-#define OPENQPEP_VERSION_STRING "1.2.0"
+#define OPENQPEP_VERSION_PATCH 1
+#define OPENQPEP_VERSION_STRING "1.2.1"
 
 #define OPENQPEP_ABI_CURRENT  1
 #define OPENQPEP_ABI_REVISION 2
@@ -66,6 +66,26 @@ extern "C" {
 #define OPENQPEP_QVS_Q 8380417
 #define OPENQPEP_QVS_N 256
 #define OPENQPEP_WIRE_V5_MAGIC_LEN 6
+
+/* Keccak-f[1600] / NIST FIPS 202 Sponge Constants */
+#define OPENQPEP_SHA3_256_RATE     136U
+#define OPENQPEP_SHA3_512_RATE     72U
+#define OPENQPEP_SHAKE128_RATE     168U
+#define OPENQPEP_SHAKE256_RATE     136U
+#define OPENQPEP_SHA3_256_BYTES    32U
+#define OPENQPEP_QSPONGE_512_BYTES 64U
+#define OPENQPEP_SHA3_DOMAIN_SEP   0x06U
+#define OPENQPEP_SHAKE_DOMAIN_SEP  0x1FU
+
+/** Incremental Keccak-f[1600] sponge state context (zero heap allocations). */
+typedef struct {
+    uint64_t state[25];
+    uint32_t rate;
+    uint32_t pos;
+    uint8_t  domain_sep;
+    uint8_t  squeezing;
+    uint8_t  reserved[2];
+} openqpep_keccak_ctx_t;
 
 /* Bitflags returned by openqpep_native_abi_info() */
 #define OPENQPEP_ABI_FLAG_C99  0x01U
@@ -188,6 +208,52 @@ OPENQPEP_API int openqpep_is_zeroed(const uint8_t *ptr, size_t len);
 
 /** Constant-time Wire Format v5 (\x89QPE\x05\x00) / v5.1 (\x89QPE\x05\x01) magic validator. */
 OPENQPEP_API int openqpep_verify_wire_v5_magic(const uint8_t *hdr, size_t len);
+
+/* ------------------------------------------------------------------------- */
+/* Zero-Dependency Constant-Time Keccak-f[1600] (qSponge-512 / SHA3 / SHAKE) */
+/* ------------------------------------------------------------------------- */
+
+/** Unrolled 24-round constant-time Keccak-f[1600] permutation over 25 uint64 lanes. */
+OPENQPEP_API void openqpep_keccak_f1600(uint64_t state[25]);
+
+/** Initializes a generic Keccak-f[1600] sponge context with given rate and domain separator. */
+OPENQPEP_API int openqpep_keccak_init(openqpep_keccak_ctx_t *ctx, uint32_t rate, uint8_t domain_sep);
+
+/** Initializes an incremental SHA3-512 (qSponge-512) context. */
+OPENQPEP_API int openqpep_sha3_512_init(openqpep_keccak_ctx_t *ctx);
+
+/** Initializes an incremental SHA3-256 context. */
+OPENQPEP_API int openqpep_sha3_256_init(openqpep_keccak_ctx_t *ctx);
+
+/** Initializes an incremental SHAKE-256 (qSponge-XOF) context. */
+OPENQPEP_API int openqpep_shake256_init(openqpep_keccak_ctx_t *ctx);
+
+/** Initializes an incremental SHAKE-128 context. */
+OPENQPEP_API int openqpep_shake128_init(openqpep_keccak_ctx_t *ctx);
+
+/** Incrementally absorbs `in_len` bytes into an active sponge context. */
+OPENQPEP_API int openqpep_keccak_absorb(openqpep_keccak_ctx_t *ctx, const uint8_t *in, size_t in_len);
+
+/** Finalizes sponge absorption with NIST FIPS 202 pad10*1 padding. */
+OPENQPEP_API int openqpep_keccak_finalize(openqpep_keccak_ctx_t *ctx);
+
+/** Incrementally squeezes `out_len` output bytes (auto-finalizes if needed). */
+OPENQPEP_API int openqpep_keccak_squeeze(openqpep_keccak_ctx_t *ctx, uint8_t *out, size_t out_len);
+
+/** Compiler-barrier wipes all state inside `ctx` via openqpep_explicit_bzero. */
+OPENQPEP_API void openqpep_keccak_wipe(openqpep_keccak_ctx_t *ctx);
+
+/** One-shot qSponge-512 (NIST FIPS 202 SHA3-512): 64-byte fixed digest. */
+OPENQPEP_API int openqpep_qsponge_512(const uint8_t *in, size_t in_len, uint8_t out64[64]);
+
+/** One-shot NIST FIPS 202 SHA3-256: 32-byte fixed digest. */
+OPENQPEP_API int openqpep_sha3_256(const uint8_t *in, size_t in_len, uint8_t out32[32]);
+
+/** One-shot qSponge-XOF (NIST FIPS 202 SHAKE-256): variable `out_len`-byte output. */
+OPENQPEP_API int openqpep_qsponge_var(const uint8_t *in, size_t in_len, uint8_t *out, size_t out_len);
+
+/** One-shot NIST FIPS 202 SHAKE-128: variable `out_len`-byte output. */
+OPENQPEP_API int openqpep_shake128(const uint8_t *in, size_t in_len, uint8_t *out, size_t out_len);
 
 #ifdef __cplusplus
 }

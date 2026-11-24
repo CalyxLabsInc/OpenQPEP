@@ -1,4 +1,4 @@
-"""OpenQPEP Self-Contained Attached Signatures & Canonical Payload Digest Helpers (Official Release 1.2.0)."""
+"""OpenQPEP Self-Contained Attached Signatures & Canonical Payload Digest Helpers (Official Release 1.2.1)."""
 from typing import Sequence, Tuple
 
 from ..primitives.qsponge import qsponge_512

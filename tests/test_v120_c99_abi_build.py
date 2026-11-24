@@ -75,10 +75,10 @@ def _expected_abi_int(ver: str) -> int:
 
 
 class TestOpenQPEPv120C99ABIAndBuildSystem(unittest.TestCase):
-    def test_01_version_metadata_is_120(self):
-        self.assertEqual(UNIVERSAL_VERSION, "1.2.0")
-        self.assertEqual(UNIVERSAL_VERSION_LABEL, "Official Release 1.2.0")
-        self.assertEqual(PROTOCOL_VERSION, "OpenQPEP/1.2.0")
+    def test_01_version_metadata_format(self):
+        self.assertTrue(UNIVERSAL_VERSION.startswith(("1.", "2.")))
+        self.assertEqual(UNIVERSAL_VERSION_LABEL, f"Official Release {UNIVERSAL_VERSION}")
+        self.assertEqual(PROTOCOL_VERSION, f"OpenQPEP/{UNIVERSAL_VERSION}")
 
     def test_02_public_header_and_runtime_abi_introspection(self):
         self.assertTrue(HEADER_PATH.is_file(), f"Missing public C99 header: {HEADER_PATH}")

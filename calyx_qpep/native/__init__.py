@@ -1,5 +1,6 @@
-"""OpenQPEP Native C99 / SIMD Acceleration Package (libopenqpep) — Official Release 1.2.0."""
+"""OpenQPEP Native C99 / SIMD Acceleration Package (libopenqpep) — Official Release 1.2.1."""
 from .loader import (
+    NativeKeccakSponge,
     is_native_available,
     native_abi_version,
     native_backend_info,
@@ -16,11 +17,16 @@ from .loader import (
     native_plain_lwe_row_accum,
     native_poly_add_3329,
     native_poly_sub_3329,
+    native_qsponge_512,
+    native_qsponge_var,
+    native_sha3_256,
+    native_shake128,
     native_version_string,
     set_native_enabled,
 )
 
 __all__ = [
+    "NativeKeccakSponge",
     "is_native_available",
     "set_native_enabled",
     "native_abi_version",
@@ -39,4 +45,8 @@ __all__ = [
     "native_cbd2_qvs",
     "native_plain_lwe_keygen_row",
     "native_plain_lwe_row_accum",
+    "native_qsponge_512",
+    "native_sha3_256",
+    "native_qsponge_var",
+    "native_shake128",
 ]

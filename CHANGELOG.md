@@ -1,4 +1,17 @@
-# OpenQPEP Core Protocol Changelog — Official Release `v1.2.0`
+# OpenQPEP Core Protocol Changelog — Official Release `v1.2.1`
+
+## Official Release `v1.2.1` (2026-11-24) — Native C99 Keccak-f[1600] (`qSponge-512` / `SHA3-512` / `SHAKE-256`)
+
+- **Zero-Dependency Native C99 Keccak-f[1600] Sponge Engine (`calyx_qpep/native/csrc/keccak_f1600.c`):**
+  - Implemented a standalone, constant-time, endian-independent, register-unrolled (2 rounds per iteration, 24 full rounds) ISO C99 `openqpep_keccak_f1600` permutation with zero external dependencies and strict `-std=c99 -Wall -Wextra -Werror -Wpedantic -Wstrict-prototypes -Wmissing-prototypes` compilation.
+  - Added incremental streaming sponge APIs (`openqpep_keccak_init`, `openqpep_sha3_512_init`, `openqpep_sha3_256_init`, `openqpep_shake256_init`, `openqpep_shake128_init`, `openqpep_keccak_absorb`, `openqpep_keccak_finalize`, `openqpep_keccak_squeeze`, and `openqpep_keccak_wipe` backed by `openqpep_explicit_bzero`) alongside one-shot FIPS 202 functions (`openqpep_qsponge_512`, `openqpep_sha3_256`, `openqpep_qsponge_var`, `openqpep_shake128`).
+- **Public ABI & Transparent Python Dispatch (`include/openqpep.h`, `loader.py`, `qsponge.py`, `Makefile`, `CMakeLists.txt`):**
+  - Bumped `OPENQPEP_ABI_VERSION` to `0x00010201U` (`1.2.1`), defined `openqpep_keccak_ctx_t` and FIPS 202 rate/domain constants in `include/openqpep.h`, and exported all 14 Keccak APIs with `OPENQPEP_API` across both Makefile and CMake builds.
+  - Wired `native_qsponge_512`, `native_sha3_256`, `native_qsponge_var`, `native_shake128`, and the `NativeKeccakSponge` context manager into `calyx_qpep/native/loader.py` and `calyx_qpep/native/__init__.py`.
+  - Upgraded `calyx_qpep/primitives/qsponge.py` (`qsponge_512` / `qsponge_var`) to transparently dispatch to native C99 Keccak-f[1600] when `libopenqpep` is active while retaining bit-exact `hashlib` Pure-Python fallback under `OPENQPEP_DISABLE_NATIVE=1`.
+- **Verification:** Added 6-test FIPS 202 & C99 parity suite `tests/test_v121_c99_keccak_f1600.py` verifying official NIST FIPS 202 vectors, exhaustive rate-boundary absorb/squeeze parity against `hashlib`, incremental `NativeKeccakSponge` streaming & explicit wipe, Native↔Pure-Python `qsponge` toggle parity, external `-Wpedantic` C99 static & shared linking, 10/10 Native C99 + 10/10 Pure-Python Golden KATs, and 175/175 unit & AST tests.
+
+---
 
 ## Official Release `v1.2.0` (2026-11-24) — Public C99 ABI Header (`include/openqpep.h`) & Build System Overhaul (Phase 2 Kickoff)
 
