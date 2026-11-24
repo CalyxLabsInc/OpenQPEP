@@ -1,6 +1,6 @@
 """
 Family 3 of Calyx Sovereign-Pentad (CSP-Omega): Genuine CSIDH-512 Supersingular Elliptic Curve
-Isogeny Class-Group Action Engine (CIF-SQI-512 — Official Release 1.1.3).
+Isogeny Class-Group Action Engine (CIF-SQI-512 — Official Release 1.1.4).
 
 Cryptographic Construction:
   - Prime: Exact 511-bit CSIDH-512 supersingular prime
@@ -23,7 +23,7 @@ Cryptographic Construction:
 import math
 import os
 import struct
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 from ..exceptions import QPEPFaultGuardError, QPEPSuiteError
 from ..primitives.consttime import ct_cmov, ct_eq
@@ -281,7 +281,7 @@ def _unpack_exponents(data: bytes, count: int = CSIDH_NUM_PRIMES) -> List[int]:
 class SupersingularIsogenyEngine:
     """
     Genuine CSIDH-512 Supersingular Elliptic Curve Isogeny KEM & Bimodal BLISS-SeaSign
-    Zero-Knowledge Isogeny Signature Engine (CIF-SQI-512 — Official Release 1.1.3).
+    Zero-Knowledge Isogeny Signature Engine (CIF-SQI-512 — Official Release 1.1.4).
     Zero torsion-point hints; strict supersingular validation + implicit rejection;
     independent KEM & Signing ideals.
     """
@@ -334,9 +334,11 @@ class SupersingularIsogenyEngine:
         return ct_cmov(True, k_cand, k_reject)
 
     @staticmethod
-    def sign(sk: bytes, pk: bytes, message: bytes) -> bytes:
+    def sign(sk: bytes, pk: bytes, message: bytes, *, hedged: bool = True, rnd: Optional[bytes] = None) -> bytes:
         """
         Genuine Multi-Round CSIDH-512 Bimodal BLISS-SeaSign Fiat-Shamir-with-Aborts Signature:
+          - Default `hedged=True` mixes fresh 32-byte entropy with `seed_z` + `pk` + `message`
+            to defeat differential fault attacks while remaining immune to weak/stuck RNGs.
           - Samples masking ideals y_r ~ D_sigma^48 and commits E_{Y_r} = [y_r] * E_0.
           - Derives Fiat-Shamir challenges c_r in {0, 1} from qSponge-512(pk || E_{Y_0..} || message).
           - If c_r == 0: b_r = 0, z_r = y_r.
@@ -345,65 +347,88 @@ class SupersingularIsogenyEngine:
             yielding exact zero-knowledge distribution D_sigma^48 (zero bits of s_sig leaked).
           - Enforces Verify-Before-Emit Fault-Guard (QPEPFaultGuardError).
         """
-        with SecretBuffer(sk) as sk_buf:
-            raw = sk_buf.as_bytes()
-            s_sig = _unpack_exponents(raw[CSIDH_NUM_PRIMES : CSIDH_NUM_PRIMES + _SIG_PRIMES], _SIG_PRIMES)
-            off = CSIDH_NUM_PRIMES + _SIG_PRIMES
-            seed_z = raw[off : off + 32]
+        if rnd is not None:
+            if not isinstance(rnd, (bytes, bytearray, memoryview)) or len(rnd) != 32:
+                raise ValueError("CIF-SQI-512 hedged signing rnd must be exactly 32 bytes.")
 
-        sigma2 = _SIG_SIGMA * _SIG_SIGMA
-        attempt = 0
-        while True:
-            attempt += 1
-            y_vecs: List[List[int]] = []
-            commits: List[bytes] = []
-            for r in range(_SIG_ROUNDS):
-                stream = qsponge_var(
-                    b"CALYX-SQI-BLISS-MASK-v1.0.0|" + seed_z + pk + message + struct.pack(">II", attempt, r),
-                    _SIG_PRIMES * 4,
-                )
-                yv = _sample_dgauss_vec(stream)
-                y_vecs.append(yv)
-                commits.append(csidh_group_action(0, yv).to_bytes(64, "big"))
+        s_sig: List[int] = []
+        y_vecs: List[List[int]] = []
+        try:
+            with SecretBuffer(sk) as sk_buf:
+                with sk_buf.view() as mv:
+                    s_sig = _unpack_exponents(bytes(mv[CSIDH_NUM_PRIMES : CSIDH_NUM_PRIMES + _SIG_PRIMES]), _SIG_PRIMES)
+                    off = CSIDH_NUM_PRIMES + _SIG_PRIMES
+                    seed_z = bytes(mv[off : off + 32])
 
-            ch_digest = qsponge_512(b"CALYX-SQI-BLISS-CH-v1.0.0|" + pk + b"".join(commits) + message)
-            ch_byte = ch_digest[0]
-            rej_stream = qsponge_var(
-                b"CALYX-SQI-BLISS-REJ-v1.0.0|" + seed_z + ch_digest + struct.pack(">I", attempt),
-                _SIG_ROUNDS * 9,
-            )
-
-            z_vecs: List[List[int]] = []
-            b_signs: List[int] = []
-            aborted = False
-            for r in range(_SIG_ROUNDS):
-                c_bit = (ch_byte >> r) & 1
-                if c_bit == 0:
-                    b_signs.append(0)
-                    z_vecs.append(y_vecs[r])
+                if hedged:
+                    with SecretBuffer(os.urandom(32) if rnd is None else bytes(rnd)) as rnd_buf:
+                        nonce_seed_bytes = qsponge_512(
+                            b"CALYX-SQI-BLISS-HEDGE-v1.1.4|" + seed_z + rnd_buf.as_bytes() + pk + message
+                        )[:32]
                 else:
-                    b_sign = 1 if (rej_stream[r * 9] & 1) else -1
-                    zv = [y_vecs[r][i] - b_sign * s_sig[i] for i in range(CSIDH_NUM_PRIMES)]
-                    dot = sum(zv[i] * s_sig[i] for i in range(_SIG_PRIMES))
-                    arg = abs(dot) / sigma2
-                    p_acc = (1.0 / math.cosh(arg)) if arg < 700.0 else 0.0
-                    u_float = struct.unpack_from(">Q", rej_stream, r * 9 + 1)[0] / float(1 << 64)
-                    if u_float > p_acc or any(abs(zv[i]) > _SIG_Z_MAX for i in range(_SIG_PRIMES)):
-                        aborted = True
-                        break
-                    b_signs.append(b_sign)
-                    z_vecs.append(zv)
-            if aborted:
-                continue
+                    nonce_seed_bytes = seed_z
 
-            sig_out = (
-                ch_digest[:32]
-                + struct.pack(f"<{_SIG_ROUNDS}b", *b_signs)
-                + b"".join(_pack_exponents(zv, _SIG_PRIMES) for zv in z_vecs)
-            )
-            if not SupersingularIsogenyEngine.verify(pk, message, sig_out):
-                raise QPEPFaultGuardError("CIF-SQI-512 CSIDH Bimodal SeaSign Fault-Guard failed internal verification.")
-            return sig_out
+            sigma2 = _SIG_SIGMA * _SIG_SIGMA
+            with SecretBuffer(nonce_seed_bytes) as ns_buf:
+                nonce_seed = ns_buf.as_bytes()
+                attempt = 0
+                while True:
+                    attempt += 1
+                    y_vecs = []
+                    commits: List[bytes] = []
+                    for r in range(_SIG_ROUNDS):
+                        stream = qsponge_var(
+                            b"CALYX-SQI-BLISS-MASK-v1.0.0|" + nonce_seed + pk + message + struct.pack(">II", attempt, r),
+                            _SIG_PRIMES * 4,
+                        )
+                        yv = _sample_dgauss_vec(stream)
+                        y_vecs.append(yv)
+                        commits.append(csidh_group_action(0, yv).to_bytes(64, "big"))
+
+                    ch_digest = qsponge_512(b"CALYX-SQI-BLISS-CH-v1.0.0|" + pk + b"".join(commits) + message)
+                    ch_byte = ch_digest[0]
+                    rej_stream = qsponge_var(
+                        b"CALYX-SQI-BLISS-REJ-v1.0.0|" + nonce_seed + ch_digest + struct.pack(">I", attempt),
+                        _SIG_ROUNDS * 9,
+                    )
+
+                    z_vecs: List[List[int]] = []
+                    b_signs: List[int] = []
+                    aborted = False
+                    for r in range(_SIG_ROUNDS):
+                        c_bit = (ch_byte >> r) & 1
+                        if c_bit == 0:
+                            b_signs.append(0)
+                            z_vecs.append(y_vecs[r])
+                        else:
+                            b_sign = 1 if (rej_stream[r * 9] & 1) else -1
+                            zv = [y_vecs[r][i] - b_sign * s_sig[i] for i in range(CSIDH_NUM_PRIMES)]
+                            dot = sum(zv[i] * s_sig[i] for i in range(_SIG_PRIMES))
+                            arg = abs(dot) / sigma2
+                            p_acc = (1.0 / math.cosh(arg)) if arg < 700.0 else 0.0
+                            u_float = struct.unpack_from(">Q", rej_stream, r * 9 + 1)[0] / float(1 << 64)
+                            if u_float > p_acc or any(abs(zv[i]) > _SIG_Z_MAX for i in range(_SIG_PRIMES)):
+                                aborted = True
+                                break
+                            b_signs.append(b_sign)
+                            z_vecs.append(zv)
+                    if aborted:
+                        continue
+
+                    sig_out = (
+                        ch_digest[:32]
+                        + struct.pack(f"<{_SIG_ROUNDS}b", *b_signs)
+                        + b"".join(_pack_exponents(zv, _SIG_PRIMES) for zv in z_vecs)
+                    )
+                    if not SupersingularIsogenyEngine.verify(pk, message, sig_out):
+                        raise QPEPFaultGuardError("CIF-SQI-512 CSIDH Bimodal SeaSign Fault-Guard failed internal verification.")
+                    return sig_out
+        finally:
+            for idx in range(len(s_sig)):
+                s_sig[idx] = 0
+            for yv in y_vecs:
+                for idx in range(len(yv)):
+                    yv[idx] = 0
 
     @staticmethod
     def verify(pk: bytes, message: bytes, signature: bytes) -> bool:

@@ -35,10 +35,10 @@ from calyx_qpep.primitives.cc512_aead import (
 
 
 class TestOpenQPEPv113CC512SIV(unittest.TestCase):
-    def test_01_version_metadata_is_113(self):
-        self.assertEqual(UNIVERSAL_VERSION, "1.1.3")
-        self.assertEqual(UNIVERSAL_VERSION_LABEL, "Official Release 1.1.3")
-        self.assertEqual(PROTOCOL_VERSION, "OpenQPEP/1.1.3")
+    def test_01_version_metadata_format(self):
+        self.assertTrue(UNIVERSAL_VERSION.startswith("1.1."))
+        self.assertEqual(UNIVERSAL_VERSION_LABEL, f"Official Release {UNIVERSAL_VERSION}")
+        self.assertEqual(PROTOCOL_VERSION, f"OpenQPEP/{UNIVERSAL_VERSION}")
 
     def test_02_wire_v5_cc512_bit_exact_compatibility(self):
         """Wire v5 CC-512 encryption/decryption must remain 100% bit-exact with v1.0.0–v1.1.2."""

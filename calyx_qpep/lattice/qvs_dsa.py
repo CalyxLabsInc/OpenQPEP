@@ -1,9 +1,9 @@
 """
-QVS Lattice Fiat-Shamir with Aborts Signature Engine over Z_8380417[X]/(X^256+1) (Official Release 1.1.3).
+QVS Lattice Fiat-Shamir with Aborts Signature Engine over Z_8380417[X]/(X^256+1) (Official Release 1.1.4).
 Hardened with Verify-Before-Emit Fault-Guard (QPEPFaultGuardError) and SecretBuffer scrubbing.
 """
 import os
-from typing import Tuple
+from typing import Optional, Tuple
 
 from ..constants import QVS_GAMMA1, QVS_GAMMA2, QVS_Q, QVS_TIERS
 from ..exceptions import QPEPFaultGuardError
@@ -73,11 +73,30 @@ class QVSEngine:
                         poly[idx] = 0
 
     @staticmethod
-    def sign(sk: bytes, pk: bytes, message: bytes, tier: str = "QVS-256") -> bytes:
+    def sign(
+        sk: bytes,
+        pk: bytes,
+        message: bytes,
+        tier: str = "QVS-256",
+        *,
+        hedged: bool = True,
+        rnd: Optional[bytes] = None,
+    ) -> bytes:
+        """
+        Signs `message` under QVS Lattice Fiat-Shamir with Aborts:
+          - Default `hedged=True` uses FIPS 204-style hedged signing: mixes fresh 32-byte CSPRNG
+            entropy `rnd` with secret `k_sign` and message representative `mu`, defeating both
+            weak/stuck RNGs and differential fault-injection attacks on repeated messages.
+          - Optional `hedged=False` selects pure deterministic mode (`CALYX-QVS-RNDS-v1.0.0|`).
+          - Enforces mandatory Verify-Before-Emit Fault-Guard (`QPEPFaultGuardError`).
+        """
         spec = QVS_TIERS.get(tier, QVS_TIERS["QVS-256"])
         k, l, tau, beta = spec["k"], spec["l"], spec["tau"], spec["beta"]
         if len(sk) != spec["sk_bytes"] or len(pk) != spec["pk_bytes"]:
             raise ValueError(f"Invalid {tier} key sizes.")
+        if rnd is not None:
+            if not isinstance(rnd, (bytes, bytearray, memoryview)) or len(rnd) != 32:
+                raise ValueError("QVS hedged signing rnd must be exactly 32 bytes.")
 
         s1 = []
         s2 = []
@@ -110,7 +129,14 @@ class QVSEngine:
                 s2_hat = [ntt_qvs(p) for p in s2]
 
                 mu = qsponge_var(b"CALYX-QVS-MU-v1.0.0|" + tr + message, 64)
-                rho_dp_bytes = qsponge_var(b"CALYX-QVS-RNDS-v1.0.0|" + k_sign + mu, 64)
+                if hedged:
+                    with SecretBuffer(os.urandom(32) if rnd is None else bytes(rnd)) as rnd_buf:
+                        rho_dp_bytes = qsponge_var(
+                            b"CALYX-QVS-RNDS-HEDGED-v1.1.4|" + k_sign + rnd_buf.as_bytes() + mu,
+                            64,
+                        )
+                else:
+                    rho_dp_bytes = qsponge_var(b"CALYX-QVS-RNDS-v1.0.0|" + k_sign + mu, 64)
 
             with SecretBuffer(rho_dp_bytes) as rho_dp_buf:
                 rho_double_prime = rho_dp_buf.as_bytes()

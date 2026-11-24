@@ -1,8 +1,8 @@
 {
   "schema": "openqpep-kat-v3",
   "family": "structured_lattice",
-  "protocol_version": "OpenQPEP/1.1.3",
-  "universal_version": "1.1.3",
+  "protocol_version": "OpenQPEP/1.1.4",
+  "universal_version": "1.1.4",
   "suite_id": "QLX-2048",
   "suite_name": "Calyx Ultra-Grid: QLX-2048 + QVS-128 (2,048-Dim Lattice \u2014 All Devices)",
   "qlx_tier": "QLX-2048",
@@ -32,15 +32,15 @@
     "actual_sk_bytes": 7552,
     "actual_sig_bytes": 3904,
     "pk_sha3_512": "e1ce0fdd5cefe6d3ce08d9c4eb402cb9eda1e314270456ed13b61e6a2bd7221e775140c9993d2505476312ca8dc20a4903580cfa8f1af604f14d95454f32dc4b",
-    "sig_sha3_512": "de78f1631a57515bacd64507f08dff47a8f1ea75e45a9fe1b2b6663bf38c79408607f909227ddba3a771fbcd628feb190c0e353b01d91927fcdceadeb805a913",
+    "sig_sha3_512": "7f212739b65a40c6d4a5fe6e7da96c4591f31b3acd723dde603b7df393ccbd8c04ecdfddbd99cd7c7a008afdec84e7584fe585fcf3f3e3ef2facdeaa0e3bf754",
     "verified": true
   },
   "wire_packet": {
-    "key_hash": "68F3780FB3F6B929ABBC5FBFDC136EBE3F26B7948F31C0A209FCAB1144472A5B",
+    "key_hash": "9BCFACA0231B2B276A483EF27532B3B45571F2D2E5C4A7A2F2D38388F674FBBD",
     "wire_magic_hex": "895150450500",
     "wire_frame_bytes": 17174,
-    "wire_frame_sha3_512": "f8901b9c8fc311ed9e698a3eb47cac87361444b204f6e66011ea9aec80a83b1fe3bf1969436439b1f4b336fd4324dcc6a27b77887c51be35d09a467f919b647d",
-    "wire_frame_prefix_hex": "89515045050001008a121356e0ec9224bf75351cda8ff87d234f913eb589f10940b0985668ca5273781176c7433774741736dc4b6ee1aa4017692a30d7420fe8",
+    "wire_frame_sha3_512": "bfeade87c0533b77133215892d609ddac1e2c396d42b30698e926f9d7bad5a76d0127472cf200297d20800ad173c8e28c2f5c40b58055184556a0626431c289c",
+    "wire_frame_prefix_hex": "89515045050001006603699cd1cd3902c82e15d76353487b7c729c7af0dbd72c417577b37e4561ac1ca88e3514f7a2d8cb38336d52c36c7bce5b6a501e61fe44",
     "cleartext_identity_headers_present": false
   }
 }

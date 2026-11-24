@@ -1,8 +1,8 @@
 {
   "schema": "openqpep-kat-v3",
   "family": "structured_lattice",
-  "protocol_version": "OpenQPEP/1.1.3",
-  "universal_version": "1.1.3",
+  "protocol_version": "OpenQPEP/1.1.4",
+  "universal_version": "1.1.4",
   "suite_id": "QLX-4096",
   "suite_name": "Calyx Lattice-Apex: QLX-4096 + QVS-256 (4,096-Dim Module-LWE \u2014 All Devices)",
   "qlx_tier": "QLX-4096",
@@ -32,15 +32,15 @@
     "actual_sk_bytes": 10112,
     "actual_sig_bytes": 5440,
     "pk_sha3_512": "12ad5b039479be44ba014ad0abae2ae362b24249816e8e373a081c0c39aef390725f931bee344265a8ce0e18c79fec6e7fcd5bf8ddff38c3b20dc1eff739e647",
-    "sig_sha3_512": "5e95bea8c4afdc8f7e1b6d509c0c8158277db2df426555c26fd285b7eced1cd1dc10f09debeeb939cca7d2764052c6e488649fd0db137245e7245bbb7ff66716",
+    "sig_sha3_512": "5470dde55faba7c9ead55ac71b9d0151715a8e25f3db9a27ecffc30f853ae81b72cd390212f2317f5d164881818d632bf40a9344d82a0b50449e270f68b70ad5",
     "verified": true
   },
   "wire_packet": {
-    "key_hash": "2182B288B4246DA2470307EFBE7D7D275875C3D7ACCBE40502FA4F672969B694",
+    "key_hash": "3683C2171209AC997DF6476CBDDF375C64827D583264FE97BD7A421D01E7B347",
     "wire_magic_hex": "895150450500",
     "wire_frame_bytes": 24682,
-    "wire_frame_sha3_512": "107ca77ecf0d0c4bc38479a6b9f61e906800c92ccafea63ab94db1623f3f89c805a49c55c4465d55884bb60ef6abd2a04cf530f9d87a8e2026de9f2799c4e679",
-    "wire_frame_prefix_hex": "89515045050001003a91a637a6f7bdfe5c777f41ba1708894c57fd2c36e0be14330823e882dbb14b42c8f69bd723c445b72a30fa6363bae4da597d7bddb03713",
+    "wire_frame_sha3_512": "91859a13a097da281eeac3eb64865d247224a319d25e9896d450bb0bd6c50aa6bde477c4a804d94d7c3c9ae4df901b025d343e2e55eb56f994a1417cb39ef046",
+    "wire_frame_prefix_hex": "895150450500010066fd7de28aab18ae5c6eecd0a5c512bfe0334776ee8b0502bad6eceb466ea37d637cf94f4e7e99a6b4f19ce5e9760f56eccf402055ea31f8",
     "cleartext_identity_headers_present": false
   }
 }

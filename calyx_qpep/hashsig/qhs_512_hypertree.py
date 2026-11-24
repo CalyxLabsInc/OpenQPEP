@@ -1,4 +1,4 @@
-# OpenQPEP Official Release 1.1.3 (v1.1.3)
+# OpenQPEP Official Release 1.1.4 (v1.1.4)
 """
 Family 5 of Calyx Sovereign-Pentad (CSP-Omega): Stateless Hash-Based Signature Hypertree
 (QHS-512: WOTS+ Winternitz Chains + XMSS Merkle Authentication Path over 24-round qSponge-512).
@@ -6,8 +6,9 @@ Zero algebraic structure, zero trapdoors—unforgeability reduces strictly to Ke
 """
 import os
 import struct
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
+from ..exceptions import QPEPFaultGuardError
 from ..primitives.consttime import ct_eq
 from ..primitives.qsponge import qsponge_512, qsponge_var
 from ..primitives.zeroize import SecretBuffer
@@ -74,44 +75,67 @@ class QHS512HypertreeEngine:
         return pk, sk
 
     @staticmethod
-    def sign(sk: bytes, message: bytes) -> bytes:
+    def sign(sk: bytes, message: bytes, *, hedged: bool = True, rnd: Optional[bytes] = None) -> bytes:
+        """
+        Signs `message` with QHS-512 WOTS+ + XMSS Hypertree:
+          - Default `hedged=True` hedges `opt_rand` over (sk_seed || os.urandom(32) || pub_seed || root || message)
+            so weak/stuck RNGs cannot cause nonce reuse across distinct messages.
+          - Enforces mandatory Verify-Before-Emit Fault-Guard (`QPEPFaultGuardError`).
+        """
+        if not isinstance(sk, (bytes, bytearray, memoryview)) or len(sk) != 97:
+            raise ValueError("Invalid QHS-512 secret key length (expected 97 bytes).")
+        if rnd is not None:
+            if not isinstance(rnd, (bytes, bytearray, memoryview)) or len(rnd) != 32:
+                raise ValueError("QHS-512 hedged signing rnd must be exactly 32 bytes.")
+
         with SecretBuffer(sk) as sk_buf:
-            raw = sk_buf.as_bytes()
-            height = raw[0]
-            sk_seed = raw[1:33]
-            pub_seed = raw[33:65]
-            root = raw[65:97]
+            with sk_buf.view() as mv:
+                height = int(mv[0])
+                sk_seed = bytes(mv[1:33])
+                pub_seed = bytes(mv[33:65])
+                root = bytes(mv[65:97])
 
-        num_leaves = 1 << height
-        opt_rand = os.urandom(32)
-        # Stateless randomized leaf selection + message digest
-        h_all = qsponge_512(b"CALYX-QHS-MSG|" + opt_rand + pub_seed + root + message)
-        msg_digest32 = h_all[:32]
-        leaf_idx = int.from_bytes(h_all[32:36], "big") % num_leaves
+            num_leaves = 1 << height
+            if hedged:
+                with SecretBuffer(os.urandom(32) if rnd is None else bytes(rnd)) as rnd_buf:
+                    opt_rand = qsponge_512(
+                        b"CALYX-QHS-HEDGE-v1.1.4|" + sk_seed + rnd_buf.as_bytes() + pub_seed + root + message
+                    )[:32]
+            else:
+                opt_rand = qsponge_512(b"CALYX-QHS-DET-v1.1.4|" + sk_seed + pub_seed + root + message)[:32]
 
-        # WOTS+ signature on leaf_idx
-        digits = _msg_to_base_w(msg_digest32)
-        wots_sig_parts = []
-        for i, d in enumerate(digits):
-            sk_i = qsponge_var(b"CALYX-QHS-WOTS-SK|" + sk_seed + struct.pack(">IH", leaf_idx, i), WOTS_N)
-            wots_sig_parts.append(_chain(sk_i, 0, d, pub_seed, leaf_idx, i))
-        wots_sig = b"".join(wots_sig_parts)
+            # Stateless hedged leaf selection + message digest
+            h_all = qsponge_512(b"CALYX-QHS-MSG|" + opt_rand + pub_seed + root + message)
+            msg_digest32 = h_all[:32]
+            leaf_idx = int.from_bytes(h_all[32:36], "big") % num_leaves
 
-        # Build XMSS Merkle authentication path for leaf_idx
-        leaves = [_wots_pk_from_sk_seed(sk_seed, pub_seed, idx) for idx in range(num_leaves)]
-        auth_path = []
-        cur = leaves
-        idx = leaf_idx
-        while len(cur) > 1:
-            sib = cur[idx ^ 1]
-            auth_path.append(sib)
-            nxt = []
-            for i in range(0, len(cur), 2):
-                nxt.append(qsponge_512(b"CALYX-QHS-NODE|" + pub_seed + cur[i] + cur[i + 1])[:WOTS_N])
-            cur = nxt
-            idx //= 2
+            # WOTS+ signature on leaf_idx
+            digits = _msg_to_base_w(msg_digest32)
+            wots_sig_parts = []
+            for i, d in enumerate(digits):
+                sk_i = qsponge_var(b"CALYX-QHS-WOTS-SK|" + sk_seed + struct.pack(">IH", leaf_idx, i), WOTS_N)
+                wots_sig_parts.append(_chain(sk_i, 0, d, pub_seed, leaf_idx, i))
+            wots_sig = b"".join(wots_sig_parts)
 
-        return struct.pack(">I", leaf_idx) + opt_rand + wots_sig + b"".join(auth_path)
+            # Build XMSS Merkle authentication path for leaf_idx
+            leaves = [_wots_pk_from_sk_seed(sk_seed, pub_seed, idx) for idx in range(num_leaves)]
+            auth_path = []
+            cur = leaves
+            idx = leaf_idx
+            while len(cur) > 1:
+                sib = cur[idx ^ 1]
+                auth_path.append(sib)
+                nxt = []
+                for i in range(0, len(cur), 2):
+                    nxt.append(qsponge_512(b"CALYX-QHS-NODE|" + pub_seed + cur[i] + cur[i + 1])[:WOTS_N])
+                cur = nxt
+                idx //= 2
+
+        sig_out = struct.pack(">I", leaf_idx) + opt_rand + wots_sig + b"".join(auth_path)
+        pk_rebuilt = struct.pack(">B", height) + pub_seed + root
+        if not QHS512HypertreeEngine.verify(pk_rebuilt, message, sig_out):
+            raise QPEPFaultGuardError("QHS-512 Hypertree Fault-Injection Guard triggered: signature failed internal verification.")
+        return sig_out
 
     @staticmethod
     def verify(pk: bytes, message: bytes, signature: bytes) -> bool:

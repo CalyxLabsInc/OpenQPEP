@@ -1,8 +1,8 @@
 {
   "schema": "openqpep-kat-v3",
   "family": "structured_lattice",
-  "protocol_version": "OpenQPEP/1.1.3",
-  "universal_version": "1.1.3",
+  "protocol_version": "OpenQPEP/1.1.4",
+  "universal_version": "1.1.4",
   "suite_id": "QLX-16384",
   "suite_name": "Calyx Hyper-Tesseract: QLX-16384 + QVS-1024 (16,384-Dim 4-Manifold \u2014 HIGH-TIER HARDWARE ONLY)",
   "qlx_tier": "QLX-16384",
@@ -32,15 +32,15 @@
     "actual_sk_bytes": 20096,
     "actual_sig_bytes": 10816,
     "pk_sha3_512": "ef0addb237ea003b6a03a6935af0040b77c295fd41f18a9c54d745406d82161b4d261c55d6404a05d4254735f7def6fceaff1ac33498c3c894c6ddd54c9b97c3",
-    "sig_sha3_512": "bbecd1abbe26f0eb94b76d43ce848b9b5867a87701e75ffe691c1d79125f04cbe44f00c52f4a2cde54b51cac27346fbd5eb16a88595a8167910e3f9b77b8b408",
+    "sig_sha3_512": "52109aea6d255cc60c7d9568e6de5acd9cf2dbf9eb8a34a63bcc4844560d51d0ab73267bf99303f26095c3474cd75f84288e914b93185133db303cf44383391a",
     "verified": true
   },
   "wire_packet": {
-    "key_hash": "AF1E24FF99A56C8B9AFDF1E6FEA16EF18B3FB1C30078611D0D292D3D80FFD4CD",
+    "key_hash": "E559DE7A2B5EE36811912978A70F77943CD277A16EBB3F71ADDFE4C5A15A46D0",
     "wire_magic_hex": "895150450500",
     "wire_frame_bytes": 60999,
-    "wire_frame_sha3_512": "aee8e48e6193aa7fba2755a300674f8f5aadf84e50287d5a9ee3a86c7bd3ab44534a68195a40887b152d1f28b9daff7083de60030c2b9343d108ee243a0e18a1",
-    "wire_frame_prefix_hex": "89515045050001003e7f8f93ec32d9f1123e7ac462e0c4a6d6d9f5f4b04aa9ba8bfa371dd8e9b0bb396440be51e99cf045f45b956ac2511f6da85ca28e4ea99e",
+    "wire_frame_sha3_512": "2e50d55ea100f61ce6f0d1ee9111c31cefecb634ee23293d04b1e80032d58eb78eb846df11e84fd930b1cfcdbcc8ff02d2a2e0a8fda7cad04365c495358e3b6a",
+    "wire_frame_prefix_hex": "895150450500010086b3c8b92cffea0888dc2121abaadb078a268dfd4e85f1deb98107925544d9786fce0c308d754b6234eaa9af3cdf2d732f6893e274a090ef",
     "cleartext_identity_headers_present": false
   }
 }

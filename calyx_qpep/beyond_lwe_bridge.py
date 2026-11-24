@@ -1,5 +1,5 @@
 """
-OpenQPEP Official Release 1.1.3 (v1.1.3) Beyond-LWE Native .qpkrf Persistence & Dispatch Bridge.
+OpenQPEP Official Release 1.1.4 (v1.1.4) Beyond-LWE Native .qpkrf Persistence & Dispatch Bridge.
 Provides unified Wire Format v5 keygen, encrypt, decrypt, sign, and verify dispatch for all 5 Beyond-LWE suites:
   - CIF-SQI-512  (Calyx Isogeny-Forge: CIF-SQI-512 + QHS-512)
   - CRT-RSD512   (Calyx Rank-Metric Tensor: CRT-RSD512 + QMQ-512)
@@ -13,8 +13,8 @@ import json
 from typing import Any, Dict, Tuple
 
 from .constants import MAX_ARMOR_BYTES, PACKET_TYPE_SIGNATURE, PROTOCOL_VERSION, UNIVERSAL_VERSION
-from .exceptions import OpenQPEPError, QPEPKeyRingError, QPEPSuiteError, QPEPWireFormatError
-from .primitives.consttime import ct_eq_str
+from .exceptions import OpenQPEPError, QPEPFaultGuardError, QPEPKeyRingError, QPEPSuiteError, QPEPWireFormatError
+from .primitives.consttime import ct_eq, ct_eq_str
 from .wire.armor import armor_unwrap, armor_wrap
 
 BEYOND_LWE_SUITES = ("CIF-SQI-512", "CRT-RSD512", "CGM-8192", "CULC-2048", "CSP-Omega")
@@ -156,9 +156,11 @@ def sign_beyond_lwe(suite_id: str, message: bytes, blwe_pub: Dict[str, Any], blw
     msg = _validate_bytes_payload(message, "message")
     _CGM, _CRT, QHS512HypertreeEngine, CalyxIsogenyForgeSuite, CalyxUnstructuredCitadelSuite, MultivariateQuadraticEngine, CalyxSovereignPentad = _engines()
     if suite_id == "CIF-SQI-512":
+        _validate_material(suite_id, blwe_pub, "pub", "public")
         _validate_material(suite_id, blwe_priv, "priv", "private")
-        return CalyxIsogenyForgeSuite.sign(msg, blwe_priv["priv"])
-    if suite_id == "CRT-RSD512":
+        armored = CalyxIsogenyForgeSuite.sign(msg, blwe_priv["priv"])
+    elif suite_id == "CRT-RSD512":
+        _validate_material(suite_id, blwe_pub, "sig_pk_b64", "public")
         _validate_material(suite_id, blwe_priv, "sig_sk_b64", "private")
         sig = MultivariateQuadraticEngine.sign(_b64d(blwe_priv["sig_sk_b64"]), msg)
         bundle = {
@@ -169,8 +171,9 @@ def sign_beyond_lwe(suite_id: str, message: bytes, blwe_pub: Dict[str, Any], blw
             "message_b64": _b64e(msg),
             "sig_qmq_b64": _b64e(sig),
         }
-        return armor_wrap(CRT_SIG_LABEL, json.dumps(bundle, separators=(",", ":")).encode("utf-8"), packet_type=PACKET_TYPE_SIGNATURE)
-    if suite_id == "CGM-8192":
+        armored = armor_wrap(CRT_SIG_LABEL, json.dumps(bundle, separators=(",", ":")).encode("utf-8"), packet_type=PACKET_TYPE_SIGNATURE)
+    elif suite_id == "CGM-8192":
+        _validate_material(suite_id, blwe_pub, "sig_pk_b64", "public")
         _validate_material(suite_id, blwe_priv, "sig_sk_b64", "private")
         sig = QHS512HypertreeEngine.sign(_b64d(blwe_priv["sig_sk_b64"]), msg)
         bundle = {
@@ -181,13 +184,23 @@ def sign_beyond_lwe(suite_id: str, message: bytes, blwe_pub: Dict[str, Any], blw
             "message_b64": _b64e(msg),
             "sig_qhs_b64": _b64e(sig),
         }
-        return armor_wrap(CGM_SIG_LABEL, json.dumps(bundle, separators=(",", ":")).encode("utf-8"), packet_type=PACKET_TYPE_SIGNATURE)
-    if suite_id == "CULC-2048":
+        armored = armor_wrap(CGM_SIG_LABEL, json.dumps(bundle, separators=(",", ":")).encode("utf-8"), packet_type=PACKET_TYPE_SIGNATURE)
+    elif suite_id == "CULC-2048":
+        _validate_material(suite_id, blwe_pub, "pub", "public")
         _validate_material(suite_id, blwe_priv, "priv", "private")
-        return CalyxUnstructuredCitadelSuite.sign(msg, blwe_priv["priv"])
-    _validate_material(suite_id, blwe_pub, "pub", "public")
-    _validate_material(suite_id, blwe_priv, "priv", "private")
-    return CalyxSovereignPentad.sign(msg, blwe_pub["pub"], blwe_priv["priv"])
+        armored = CalyxUnstructuredCitadelSuite.sign(msg, blwe_priv["priv"])
+    else:
+        _validate_material(suite_id, blwe_pub, "pub", "public")
+        _validate_material(suite_id, blwe_priv, "priv", "private")
+        armored = CalyxSovereignPentad.sign(msg, blwe_pub["pub"], blwe_priv["priv"])
+
+    # Mandatory suite-level Verify-Before-Emit Fault-Guard across all 5 Beyond-LWE suites
+    ok_fg, verified_msg = verify_beyond_lwe(suite_id, armored, blwe_pub)
+    if not ok_fg or not ct_eq(verified_msg, msg):
+        raise QPEPFaultGuardError(
+            f"Beyond-LWE {suite_id} Fault-Injection Guard triggered: signature bundle failed internal verification."
+        )
+    return armored
 
 
 def verify_beyond_lwe(suite_id: str, armored_sig: str, blwe_pub: Dict[str, Any]) -> Tuple[bool, bytes]:

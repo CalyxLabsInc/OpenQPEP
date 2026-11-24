@@ -1,6 +1,6 @@
 """
 HGC-448 (448-bit Goldilocks X448 Diffie-Hellman & Ed448 Edwards Signatures) Hybrid Combiner
-(Official Release 1.1.3 / v1.1.3).
+(Official Release 1.1.4 / v1.1.4).
 Uses os.urandom(56)/os.urandom(57) so keygen is CSPRNG-secure in production and 100% deterministic
 under KAT DRBG, with SecretBuffer RAM scrubbing on every private-key operation.
 """
@@ -12,6 +12,7 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed448 import Ed448PrivateKey, Ed448PublicKey
 from cryptography.hazmat.primitives.asymmetric.x448 import X448PrivateKey, X448PublicKey
 
+from ..exceptions import QPEPFaultGuardError
 from .consttime import ct_eq
 from .zeroize import SecretBuffer
 
@@ -52,8 +53,17 @@ def ed448_public_from_private(priv_bytes: bytes) -> bytes:
 
 
 def ed448_sign(priv_bytes: bytes, data: bytes) -> bytes:
+    """
+    Signs `data` with RFC 8032 Ed448 and enforces mandatory Verify-Before-Emit Fault-Guard
+    (`QPEPFaultGuardError`) to defeat differential fault-injection attacks on deterministic Edwards signing.
+    """
     with SecretBuffer(priv_bytes) as sb:
-        return Ed448PrivateKey.from_private_bytes(sb.as_bytes()).sign(data)
+        priv = Ed448PrivateKey.from_private_bytes(sb.as_bytes())
+        pub_bytes = priv.public_key().public_bytes(serialization.Encoding.Raw, serialization.PublicFormat.Raw)
+        sig = priv.sign(bytes(data))
+    if not ed448_verify(pub_bytes, sig, data):
+        raise QPEPFaultGuardError("HGC-448 Ed448 Fault-Injection Guard triggered: signature failed internal verification.")
+    return sig
 
 
 def ed448_verify(pub_bytes: bytes, signature: bytes, data: bytes) -> bool:

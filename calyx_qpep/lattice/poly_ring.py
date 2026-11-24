@@ -1,4 +1,4 @@
-# OpenQPEP Official Release 1.1.3 (v1.1.3)
+# OpenQPEP Official Release 1.1.4 (v1.1.4)
 """
 Polynomial Ring Sampling (NTT Rejection, CBD_1, CBD_2, Ball Challenge) & Bit-Packing Codecs.
 Automatically accelerates CBD_1 / CBD_2 sampling via libopenqpep (C99/AVX2/NEON) when available.

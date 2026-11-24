@@ -1,4 +1,17 @@
-# OpenQPEP Core Protocol Changelog — Official Release `v1.1.3`
+# OpenQPEP Core Protocol Changelog — Official Release `v1.1.4`
+
+## Official Release `v1.1.4` (2026-11-24) — FIPS 204-Style Hedged Deterministic Signatures & Universal Fault-Guard Across All 10 Suites
+
+- **FIPS 204-Style Hedged `QVSEngine.sign` (`calyx_qpep/lattice/qvs_dsa.py`):** Upgraded `QVSEngine.sign` to default hedged mode (`hedged=True`, mixing fresh 32-byte CSPRNG `rnd` with `k_sign` + `mu` via `CALYX-QVS-RNDS-HEDGED-v1.1.4|`) defeating both weak/stuck RNGs and differential fault analysis on repeated signing, while preserving optional pure deterministic mode (`hedged=False`) and 100% unchanged `QVSEngine.verify` wire compatibility.
+- **Universal Verify-Before-Emit Fault-Guard (`QPEPFaultGuardError`) Across All 10 Suites:**
+  - Added mandatory Verify-Before-Emit Fault-Guard to **`ed448_sign`** (`calyx_qpep/primitives/hgc448.py`).
+  - Added hedged `opt_rand` derivation + mandatory Verify-Before-Emit Fault-Guard + full-scope `SecretBuffer` scrubbing to **`QHS512HypertreeEngine.sign`** (`calyx_qpep/hashsig/qhs_512_hypertree.py`).
+  - Upgraded **`MultivariateQuadraticEngine.sign`** (`calyx_qpep/multivariate/qmq_512.py`) with hedged message-bound 16-byte UOV salt (closing weak-RNG vinegar-reuse attacks) + secret oil/vinegar matrix zeroization.
+  - Upgraded **`SupersingularIsogenyEngine.sign`** (`calyx_qpep/isogeny/sqi_2d_512.py`) with hedged CSIDH-512 SeaSign nonce derivation + secret ideal scrubbing.
+  - Added bundle-level Verify-Before-Emit Fault-Guard to **`CalyxSovereignPentad.sign`** (`calyx_qpep/pentad/sovereign_pentad.py`) and **`sign_beyond_lwe`** (`calyx_qpep/beyond_lwe_bridge.py`).
+- **Verification:** Added 8-test suite `tests/test_v114_hedged_fault_guard.py` verifying hedged vs. deterministic signing, stuck all-zero RNG immunity, fault-injection rejection across every signature engine (`QVS`, `Ed448`, `QHS-512`, `QMQ-512`, `CIF-SQI-512`, `CSP-Omega`, and Beyond-LWE bridge), zero `mlock` leaks, and 10/10 Native + Pure-Python Golden KAT parity.
+
+---
 
 ## Official Release `v1.1.3` (2026-11-24) — Constant-Time `CC-512` AEAD Hardening & Nonce-Misuse-Resistant `CC-512-SIV` Mode
 

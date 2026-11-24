@@ -1,6 +1,6 @@
 """
 Family 4 of Calyx Sovereign-Pentad (CSP-Omega): Genuine Unbalanced Oil-and-Vinegar (UOV)
-Multivariate Quadratic Signature Engine over GF(256) (QMQ-512 — Official Release 1.1.3).
+Multivariate Quadratic Signature Engine over GF(256) (QMQ-512 — Official Release 1.1.4).
 
 Cryptographic Construction (NIST PQC Round 2 Canonical UOV Structure):
   - Field: GF(256) modulo AES irreducible polynomial x^8 + x^4 + x^3 + x + 1 (0x11B),
@@ -214,73 +214,100 @@ class MultivariateQuadraticEngine:
         return pk, sk
 
     @staticmethod
-    def sign(sk: bytes, message: bytes) -> bytes:
-        with SecretBuffer(sk) as sk_buf:
-            raw = sk_buf.as_bytes()
-            v, m = struct.unpack("<HH", raw[:4])
-            seed_pk = raw[4:36]
-            seed_sk = raw[36:68]
-            pk_hash = raw[68:100]
-            p3_bytes = raw[100:]
-            oil_o = _expand_oil_matrix(seed_sk, v, m)
+    def sign(sk: bytes, message: bytes, *, hedged: bool = True, rnd: Optional[bytes] = None) -> bytes:
+        """
+        Signs `message` under UOV (QMQ-512) with hedged message-bound salt derivation
+        (defeating weak/stuck-RNG vinegar reuse) and mandatory Verify-Before-Emit Fault-Guard.
+        """
+        if rnd is not None:
+            if not isinstance(rnd, (bytes, bytearray, memoryview)) or len(rnd) != 32:
+                raise ValueError("QMQ-512 hedged signing rnd must be exactly 32 bytes.")
 
-        p1_all, p2_all = _expand_p1_p2(seed_pk, v, m)
-        salt = os.urandom(16)
-        target = list(qsponge_var(b"CALYX-QMQ-TARGET-v1.0.0|" + pk_hash + salt + message, m))
+        oil_o: List[List[int]] = []
+        vin: List[int] = []
+        xo: Optional[List[int]] = None
+        try:
+            with SecretBuffer(sk) as sk_buf:
+                with sk_buf.view() as mv:
+                    v, m = struct.unpack("<HH", mv[:4])
+                    seed_pk = bytes(mv[4:36])
+                    seed_sk = bytes(mv[36:68])
+                    pk_hash = bytes(mv[68:100])
+                    p3_bytes = bytes(mv[100:])
+                oil_o = _expand_oil_matrix(seed_sk, v, m)
 
-        for attempt in range(64):
-            vin = list(qsponge_var(b"CALYX-QMQ-VINEGAR-v1.0.0|" + seed_sk + salt + struct.pack(">H", attempt), v))
-            rhs = list(target)
-            lin = [[0] * m for _ in range(m)]
+                p1_all, p2_all = _expand_p1_p2(seed_pk, v, m)
+                if hedged:
+                    with SecretBuffer(os.urandom(32) if rnd is None else bytes(rnd)) as rnd_buf:
+                        salt = qsponge_512(
+                            b"CALYX-QMQ-HEDGE-v1.1.4|" + seed_sk + rnd_buf.as_bytes() + pk_hash + message
+                        )[:16]
+                else:
+                    salt = qsponge_512(b"CALYX-QMQ-DET-v1.1.4|" + seed_sk + pk_hash + message)[:16]
+                target = list(qsponge_var(b"CALYX-QMQ-TARGET-v1.0.0|" + pk_hash + salt + message, m))
 
-            for k in range(m):
-                p1k, p2k = p1_all[k], p2_all[k]
-                yk = 0
-                w = [0] * v
-                for i in range(v):
-                    vi = vin[i]
-                    row1 = p1k[i]
-                    for j in range(i, v):
-                        c = row1[j]
-                        if not c:
-                            continue
-                        vj = vin[j]
-                        if vi and vj:
-                            yk ^= _MUL256[_MUL256[vi][c]][vj]
-                        if i != j:
+                for attempt in range(64):
+                    vin = list(qsponge_var(b"CALYX-QMQ-VINEGAR-v1.0.0|" + seed_sk + salt + struct.pack(">H", attempt), v))
+                    rhs = list(target)
+                    lin = [[0] * m for _ in range(m)]
+
+                    for k in range(m):
+                        p1k, p2k = p1_all[k], p2_all[k]
+                        yk = 0
+                        w = [0] * v
+                        for i in range(v):
+                            vi = vin[i]
+                            row1 = p1k[i]
+                            for j in range(i, v):
+                                c = row1[j]
+                                if not c:
+                                    continue
+                                vj = vin[j]
+                                if vi and vj:
+                                    yk ^= _MUL256[_MUL256[vi][c]][vj]
+                                if i != j:
+                                    if vi:
+                                        w[j] ^= _MUL256[vi][c]
+                                    if vj:
+                                        w[i] ^= _MUL256[vj][c]
+                        rhs[k] ^= yk
+                        lk = lin[k]
+                        for i in range(v):
+                            wi = w[i]
+                            if wi:
+                                mwi, oi = _MUL256[wi], oil_o[i]
+                                for j in range(m):
+                                    lk[j] ^= mwi[oi[j]]
+                            vi = vin[i]
                             if vi:
-                                w[j] ^= _MUL256[vi][c]
-                            if vj:
-                                w[i] ^= _MUL256[vj][c]
-                rhs[k] ^= yk
-                lk = lin[k]
-                for i in range(v):
-                    wi = w[i]
-                    if wi:
-                        mwi, oi = _MUL256[wi], oil_o[i]
-                        for j in range(m):
-                            lk[j] ^= mwi[oi[j]]
-                    vi = vin[i]
-                    if vi:
-                        mvi, p2i = _MUL256[vi], p2k[i]
-                        for j in range(m):
-                            lk[j] ^= mvi[p2i[j]]
+                                mvi, p2i = _MUL256[vi], p2k[i]
+                                for j in range(m):
+                                    lk[j] ^= mvi[p2i[j]]
 
-            xo = _solve_gf256_linear(lin, rhs)
+                    xo = _solve_gf256_linear(lin, rhs)
+                    if xo is not None:
+                        sv = list(vin)
+                        for i in range(v):
+                            oi = oil_o[i]
+                            for j in range(m):
+                                sv[i] ^= _MUL256[oi[j]][xo[j]]
+                        sig_out = salt + bytes(sv) + bytes(xo)
+                        # Mandatory Verify-Before-Emit Fault-Guard
+                        pk_rebuilt = struct.pack("<HH", v, m) + seed_pk + p3_bytes
+                        if not MultivariateQuadraticEngine.verify(pk_rebuilt, message, sig_out):
+                            raise QPEPFaultGuardError("QMQ-512 UOV Fault-Guard triggered: signature failed internal verification.")
+                        return sig_out
+
+            raise RuntimeError("QMQ-512 UOV signing failed to find invertible linear oil system.")
+        finally:
+            for row in oil_o:
+                for idx in range(len(row)):
+                    row[idx] = 0
+            for idx in range(len(vin)):
+                vin[idx] = 0
             if xo is not None:
-                sv = list(vin)
-                for i in range(v):
-                    oi = oil_o[i]
-                    for j in range(m):
-                        sv[i] ^= _MUL256[oi[j]][xo[j]]
-                sig_out = salt + bytes(sv) + bytes(xo)
-                # Mandatory Verify-Before-Emit Fault-Guard
-                pk_rebuilt = struct.pack("<HH", v, m) + seed_pk + p3_bytes
-                if not MultivariateQuadraticEngine.verify(pk_rebuilt, message, sig_out):
-                    raise QPEPFaultGuardError("QMQ-512 UOV Fault-Guard triggered: signature failed internal verification.")
-                return sig_out
-
-        raise RuntimeError("QMQ-512 UOV signing failed to find invertible linear oil system.")
+                for idx in range(len(xo)):
+                    xo[idx] = 0
 
     @staticmethod
     def verify(pk: bytes, message: bytes, signature: bytes) -> bool:

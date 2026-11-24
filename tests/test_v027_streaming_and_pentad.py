@@ -1,5 +1,5 @@
 """
-Unit tests for OpenQPEP Official Release 1.1.3:
+Unit tests for OpenQPEP Official Release 1.1.4:
   - O(1)-RAM Streaming Chunked AEAD (StreamingEncryptor / StreamingDecryptor)
   - Chunk-bound nonce truncation & reordering immunity
   - Seekable qSponge-512 Merkle-Tree arbitrary byte-range decryption

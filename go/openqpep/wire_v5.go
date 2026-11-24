@@ -1,4 +1,4 @@
-// Package openqpep provides the Go Official Release 1.1.3 (v1.1.3) conformance port (CPOSLS-1.0).
+// Package openqpep provides the Go Official Release 1.1.4 (v1.1.4) conformance port (CPOSLS-1.0).
 // Wire Format v5/v5.1 compatible with OpenQPEP Official Releases 1.0.x+; zero compatibility with legacy -rc, -pc, or -beta frames.
 package openqpep
 
@@ -9,7 +9,7 @@ import (
 
 const (
 	QlxQ            = 3329
-	ProtocolVersion = "OpenQPEP/1.1.3"
+	ProtocolVersion = "OpenQPEP/1.1.4"
 	MandatoryKDFV4  = 4
 )
 
@@ -21,7 +21,7 @@ var (
 	LegacyWireMagicV3  = []byte{0x89, 'Q', 'P', 'E', 0x03, 0x00}
 	LegacyWireMagicV31 = []byte{0x89, 'Q', 'P', 'E', 0x03, 0x01}
 
-	ErrLegacyProtocol = errors.New("QPEPLegacyProtocolError: legacy -rc, -pc, or -beta wire format rejected in Official Release 1.1.3")
+	ErrLegacyProtocol = errors.New("QPEPLegacyProtocolError: legacy -rc, -pc, or -beta wire format rejected in Official Release 1.1.4")
 	ErrInvalidMagic   = errors.New("QPEPWireFormatError: invalid OpenQPEP Official Wire Format v5 magic")
 )
 

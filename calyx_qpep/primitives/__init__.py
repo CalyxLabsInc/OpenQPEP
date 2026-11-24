@@ -1,4 +1,4 @@
-"""OpenQPEP Low-Level Cryptographic Primitives (Official Release 1.1.3)."""
+"""OpenQPEP Low-Level Cryptographic Primitives (Official Release 1.1.4)."""
 from .qsponge import qsponge_512, qsponge_var
 from .consttime import ct_eq, ct_eq_str, ct_eq_int, ct_cmov, ct_select_int, barrett_reduce_3329, montgomery_reduce_3329, barrett_reduce_qvs
 from .zeroize import (

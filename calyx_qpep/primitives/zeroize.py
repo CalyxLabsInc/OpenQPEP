@@ -1,6 +1,6 @@
 """
 OS Memory Locking (mlock / MADV_DONTDUMP / PR_SET_DUMPABLE), Guard-Page Secret Arenas,
-and Active Compiler-Barrier Zeroization (Official Release 1.1.3 / v1.1.3).
+and Active Compiler-Barrier Zeroization (Official Release 1.1.4 / v1.1.4).
 
 Security Guarantees:
   1. Compiler-Barrier Zeroization: Overwrites secret memory using C99 `openqpep_explicit_bzero`
