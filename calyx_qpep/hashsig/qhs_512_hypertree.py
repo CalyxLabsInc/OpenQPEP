@@ -1,4 +1,4 @@
-# OpenQPEP Official Release 1.1.2 (v1.1.2)
+# OpenQPEP Official Release 1.1.3 (v1.1.3)
 """
 Family 5 of Calyx Sovereign-Pentad (CSP-Omega): Stateless Hash-Based Signature Hypertree
 (QHS-512: WOTS+ Winternitz Chains + XMSS Merkle Authentication Path over 24-round qSponge-512).

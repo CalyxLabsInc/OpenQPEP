@@ -1,5 +1,5 @@
 """
-OpenQPEP Cryptographic & Protocol Constants (Official Release 1.1.2 / v1.1.2).
+OpenQPEP Cryptographic & Protocol Constants (Official Release 1.1.3 / v1.1.3).
 Project: OpenQPEP by Calyx Labs Inc. (Creator: Tristen Martinez)
 License: Calyx Public Open Source Specifications v1.0 License (CPOSLS-1.0)
 """
@@ -7,11 +7,11 @@ from typing import Dict
 
 PROJECT_NAME = "OpenQPEP by Calyx Labs Inc."
 APP_NAME = "OpenQPEP"
-UNIVERSAL_VERSION = "1.1.2"
-UNIVERSAL_VERSION_LABEL = "Official Release 1.1.2"
-PROTOCOL_VERSION = "OpenQPEP/1.1.2"
+UNIVERSAL_VERSION = "1.1.3"
+UNIVERSAL_VERSION_LABEL = "Official Release 1.1.3"
+PROTOCOL_VERSION = "OpenQPEP/1.1.3"
 RELEASE_CHANNEL = "RELEASE"
-API_STABILITY = "v1.1.2-stable"
+API_STABILITY = "v1.1.3-stable"
 MANDATORY_KDF_VERSION = 4
 
 DEFAULT_SUITE = "QLX-4096"
@@ -28,10 +28,10 @@ CALYX_HYPER_TESSERACT_HARDWARE_WARNING = (
     "Do NOT use on low-RAM budget devices (<= 6 GB RAM) due to ~69 KB secret vectors and heavy 16,384-dim NTT math."
 )
 
-# Official Release 1.1.2 Binary Wire Framing Constants (Clean-Slate v5 / v5.1 — Zero Legacy Compatibility)
-WIRE_MAGIC_V5 = b"\x89QPE\x05\x00"        # Official Release 1.1.2 Canonical Wire Format v5
-WIRE_MAGIC_V5_1 = b"\x89QPE\x05\x01"      # Official Release 1.1.2 Compact Binary TLV Wire Format v5.1
-STREAM_MAGIC_V5 = b"\x89QPS\x05\x00"      # Official Release 1.1.2 O(1)-RAM Chunked Streaming AEAD Magic
+# Official Release 1.1.3 Binary Wire Framing Constants (Clean-Slate v5 / v5.1 — Zero Legacy Compatibility)
+WIRE_MAGIC_V5 = b"\x89QPE\x05\x00"        # Official Release 1.1.3 Canonical Wire Format v5
+WIRE_MAGIC_V5_1 = b"\x89QPE\x05\x01"      # Official Release 1.1.3 Compact Binary TLV Wire Format v5.1
+STREAM_MAGIC_V5 = b"\x89QPS\x05\x00"      # Official Release 1.1.3 O(1)-RAM Chunked Streaming AEAD Magic
 
 # Explicitly rejected legacy magics (Release Candidate -rc, Production Candidate -pc, Beta -beta)
 LEGACY_RC_WIRE_MAGICS = (b"\x89QPE\x04\x00", b"\x89QPE\x04\x01")
@@ -122,7 +122,7 @@ QVS_TIERS: Dict[str, Dict[str, int]] = {
 }
 
 # ---------------------------------------------------------------------------
-# All 10 Canonical OpenQPEP Post-Quantum Suites (Official Release 1.1.2)
+# All 10 Canonical OpenQPEP Post-Quantum Suites (Official Release 1.1.3)
 # Uniform Naming Standard: "Calyx <Key-Name>: <KEM> + <SIG> (<Short Description>)"
 # ---------------------------------------------------------------------------
 ALL_TEN_SUITES: Dict[str, Dict[str, object]] = {

@@ -1,5 +1,5 @@
 """
-OpenQPEP by Calyx Labs Inc. — Official Release 1.1.2 (v1.1.2, Modular Cryptographic Kernel)
+OpenQPEP by Calyx Labs Inc. — Official Release 1.1.3 (v1.1.3, Modular Cryptographic Kernel)
 Clean official API facade over calyx_qpep.primitives.*, calyx_qpep.lattice.*, compat_server, and protocol.
 """
 from .compat_server import SlidingWindowRateLimiter
@@ -31,8 +31,15 @@ from .exceptions import (
 from .native.loader import is_native_available, native_backend_info, set_native_enabled
 from .passphrase import PassphraseValidationResult, analyze_passphrase, enforce_passphrase_policy
 from .primitives import (
+    CC512SIV,
     LockedMemoryBuffer,
     SecretBuffer,
+    cc512_decrypt,
+    cc512_encrypt,
+    cc512_siv_decrypt,
+    cc512_siv_encrypt,
+    cc512_siv_unwrap_key,
+    cc512_siv_wrap_key,
     ct_cmov,
     ct_eq,
     disable_core_dumps,
@@ -86,6 +93,13 @@ __all__ = [
     "disable_core_dumps",
     "harden_process_memory",
     "memory_security_status",
+    "cc512_encrypt",
+    "cc512_decrypt",
+    "cc512_siv_encrypt",
+    "cc512_siv_decrypt",
+    "cc512_siv_wrap_key",
+    "cc512_siv_unwrap_key",
+    "CC512SIV",
     "qsponge_512",
     "qsponge_var",
     "PassphraseValidationResult",

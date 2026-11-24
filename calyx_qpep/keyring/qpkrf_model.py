@@ -1,4 +1,4 @@
-# OpenQPEP Official Release 1.1.2 (v1.1.2)
+# OpenQPEP Official Release 1.1.3 (v1.1.3)
 """Canonical QPEPKeyRing model re-export under calyx_qpep.keyring."""
 from ..protocol import QPEPKeyRing, _compute_keyring_integrity_mac
 

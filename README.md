@@ -1,6 +1,6 @@
-# OpenQPEP by Calyx Labs Inc. — Official Release `v1.1.2` (`OpenQPEP/1.1.2`)
+# OpenQPEP by Calyx Labs Inc. — Official Release `v1.1.3` (`OpenQPEP/1.1.3`)
 
-**Protocol Version:** `OpenQPEP/1.1.2` (`Official Release 1.1.2`, PEP 440 `1.1.2`, upgraded from **Official Release `1.1.1`**)  
+**Protocol Version:** `OpenQPEP/1.1.3` (`Official Release 1.1.3`, PEP 440 `1.1.3`, upgraded from **Official Release `1.1.2`**)  
 **Creator & Lead Architect:** Tristen Martinez (Calyx Labs Inc., Cleveland, Ohio)  
 **Repository:** https://github.com/CalyxLabsInc/OpenQPEP  
 **Public Key Directory & QPEP-KT:** https://qpepkeys.calyxlabsinc.org  
@@ -10,19 +10,19 @@
 
 OpenQPEP is a modern, quantum-proof encryption, authentication, and messaging protocol engineered to replace legacy OpenPGP (RFC 4880 / RFC 9580) as a worldwide standard—with provable multi-assumption post-quantum security, constant-time native C99/Rust/WASM/Go performance, and 100% deterministic Known Answer Test (KAT) verification.
 
-## Official Release `v1.1.2` Highlights
+## Official Release `v1.1.3` Highlights
 
-- **100% Official `v1.0.x`–`v1.1.x` Interoperability (`1.0.0`–`1.1.1` ↔ `1.1.2`):** Preserves complete Wire Format v5 (`\x89QPE\x05\x00`), Compact TLV v5.1 (`\x89QPE\x05\x01`), Stream v5 (`\x89QPS\x05\x00`), and `kdf_version: 4` compatibility across all Official Public Stable Releases while continuing to hard-reject all retired pre-release formats (`-rc`, `-pc`, `-beta`, Wire v1–v4, `kdf_version < 4`) with `QPEPLegacyProtocolError`.
+- **100% Official `v1.0.x`–`v1.1.x` Interoperability (`1.0.0`–`1.1.2` ↔ `1.1.3`):** Preserves complete Wire Format v5 (`\x89QPE\x05\x00`), Compact TLV v5.1 (`\x89QPE\x05\x01`), Stream v5 (`\x89QPS\x05\x00`), and `kdf_version: 4` compatibility across all Official Public Stable Releases while continuing to hard-reject all retired pre-release formats (`-rc`, `-pc`, `-beta`, Wire v1–v4, `kdf_version < 4`) with `QPEPLegacyProtocolError`.
+- **Constant-Time CMT-4 `CC-512` AEAD & Nonce-Misuse-Resistant `CC-512-SIV` Mode:** Strict `QPEPWireFormatError` key/nonce/length validation and `SecretBuffer` scrubbing across `CC-512`, plus deterministic & hedged Synthetic-IV `CC-512-SIV` (`cc512_siv_encrypt`, `cc512_siv_decrypt`, `cc512_siv_wrap_key`, `cc512_siv_unwrap_key`, `CC512SIV`) for nonce-misuse-resistant key wrapping and offline vaults while keeping Wire v5 `CC-512` 100% bit-exact.
 - **OS Memory Locking & Guard-Page Secret Arenas (`mlock` / `MADV_DONTDUMP` / `PR_SET_DUMPABLE`):** Reference-counted `mlock()`/`munlock()` inside `SecretBuffer`, dedicated `PROT_NONE` guard-paged & `MADV_DONTDUMP`-excluded `LockedMemoryBuffer` arenas, C99 constant-time `openqpep_explicit_bzero` + `openqpep_is_zeroed`, opt-in process core-dump hardening (`disable_core_dumps`, `harden_process_memory`), and deterministic scrubbing across KDF/KEM/DSA/AEAD/protocol secret paths.
 - **Shared Server Security Adapter (`calyx_qpep.compat_server`):** Canonical `SlidingWindowRateLimiter`, strict Wire v5 verification, pre-release token guards, and directory `.qpkrf` validator shared across ecosystem backends.
-- **CMT-4 Key-Committing `CC-512` AEAD:** Dual-stream `AES-256-GCM` + `ChaCha20-Poly1305` + 256-bit `qSponge-512` key/nonce/AAD/ciphertext commitment verified in constant time prior to decryption.
 - **Mandatory `kdf_version: 4` (`RFC 9106 QPKD-Argon2id + qSponge-512`):** Hardcoded 64-byte structural passphrase witness, hardware auto-tuner, and optional `FIDO2-PRF` hardware passkey secret mixing.
 - **10 Cryptographically Genuine Post-Quantum Suites:**
   - **5 Structured Module-LWE + HGC-448 Suites:** `QLX-768`, `QLX-1024`, `QLX-2048`, `QLX-4096` (default), `QLX-16384` paired with `QVS-65`..`QVS-1024` (with Verify-Before-Emit Fault-Guard).
   - **5 Genuine Beyond-LWE Suites:** **CSIDH-512** Supersingular Isogeny (`CIF-SQI-512`), **LRPC / ROLLO-I** Rank-Metric Syndrome Decoding (`CRT-RSD512`) + **UOV** Multivariate Quadratic (`QMQ-512`), **Classic McEliece / Niederreiter Binary Goppa Patterson** (`CGM-8192`), **Zero-Ring Plain-LWE + Goppa** (`CULC-2048`), and **5-Family Citadel** (`CSP-Omega`).
 - **Complete Hardened Sub-Protocol Stack:** `QPEP-Ratchet`, `QPEP-MLS` (256-member TreeKEM), `QPEP-AKE`, `QPEP-KT` (Ed448 publicly verifiable STHs + RFC 9162 Merkle Consistency Proofs), `QVS-Ring`, `DeniableVault`, `ThresholdKEM`, `Sphinx-PQ`, `LT-QR`, `BlindSearchVault`, `TimeLockCapsule`, `LatticeZKProof`, and `EncryptedLWWMapCRDT`.
 
-## All 10 Canonical OpenQPEP Post-Quantum Suites (`v1.1.2`)
+## All 10 Canonical OpenQPEP Post-Quantum Suites (`v1.1.3`)
 
 | Canonical Suite Name | KEM + Signature | Mathematical Family | Hardware Classification |
 | :--- | :--- | :--- | :--- |
@@ -43,7 +43,7 @@ OpenQPEP is a modern, quantum-proof encryption, authentication, and messaging pr
 # 1. Build Native C99 / SIMD Accelerator (zero warnings with -Werror)
 make -C calyx_qpep/native/csrc clean all
 
-# 2. Install OpenQPEP Official Release 1.1.2
+# 2. Install OpenQPEP Official Release 1.1.3
 pip install -e .
 
 # 3. Verify All 10 Deterministic Golden KAT Suites (Native C99 & Pure-Python)
@@ -61,7 +61,7 @@ openqpep
 ## Specifications & Documentation
 
 - [WIRE_FORMAT_V5_SPEC.md](WIRE_FORMAT_V5_SPEC.md) — Official Binary Wire Format v5 / Compact TLV v5.1 / Stream v5 Specification
-- [specs/OPENQPEP_v1.1.2_OFFICIAL_RELEASE_SPEC.md](specs/OPENQPEP_v1.1.2_OFFICIAL_RELEASE_SPEC.md) — Official Release `v1.1.2` Frozen Wire v5 Specification
+- [specs/OPENQPEP_v1.1.3_OFFICIAL_RELEASE_SPEC.md](specs/OPENQPEP_v1.1.3_OFFICIAL_RELEASE_SPEC.md) — Official Release `v1.1.3` Frozen Wire v5 Specification
 - [CHANGELOG.md](CHANGELOG.md) — Official Release Changelog
 - [docs/01_OpenQPEP_Mathematical_and_Cryptographic_Specification.md](docs/01_OpenQPEP_Mathematical_and_Cryptographic_Specification.md) — Mathematical & Cryptographic Specification
 - [docs/02_OpenQPEP_vs_OpenPGP_Security_Comparison.md](docs/02_OpenQPEP_vs_OpenPGP_Security_Comparison.md) — OpenQPEP vs. OpenPGP Security Comparison

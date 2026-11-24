@@ -1,4 +1,13 @@
-# OpenQPEP Core Protocol Changelog — Official Release `v1.1.2`
+# OpenQPEP Core Protocol Changelog — Official Release `v1.1.3`
+
+## Official Release `v1.1.3` (2026-11-24) — Constant-Time `CC-512` AEAD Hardening & Nonce-Misuse-Resistant `CC-512-SIV` Mode
+
+- **Hardened Wire v5 `CC-512` AEAD (`calyx_qpep/primitives/cc512_aead.py`):** Added strict bytes-like type checks, 64-byte key / 24-byte nonce / NIST SP 800-38D payload-ceiling assertions (`QPEPWireFormatError`), `SecretBuffer` wrapping of master keys, derived subkeys, and intermediate `ct_inner` buffers on both encrypt and decrypt while keeping Wire v5 `CC-512` 100% bit-exact.
+- **Nonce-Misuse-Resistant `CC-512-SIV` Mode (`cc512_siv_encrypt`, `cc512_siv_decrypt`, `CC512SIV`):** Implemented a provably CMT-4 key-committing Synthetic-IV mode (`96`-byte overhead = 32 B 256-bit `qSponge-512` SIV + 64 B `CC-512`) with injective `u64be` length-framed `(nonce, aad, plaintext)` binding, per-SIV fresh `(msg_key64, msg_nonce24)` derivation, deterministic & hedged nonce support, and constant-time SIV re-verification before releasing plaintext.
+- **Domain-Separated Key Wrapping (`cc512_siv_wrap_key`, `cc512_siv_unwrap_key`):** Added nonce-misuse-resistant key wrapping with dedicated `CALYX-CC512-SIV-KEYWRAP-v1.1.3|` AAD domain separation and `SecretBuffer` scrubbing, exported from `calyx_qpep` and `calyx_qpep.primitives`.
+- **Verification:** Added 9-test regression suite `tests/test_v113_cc512_siv.py` covering Wire v5 parity, strict bounds, nonce-misuse resistance, injective framing, bit-flip & SIV-recheck forgery defense, key-wrap domain separation, and zero `mlock` leaks.
+
+---
 
 ## Official Release `v1.1.2` (2026-11-24) — OS Memory Locking (`mlock` / `MADV_DONTDUMP` / `PR_SET_DUMPABLE`) & Hardened `SecretBuffer`
 

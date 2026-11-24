@@ -33,10 +33,10 @@ from calyx_qpep.primitives.zeroize import is_addr_zeroed, zeroize_addr
 class TestOpenQPEPv112MemoryLocking(unittest.TestCase):
     PASS = "Calyx!@#$_2026v112Aa99"
 
-    def test_01_version_metadata_is_112(self):
-        self.assertEqual(UNIVERSAL_VERSION, "1.1.2")
-        self.assertEqual(UNIVERSAL_VERSION_LABEL, "Official Release 1.1.2")
-        self.assertEqual(PROTOCOL_VERSION, "OpenQPEP/1.1.2")
+    def test_01_version_metadata_format(self):
+        self.assertTrue(UNIVERSAL_VERSION.startswith("1.1."))
+        self.assertEqual(UNIVERSAL_VERSION_LABEL, f"Official Release {UNIVERSAL_VERSION}")
+        self.assertEqual(PROTOCOL_VERSION, f"OpenQPEP/{UNIVERSAL_VERSION}")
 
     def test_02_secret_buffer_refcounted_mlock_and_zeroization(self):
         baseline = memory_security_status()["active_locked_pages"]

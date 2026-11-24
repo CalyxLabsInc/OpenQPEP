@@ -1,4 +1,4 @@
-"""OpenQPEP Official Release 1.1.2 — Genuine CSIDH-512 Supersingular Isogeny Cryptography Plugin (CIF-SQI-512)."""
+"""OpenQPEP Official Release 1.1.3 — Genuine CSIDH-512 Supersingular Isogeny Cryptography Plugin (CIF-SQI-512)."""
 from .sqi_2d_512 import (
     CSIDH_PRIME,
     CSIDH_PRIMES,
