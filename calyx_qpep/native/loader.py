@@ -1,5 +1,5 @@
 """
-OpenQPEP Native C99 / SIMD Vectorized Acceleration Loader (libopenqpep) — Official Release 1.1.1.
+OpenQPEP Native C99 / SIMD Vectorized Acceleration Loader (libopenqpep) — Official Release 1.1.2.
 Loads libopenqpep.so / .dylib / .dll via ctypes with zero-copy array.array buffer marshaling.
 Seamlessly falls back to the bit-exact pure-Python reference engine when absent or disabled.
 """
@@ -92,6 +92,9 @@ def _configure_signatures(lib: ctypes.CDLL) -> None:
     if hasattr(lib, "openqpep_explicit_bzero"):
         lib.openqpep_explicit_bzero.argtypes = [_c_void_p, ctypes.c_size_t]
         lib.openqpep_explicit_bzero.restype = None
+    if hasattr(lib, "openqpep_is_zeroed"):
+        lib.openqpep_is_zeroed.argtypes = [_c_void_p, ctypes.c_size_t]
+        lib.openqpep_is_zeroed.restype = ctypes.c_int
     if hasattr(lib, "openqpep_verify_wire_v5_magic"):
         lib.openqpep_verify_wire_v5_magic.argtypes = [ctypes.c_char_p, ctypes.c_size_t]
         lib.openqpep_verify_wire_v5_magic.restype = ctypes.c_int
@@ -266,6 +269,12 @@ def native_explicit_bzero(addr: int, length: int) -> bool:
         return False
     _LIB.openqpep_explicit_bzero(addr, length)
     return True
+
+
+def native_is_zeroed(addr: int, length: int) -> Optional[bool]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_is_zeroed")):
+        return None
+    return bool(_LIB.openqpep_is_zeroed(addr, length))
 
 
 def native_verify_wire_v5_magic(hdr: bytes) -> Optional[int]:

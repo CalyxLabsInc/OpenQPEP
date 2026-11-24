@@ -1,4 +1,4 @@
-# OpenQPEP Official Release 1.1.1 (v1.1.1)
+# OpenQPEP Official Release 1.1.2 (v1.1.2)
 """
 Conflict-free LWW-Element-Map CRDT with per-operation CC-512 encryption for zero-knowledge
 multi-device synchronization of contact keyrings, subkeys, and messenger state.

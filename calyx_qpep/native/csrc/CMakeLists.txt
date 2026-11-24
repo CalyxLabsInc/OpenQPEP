@@ -1,4 +1,4 @@
-# OpenQPEP Official Release 1.1.1 (v1.1.1) — Android NDK CMakeLists.txt (arm64-v8a NEON & x86_64 AVX2)
+# OpenQPEP Official Release 1.1.2 (v1.1.2) — Android NDK CMakeLists.txt (arm64-v8a NEON & x86_64 AVX2)
 cmake_minimum_required(VERSION 3.22.1)
 project(openqpep C)
 

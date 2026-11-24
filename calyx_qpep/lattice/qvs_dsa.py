@@ -1,5 +1,5 @@
 """
-QVS Lattice Fiat-Shamir with Aborts Signature Engine over Z_8380417[X]/(X^256+1) (Official Release 1.1.1).
+QVS Lattice Fiat-Shamir with Aborts Signature Engine over Z_8380417[X]/(X^256+1) (Official Release 1.1.2).
 Hardened with Verify-Before-Emit Fault-Guard (QPEPFaultGuardError) and SecretBuffer scrubbing.
 """
 import os
@@ -34,34 +34,43 @@ class QVSEngine:
         spec = QVS_TIERS.get(tier, QVS_TIERS["QVS-256"])
         k, l = spec["k"], spec["l"]
 
-        seed_xi = os.urandom(32)
-        with SecretBuffer(
-            qsponge_var(b"CALYX-QVS-KEYGEN-v1.0.0|" + tier.encode("ascii") + seed_xi + policy_witness, 128)
-        ) as exp_buf:
-            expanded = exp_buf.as_bytes()
-            rho, rho_prime, k_sign = expanded[:32], expanded[32:96], expanded[96:128]
+        s1 = []
+        s2 = []
+        s1_hat = []
+        try:
+            with SecretBuffer(os.urandom(32)) as seed_xi_buf:
+                with SecretBuffer(
+                    qsponge_var(b"CALYX-QVS-KEYGEN-v1.0.0|" + tier.encode("ascii") + seed_xi_buf.as_bytes() + policy_witness, 128)
+                ) as exp_buf:
+                    with exp_buf.view() as mv:
+                        rho, rho_prime, k_sign = bytes(mv[:32]), bytes(mv[32:96]), bytes(mv[96:128])
 
-            a_hat = [[sample_ntt_qvs(rho, i, j) for j in range(l)] for i in range(k)]
-            s1 = [sample_eta_qvs(rho_prime, j) for j in range(l)]
-            s2 = [sample_eta_qvs(rho_prime, l + i) for i in range(k)]
-            s1_hat = [ntt_qvs(p) for p in s1]
+                    a_hat = [[sample_ntt_qvs(rho, i, j) for j in range(l)] for i in range(k)]
+                    s1 = [sample_eta_qvs(rho_prime, j) for j in range(l)]
+                    s2 = [sample_eta_qvs(rho_prime, l + i) for i in range(k)]
+                    s1_hat = [ntt_qvs(p) for p in s1]
 
-            t_vec = []
-            for i in range(k):
-                acc = [0] * 256
-                for j in range(l):
-                    acc = [(acc[m] + a_hat[i][j][m] * s1_hat[j][m]) % QVS_Q for m in range(256)]
-                t_i = [(inv_ntt_qvs(acc)[m] + s2[i][m]) % QVS_Q for m in range(256)]
-                t_vec.append(t_i)
+                    t_vec = []
+                    for i in range(k):
+                        acc = [0] * 256
+                        for j in range(l):
+                            acc = [(acc[m] + a_hat[i][j][m] * s1_hat[j][m]) % QVS_Q for m in range(256)]
+                        t_i = [(inv_ntt_qvs(acc)[m] + s2[i][m]) % QVS_Q for m in range(256)]
+                        t_vec.append(t_i)
 
-            t_bytes = b"".join(pack_poly24_qvs(p) for p in t_vec)
-            pk = rho + t_bytes
-            tr = qsponge_var(b"CALYX-QVS-TR-v1.0.0|" + pk, 64)
+                    t_bytes = b"".join(pack_poly24_qvs(p) for p in t_vec)
+                    pk = rho + t_bytes
+                    tr = qsponge_var(b"CALYX-QVS-TR-v1.0.0|" + pk, 64)
 
-            s1_bytes = b"".join(bytes((center_qvs(c) + 2) & 0xFF for c in p) for p in s1)
-            s2_bytes = b"".join(bytes((center_qvs(c) + 2) & 0xFF for c in p) for p in s2)
-            sk = rho + k_sign + tr + s1_bytes + s2_bytes + t_bytes
-            return pk, sk
+                    s1_bytes = b"".join(bytes((center_qvs(c) + 2) & 0xFF for c in p) for p in s1)
+                    s2_bytes = b"".join(bytes((center_qvs(c) + 2) & 0xFF for c in p) for p in s2)
+                    sk = rho + k_sign + tr + s1_bytes + s2_bytes + t_bytes
+                    return pk, sk
+        finally:
+            for vec in (s1, s2, s1_hat):
+                for poly in vec:
+                    for idx in range(len(poly)):
+                        poly[idx] = 0
 
     @staticmethod
     def sign(sk: bytes, pk: bytes, message: bytes, tier: str = "QVS-256") -> bytes:
@@ -70,91 +79,103 @@ class QVSEngine:
         if len(sk) != spec["sk_bytes"] or len(pk) != spec["pk_bytes"]:
             raise ValueError(f"Invalid {tier} key sizes.")
 
-        with SecretBuffer(sk) as sk_buf:
-            raw_sk = sk_buf.as_bytes()
-            rho = raw_sk[:32]
-            k_sign = raw_sk[32:64]
-            tr = raw_sk[64:128]
-            off = 128
-            s1 = []
-            for _ in range(l):
-                chunk = raw_sk[off : off + 256]
-                off += 256
-                s1.append([((b - 2) % QVS_Q) for b in chunk])
-            s2 = []
-            for _ in range(k):
-                chunk = raw_sk[off : off + 256]
-                off += 256
-                s2.append([((b - 2) % QVS_Q) for b in chunk])
-            t_bytes = raw_sk[off:]
+        s1 = []
+        s2 = []
+        s1_hat = []
+        s2_hat = []
+        y_vec = []
+        y_hat = []
+        try:
+            with SecretBuffer(sk) as sk_buf:
+                with sk_buf.view() as mv:
+                    rho = bytes(mv[:32])
+                    k_sign = bytes(mv[32:64])
+                    tr = bytes(mv[64:128])
+                    off = 128
+                    for _ in range(l):
+                        chunk = mv[off : off + 256]
+                        off += 256
+                        s1.append([((b - 2) % QVS_Q) for b in chunk])
+                    for _ in range(k):
+                        chunk = mv[off : off + 256]
+                        off += 256
+                        s2.append([((b - 2) % QVS_Q) for b in chunk])
+                    t_bytes = bytes(mv[off:])
 
-            if not ct_eq(pk, rho + t_bytes):
-                raise ValueError(f"{tier} secret key does not match public key.")
+                if not ct_eq(pk, rho + t_bytes):
+                    raise ValueError(f"{tier} secret key does not match public key.")
 
-            a_hat = [[sample_ntt_qvs(rho, i, j) for j in range(l)] for i in range(k)]
-            s1_hat = [ntt_qvs(p) for p in s1]
-            s2_hat = [ntt_qvs(p) for p in s2]
+                a_hat = [[sample_ntt_qvs(rho, i, j) for j in range(l)] for i in range(k)]
+                s1_hat = [ntt_qvs(p) for p in s1]
+                s2_hat = [ntt_qvs(p) for p in s2]
 
-            mu = qsponge_var(b"CALYX-QVS-MU-v1.0.0|" + tr + message, 64)
-            rho_double_prime = qsponge_var(b"CALYX-QVS-RNDS-v1.0.0|" + k_sign + mu, 64)
+                mu = qsponge_var(b"CALYX-QVS-MU-v1.0.0|" + tr + message, 64)
+                rho_dp_bytes = qsponge_var(b"CALYX-QVS-RNDS-v1.0.0|" + k_sign + mu, 64)
 
-        nonce = 0
-        while True:
-            y_vec = [sample_mask_y_qvs(rho_double_prime, nonce + j) for j in range(l)]
-            nonce += l
-            y_hat = [ntt_qvs(p) for p in y_vec]
+            with SecretBuffer(rho_dp_bytes) as rho_dp_buf:
+                rho_double_prime = rho_dp_buf.as_bytes()
+                nonce = 0
+                while True:
+                    y_vec = [sample_mask_y_qvs(rho_double_prime, nonce + j) for j in range(l)]
+                    nonce += l
+                    y_hat = [ntt_qvs(p) for p in y_vec]
 
-            w_vec = []
-            w1_bytes = bytearray()
-            for i in range(k):
-                acc = [0] * 256
-                for j in range(l):
-                    acc = [(acc[m] + a_hat[i][j][m] * y_hat[j][m]) % QVS_Q for m in range(256)]
-                w_i = inv_ntt_qvs(acc)
-                w_vec.append(w_i)
-                for coeff in w_i:
-                    w1_c, _ = decompose_qvs(coeff)
-                    w1_bytes.append(w1_c & 0xFF)
+                    w_vec = []
+                    w1_bytes = bytearray()
+                    for i in range(k):
+                        acc = [0] * 256
+                        for j in range(l):
+                            acc = [(acc[m] + a_hat[i][j][m] * y_hat[j][m]) % QVS_Q for m in range(256)]
+                        w_i = inv_ntt_qvs(acc)
+                        w_vec.append(w_i)
+                        for coeff in w_i:
+                            w1_c, _ = decompose_qvs(coeff)
+                            w1_bytes.append(w1_c & 0xFF)
 
-            c_tilde = qsponge_var(b"CALYX-QVS-CHALLENGE-v1.0.0|" + mu + bytes(w1_bytes), 64)
-            c_poly = sample_in_ball_qvs(c_tilde, tau)
-            c_hat = ntt_qvs(c_poly)
+                    c_tilde = qsponge_var(b"CALYX-QVS-CHALLENGE-v1.0.0|" + mu + bytes(w1_bytes), 64)
+                    c_poly = sample_in_ball_qvs(c_tilde, tau)
+                    c_hat = ntt_qvs(c_poly)
 
-            z_vec = []
-            reject = False
-            for j in range(l):
-                cs1 = inv_ntt_qvs([(c_hat[m] * s1_hat[j][m]) % QVS_Q for m in range(256)])
-                z_j = [(y_vec[j][m] + cs1[m]) % QVS_Q for m in range(256)]
-                for coeff in z_j:
-                    if abs(center_qvs(coeff)) >= QVS_GAMMA1 - beta:
-                        reject = True
-                        break
-                if reject:
-                    break
-                z_vec.append(z_j)
-            if reject:
-                continue
+                    z_vec = []
+                    reject = False
+                    for j in range(l):
+                        cs1 = inv_ntt_qvs([(c_hat[m] * s1_hat[j][m]) % QVS_Q for m in range(256)])
+                        z_j = [(y_vec[j][m] + cs1[m]) % QVS_Q for m in range(256)]
+                        for coeff in z_j:
+                            if abs(center_qvs(coeff)) >= QVS_GAMMA1 - beta:
+                                reject = True
+                                break
+                        if reject:
+                            break
+                        z_vec.append(z_j)
+                    if reject:
+                        continue
 
-            w1_idx = 0
-            for i in range(k):
-                cs2 = inv_ntt_qvs([(c_hat[m] * s2_hat[i][m]) % QVS_Q for m in range(256)])
-                for m in range(256):
-                    diff = (w_vec[i][m] - cs2[m]) % QVS_Q
-                    r1, r0 = decompose_qvs(diff)
-                    if abs(r0) >= QVS_GAMMA2 - beta or r1 != w1_bytes[w1_idx]:
-                        reject = True
-                        break
-                    w1_idx += 1
-                if reject:
-                    break
-            if reject:
-                continue
+                    w1_idx = 0
+                    for i in range(k):
+                        cs2 = inv_ntt_qvs([(c_hat[m] * s2_hat[i][m]) % QVS_Q for m in range(256)])
+                        for m in range(256):
+                            diff = (w_vec[i][m] - cs2[m]) % QVS_Q
+                            r1, r0 = decompose_qvs(diff)
+                            if abs(r0) >= QVS_GAMMA2 - beta or r1 != w1_bytes[w1_idx]:
+                                reject = True
+                                break
+                            w1_idx += 1
+                        if reject:
+                            break
+                    if reject:
+                        continue
 
-            z_packed = b"".join(pack_poly24_qvs(p) for p in z_vec)
-            sig_out = c_tilde + z_packed
-            if not QVSEngine.verify(pk, message, sig_out, tier=tier):
-                raise QPEPFaultGuardError("QVS Fault-Injection Guard triggered: signature failed internal verification.")
-            return sig_out
+                    z_packed = b"".join(pack_poly24_qvs(p) for p in z_vec)
+                    sig_out = c_tilde + z_packed
+                    if not QVSEngine.verify(pk, message, sig_out, tier=tier):
+                        raise QPEPFaultGuardError("QVS Fault-Injection Guard triggered: signature failed internal verification.")
+                    return sig_out
+        finally:
+            for vec in (s1, s2, s1_hat, s2_hat, y_vec, y_hat):
+                for poly in vec:
+                    for idx in range(len(poly)):
+                        poly[idx] = 0
 
     @staticmethod
     def verify(pk: bytes, message: bytes, signature: bytes, tier: str = "QVS-256") -> bool:

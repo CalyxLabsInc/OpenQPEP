@@ -1,7 +1,8 @@
 /*
- * OpenQPEP Official Release 1.1.1 (v1.1.1) — Native C99 / SIMD Accelerators for
+ * OpenQPEP Official Release 1.1.2 (v1.1.2) — Native C99 / SIMD Accelerators for
  * Calyx Sovereign-Pentad, Constant-Time Wire Format v5 Verification, Constant-Time Primitives
- * (openqpep_ct_eq, openqpep_ct_cmov), and Compiler-Barrier Zeroization (openqpep_explicit_bzero).
+ * (openqpep_ct_eq, openqpep_ct_cmov, openqpep_is_zeroed), and Compiler-Barrier Zeroization
+ * (openqpep_explicit_bzero).
  * Licensed under Calyx Public Open Source Specifications v1.0 License (CPOSLS-1.0).
  */
 #include <stdint.h>
@@ -60,11 +61,23 @@ void openqpep_explicit_bzero(void *ptr, size_t len) {
 #endif
 }
 
+/* Constant-time volatile check that a buffer is completely zeroed: returns 1 if all bytes == 0, 0 otherwise */
+int openqpep_is_zeroed(const uint8_t *ptr, size_t len) {
+    if (!ptr) return (len == 0) ? 1 : 0;
+    volatile const uint8_t *vptr = (volatile const uint8_t *)ptr;
+    volatile uint8_t acc = 0U;
+    for (size_t i = 0; i < len; i++) {
+        acc = (uint8_t)(acc | vptr[i]);
+    }
+    uint32_t x = (uint32_t)acc;
+    return (int)(1U ^ ((x | (0U - x)) >> 31));
+}
+
 /*
- * Constant-time Official Release 1.1.1 Wire Format v5 (\x89QPE\x05\x00 / \x89QPE\x05\x01) magic validator.
+ * Constant-time Official Release 1.1.2 Wire Format v5 (\x89QPE\x05\x00 / \x89QPE\x05\x01) magic validator.
  * Returns:
- *   50 -> Valid Official Release 1.1.1 Full Frame (\x89QPE\x05\x00)
- *   51 -> Valid Official Release 1.1.1 Compact TLV Frame (\x89QPE\x05\x01)
+ *   50 -> Valid Official Release 1.1.2 Full Frame (\x89QPE\x05\x00)
+ *   51 -> Valid Official Release 1.1.2 Compact TLV Frame (\x89QPE\x05\x01)
  *  -40 -> Rejected legacy Release Candidate (-rc) Wire v4/v4.1 (\x89QPE\x04\x00 / \x04\x01)
  *  -30 -> Rejected legacy Production Candidate (-pc) Wire v3/v3.1 (\x89QPE\x03\x00 / \x03\x01)
  *  -10 -> Rejected legacy Beta (-beta) Wire (\x89QPE\x01\x01 / \x01\x09 / \x02\x00)

@@ -1,6 +1,6 @@
 """
 HGC-448 (448-bit Goldilocks X448 Diffie-Hellman & Ed448 Edwards Signatures) Hybrid Combiner
-(Official Release 1.1.1 / v1.1.1).
+(Official Release 1.1.2 / v1.1.2).
 Uses os.urandom(56)/os.urandom(57) so keygen is CSPRNG-secure in production and 100% deterministic
 under KAT DRBG, with SecretBuffer RAM scrubbing on every private-key operation.
 """
@@ -12,7 +12,10 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed448 import Ed448PrivateKey, Ed448PublicKey
 from cryptography.hazmat.primitives.asymmetric.x448 import X448PrivateKey, X448PublicKey
 
+from .consttime import ct_eq
 from .zeroize import SecretBuffer
+
+_ZERO_56 = b"\x00" * 56
 
 
 def x448_keygen() -> Tuple[bytes, bytes]:
@@ -27,11 +30,11 @@ def x448_exchange(priv_bytes: bytes, peer_pub_bytes: bytes) -> bytes:
     with SecretBuffer(priv_bytes) as sb:
         priv = X448PrivateKey.from_private_bytes(sb.as_bytes())
         peer_pub = X448PublicKey.from_public_bytes(peer_pub_bytes)
-        shared = priv.exchange(peer_pub)
-        # RFC 7748 Section 6.2: reject all-zero low-order shared secret
-        if not any(shared):
-            raise ValueError("X448 low-order contributor point rejected (all-zero shared secret).")
-        return shared
+        with SecretBuffer(priv.exchange(peer_pub)) as shared_buf:
+            # RFC 7748 Section 6.2: reject all-zero low-order shared secret in constant time
+            if ct_eq(shared_buf.as_bytes(), _ZERO_56):
+                raise ValueError("X448 low-order contributor point rejected (all-zero shared secret).")
+            return shared_buf.as_bytes()
 
 
 def ed448_keygen() -> Tuple[bytes, bytes]:

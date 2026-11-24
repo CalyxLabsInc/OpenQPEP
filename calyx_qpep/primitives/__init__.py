@@ -1,14 +1,27 @@
-"""OpenQPEP Low-Level Cryptographic Primitives (Official Release 1.1.1)."""
+"""OpenQPEP Low-Level Cryptographic Primitives (Official Release 1.1.2)."""
 from .qsponge import qsponge_512, qsponge_var
 from .consttime import ct_eq, ct_eq_str, ct_eq_int, ct_cmov, ct_select_int, barrett_reduce_3329, montgomery_reduce_3329, barrett_reduce_qvs
-from .zeroize import zeroize_bytes, SecretBuffer
+from .zeroize import (
+    LockedMemoryBuffer,
+    SecretBuffer,
+    disable_core_dumps,
+    harden_process_memory,
+    is_addr_zeroed,
+    memory_security_status,
+    zeroize_addr,
+    zeroize_bytes,
+    zeroize_many,
+    zeroize_secret_dict,
+)
 from .cc512_aead import cc512_encrypt, cc512_decrypt
 from .hgc448 import x448_keygen, x448_exchange, ed448_keygen, ed448_sign, ed448_verify
 
 __all__ = [
     "qsponge_512", "qsponge_var",
     "ct_eq", "ct_eq_str", "ct_eq_int", "ct_cmov", "ct_select_int", "barrett_reduce_3329", "montgomery_reduce_3329", "barrett_reduce_qvs",
-    "zeroize_bytes", "SecretBuffer",
+    "zeroize_bytes", "zeroize_addr", "is_addr_zeroed", "zeroize_many", "zeroize_secret_dict",
+    "SecretBuffer", "LockedMemoryBuffer",
+    "disable_core_dumps", "harden_process_memory", "memory_security_status",
     "cc512_encrypt", "cc512_decrypt",
     "x448_keygen", "x448_exchange", "ed448_keygen", "ed448_sign", "ed448_verify",
 ]

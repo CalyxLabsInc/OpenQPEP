@@ -1,5 +1,5 @@
 """
-OpenQPEP Typed Cryptographic Exception Hierarchy (Official Release 1.1.1 / v1.1.1).
+OpenQPEP Typed Cryptographic Exception Hierarchy (Official Release 1.1.2 / v1.1.2).
 All custom exceptions inherit from OpenQPEPError(ValueError) for clean error handling.
 """
 
@@ -25,7 +25,7 @@ class QPEPWireFormatError(OpenQPEPError):
 
 
 class QPEPLegacyProtocolError(QPEPWireFormatError):
-    """Raised when any legacy pre-release (-rc, -pc, or -beta) wire frame, stream, or kdf_version < 4 key ring is hard-rejected in Official Release 1.1.1."""
+    """Raised when any legacy pre-release (-rc, -pc, or -beta) wire frame, stream, or kdf_version < 4 key ring is hard-rejected in Official Release 1.1.2."""
 
 
 class QPEPTruncationError(OpenQPEPError):

@@ -1,4 +1,4 @@
-# OpenQPEP Official Release 1.1.1 (v1.1.1)
+# OpenQPEP Official Release 1.1.2 (v1.1.2)
 """
 8-Layer Complete Number Theoretic Transform & HighBits/LowBits Decomposition over Z_8380417[X]/(X^256+1).
 Automatically dispatches through libopenqpep (C99/AVX2/NEON) when available, with

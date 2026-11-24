@@ -1,4 +1,14 @@
-# OpenQPEP Core Protocol Changelog — Official Release `v1.1.1`
+# OpenQPEP Core Protocol Changelog — Official Release `v1.1.2`
+
+## Official Release `v1.1.2` (2026-11-24) — OS Memory Locking (`mlock` / `MADV_DONTDUMP` / `PR_SET_DUMPABLE`) & Hardened `SecretBuffer`
+
+- **Hardened `SecretBuffer` with Reference-Counted OS `mlock()` (`calyx_qpep/primitives/zeroize.py`):** Upgraded `SecretBuffer` to pin mutable secret `bytearray` storage against silent heap relocation, lock backing pages in physical RAM via thread-safe reference-counted `mlock()`/`munlock()`, expose `.view()` / `.copy_into()` / `.is_memory_locked` / `.is_wiped`, and gracefully degrade when `RLIMIT_MEMLOCK` is restricted.
+- **Dedicated Guard-Page & Core-Dump-Excluded `LockedMemoryBuffer`:** Added POSIX `mmap()` secret arenas bracketed by `PROT_NONE` guard pages, locked with `mlock()` and excluded from Linux core dumps via `madvise(MADV_DONTDUMP)`, with scoped zero-copy views (`scoped_view()`) and mandatory post-wipe zeroization verification before `munlock()`/`munmap()`.
+- **Native C99 `openqpep_is_zeroed` & Opt-In Process Hardening:** Added branchless constant-time `openqpep_is_zeroed` to `calyx_qpep/native/csrc/pentad_accel.c` (`native_is_zeroed` in `native/loader.py`), opt-in `disable_core_dumps()` / `harden_process_memory()` (`RLIMIT_CORE = 0` + Linux `prctl(PR_SET_DUMPABLE, 0)`), `memory_security_status()`, `zeroize_many()`, and `zeroize_secret_dict()`.
+- **Expanded Secret Scrubbing Across KEM / DSA / KDF / AEAD / Protocol Paths:** Scrubbed pure-Python RFC 9106 Argon2id working lanes & `final_blk`, `QLXEngine` secret polynomials & FO intermediates, `QVSEngine` secret signing vectors & nonce seeds, `HGC-448` constant-time low-order checks, `CC-512` `memoryview` subkey slicing, and `protocol.py` private-key/masking/reassembly buffers.
+- **Documentation Hygiene & Verification:** Updated `README.md` to remove the retired external roadmap link, added `tests/test_v112_memory_locking.py`, and verified 100% `v1.0.0`–`v1.1.1` Wire v5 / `kdf_version: 4` / 10-suite KAT parity.
+
+---
 
 ## Official Release `v1.1.1` (2026-11-24) — Strict Input Bounds, Typed Exceptions & Constant-Time Audit Sweep
 

@@ -1,8 +1,8 @@
 {
   "schema": "openqpep-kat-v3",
   "family": "structured_lattice",
-  "protocol_version": "OpenQPEP/1.1.1",
-  "universal_version": "1.1.1",
+  "protocol_version": "OpenQPEP/1.1.2",
+  "universal_version": "1.1.2",
   "suite_id": "QLX-1024",
   "suite_name": "Calyx Sovereign-Hybrid: QLX-1024 + QVS-87 (Balanced Post-Quantum \u2014 All Devices)",
   "qlx_tier": "QLX-1024",
@@ -39,7 +39,7 @@
     "key_hash": "D136140853D774CADD6AB5D72A263D1FADA90DC3EFEDB3210828B6BCAC39997F",
     "wire_magic_hex": "895150450500",
     "wire_frame_bytes": 11542,
-    "wire_frame_sha3_512": "22d48c34cb75d53d846b1acfeb394e40fe07042f2c4a8f572e665f2767b91453b323d11ede6d6cfe122abf7e0c63f9c5abb451476796b5730e139644e4e56015",
+    "wire_frame_sha3_512": "6ac2d06b9df1cac7fb0b8263f2c32181dbabb298f9143eb1cd4dde954841b50169dda6eb0c69df43ed8eea62f1630c07226cad622851b5db5fe1a218ea3d4520",
     "wire_frame_prefix_hex": "8951504505000100b161b7ef504b19f60d70c55f79ae6e2a92af3e5e15e5462d906572a4595dd1053a3377fd5309276bd5c711cd9edbc9d3bbc6566c43b0c159",
     "cleartext_identity_headers_present": false
   }

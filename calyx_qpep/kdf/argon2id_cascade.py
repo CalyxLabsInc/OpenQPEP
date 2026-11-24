@@ -1,7 +1,7 @@
 """
 OpenQPEP Memory-Hard QPKD-Argon2id + qSponge-512 Cascade Key Derivation (Official Release 1.0.0 / kdf_version: 4).
 
-Clean-Slate Official Release 1.1.1 Policy (Zero Legacy Backwards Compatibility):
+Clean-Slate Official Release 1.1.2 Policy (Zero Legacy Backwards Compatibility):
   - Mandatory `kdf_version: 4` across all `.qpkrf` private key rings and subkey envelopes.
   - All legacy pre-release key rings (`kdf_version: 1` Beta, `kdf_version: 2` Production Candidate,
     `kdf_version: 3` Release Candidate) are hard-rejected with `QPEPLegacyProtocolError`.
@@ -15,7 +15,7 @@ from typing import Any, Dict, Optional, Tuple
 
 from ..constants import MANDATORY_KDF_VERSION, PROTOCOL_VERSION
 from ..primitives.qsponge import qsponge_512
-from ..primitives.zeroize import SecretBuffer
+from ..primitives.zeroize import SecretBuffer, zeroize_bytes
 from .hardware_tuner import select_kdf_profile
 from .passphrase_policy import enforce_passphrase_policy
 
@@ -71,13 +71,16 @@ def _blake2b_long(data: bytes, out_len: int) -> bytes:
     r = (out_len + 31) // 32 - 2
     v = hashlib.blake2b(prefix + data, digest_size=64).digest()
     out = bytearray(v[:32])
-    for _ in range(1, r):
-        v = hashlib.blake2b(v, digest_size=64).digest()
-        out.extend(v[:32])
-    rem = out_len - 32 * r
-    v = hashlib.blake2b(v, digest_size=rem).digest()
-    out.extend(v)
-    return bytes(out)
+    try:
+        for _ in range(1, r):
+            v = hashlib.blake2b(v, digest_size=64).digest()
+            out.extend(v[:32])
+        rem = out_len - 32 * r
+        v = hashlib.blake2b(v, digest_size=rem).digest()
+        out.extend(v)
+        return bytes(out)
+    finally:
+        zeroize_bytes(out)
 
 
 def _compress_block(x_block: list[int], y_block: list[int]) -> list[int]:
@@ -125,50 +128,70 @@ def _argon2id_pure_python(
     q = m_blocks // p
     seg_len = q // 4
 
-    h0_in = (
+    h0_buf = bytearray(
         struct.pack("<IIIIII", p, hash_len, memory_cost, t, _ARGON2_VERSION, _ARGON2_TYPE_ID)
         + struct.pack("<I", len(password)) + password
         + struct.pack("<I", len(salt)) + salt
         + struct.pack("<I", len(secret)) + secret
         + struct.pack("<I", len(associated_data)) + associated_data
     )
-    h0 = hashlib.blake2b(h0_in, digest_size=64).digest()
-
     lanes: list[list[list[int]]] = [[[0] * 128 for _ in range(q)] for _ in range(p)]
-    for lane in range(p):
-        b0 = _blake2b_long(h0 + struct.pack("<II", 0, lane), 1024)
-        b1 = _blake2b_long(h0 + struct.pack("<II", 1, lane), 1024)
-        lanes[lane][0] = list(struct.unpack("<128Q", b0))
-        lanes[lane][1] = list(struct.unpack("<128Q", b1))
+    final_blk: list[int] = [0] * 128
+    try:
+        with SecretBuffer(h0_buf) as h0_in_sb:
+            h0 = hashlib.blake2b(h0_in_sb.raw, digest_size=64).digest()
+        zeroize_bytes(h0_buf)
 
-    for pass_num in range(t):
-        for slice_idx in range(4):
+        with SecretBuffer(h0) as h0_sb:
+            h0_raw = h0_sb.as_bytes()
             for lane in range(p):
-                start_idx = 2 if (pass_num == 0 and slice_idx == 0) else 0
-                for idx in range(start_idx, seg_len):
-                    curr = slice_idx * seg_len + idx
-                    prev = (curr - 1) % q
-                    prev_blk = lanes[lane][prev]
-                    j1 = prev_blk[0] & 0xFFFFFFFF
-                    j2 = (prev_blk[0] >> 32) & 0xFFFFFFFF
-                    ref_lane = lane if (pass_num == 0 and slice_idx == 0) else (j2 % p)
-                    ref_area = curr - 1 if (pass_num == 0 and ref_lane == lane) else (q - 1)
-                    ref_area = max(1, ref_area)
-                    rel = (j1 * j1) >> 32
-                    rel = ref_area - 1 - ((ref_area * rel) >> 32)
-                    ref_idx = rel % q
-                    new_blk = _compress_block(prev_blk, lanes[ref_lane][ref_idx])
-                    if pass_num == 0:
-                        lanes[lane][curr] = new_blk
-                    else:
-                        old_blk = lanes[lane][curr]
-                        lanes[lane][curr] = [old_blk[i] ^ new_blk[i] for i in range(128)]
+                b0 = _blake2b_long(h0_raw + struct.pack("<II", 0, lane), 1024)
+                b1 = _blake2b_long(h0_raw + struct.pack("<II", 1, lane), 1024)
+                lanes[lane][0] = list(struct.unpack("<128Q", b0))
+                lanes[lane][1] = list(struct.unpack("<128Q", b1))
 
-    final_blk = lanes[0][q - 1][:]
-    for lane in range(1, p):
-        lb = lanes[lane][q - 1]
-        final_blk = [final_blk[i] ^ lb[i] for i in range(128)]
-    return _blake2b_long(struct.pack("<128Q", *final_blk), hash_len)
+        for pass_num in range(t):
+            for slice_idx in range(4):
+                for lane in range(p):
+                    start_idx = 2 if (pass_num == 0 and slice_idx == 0) else 0
+                    for idx in range(start_idx, seg_len):
+                        curr = slice_idx * seg_len + idx
+                        prev = (curr - 1) % q
+                        prev_blk = lanes[lane][prev]
+                        j1 = prev_blk[0] & 0xFFFFFFFF
+                        j2 = (prev_blk[0] >> 32) & 0xFFFFFFFF
+                        ref_lane = lane if (pass_num == 0 and slice_idx == 0) else (j2 % p)
+                        ref_area = curr - 1 if (pass_num == 0 and ref_lane == lane) else (q - 1)
+                        ref_area = max(1, ref_area)
+                        rel = (j1 * j1) >> 32
+                        rel = ref_area - 1 - ((ref_area * rel) >> 32)
+                        ref_idx = rel % q
+                        new_blk = _compress_block(prev_blk, lanes[ref_lane][ref_idx])
+                        if pass_num == 0:
+                            lanes[lane][curr] = new_blk
+                        else:
+                            old_blk = lanes[lane][curr]
+                            for w in range(128):
+                                old_blk[w] ^= new_blk[w]
+                            for w in range(128):
+                                new_blk[w] = 0
+
+        for w in range(128):
+            final_blk[w] = lanes[0][q - 1][w]
+        for lane in range(1, p):
+            lb = lanes[lane][q - 1]
+            for w in range(128):
+                final_blk[w] ^= lb[w]
+        with SecretBuffer(struct.pack("<128Q", *final_blk)) as fb_sb:
+            return _blake2b_long(fb_sb.as_bytes(), hash_len)
+    finally:
+        zeroize_bytes(h0_buf)
+        for lane_arr in lanes:
+            for blk in lane_arr:
+                for w in range(len(blk)):
+                    blk[w] = 0
+        for w in range(len(final_blk)):
+            final_blk[w] = 0
 
 
 def _memory_hard_argon2id_raw(
@@ -218,7 +241,7 @@ def derive_qpkrf_keys_v4(
     fido2_prf_secret: Optional[bytes] = None,
 ) -> Tuple[bytes, bytes, bytes, Dict[str, Any]]:
     """
-    OpenQPEP Official Release 1.1.1 Mandatory Memory-Hard Key Derivation (kdf_version: 4):
+    OpenQPEP Official Release 1.1.2 Mandatory Memory-Hard Key Derivation (kdf_version: 4):
       1. Enforces mandatory passphrase policy and extracts the 64-byte structural witness.
       2. Mixes optional FIDO2-PRF hardware passkey secret (when hardware-bound).
       3. Derives 64-byte root key via RFC 9106 Argon2id bound to `"OpenQPEP/1.0.0"`.
@@ -243,30 +266,38 @@ def derive_qpkrf_keys_v4(
         profile_name = profile.profile_name
         backend_req = None
 
-    hw_mix = b""
+    hw_mix_buf = bytearray()
     fido2_bound = False
     if fido2_prf_secret is not None:
         if len(fido2_prf_secret) < 32:
             raise ValueError("FIDO2-PRF hardware secret must be at least 32 bytes.")
-        hw_mix = b"|FIDO2-PRF-v1.0.0|" + bytes(fido2_prf_secret)
+        hw_mix_buf.extend(b"|FIDO2-PRF-v1.0.0|")
+        hw_mix_buf.extend(fido2_prf_secret)
         fido2_bound = True
 
-    with SecretBuffer(
-        b"CALYX-QPKD-ARGON2ID-v4-1.0.0|"
-        + passphrase.encode("utf-8")
-        + b"|"
-        + witness
-        + hw_mix
-    ) as ikm_buf:
-        argon_root, active_backend = _memory_hard_argon2id_raw(
-            ikm_buf.as_bytes(),
-            bytes(salt),
-            m_kib=m_kib,
-            t_cost=t_cost,
-            p_lanes=p_lanes,
-            out_len=64,
-            backend_override=backend_req,
-        )
+    ikm_staging = bytearray(b"CALYX-QPKD-ARGON2ID-v4-1.0.0|")
+    try:
+        with SecretBuffer(witness) as witness_buf:
+            ikm_staging.extend(passphrase.encode("utf-8"))
+            ikm_staging.extend(b"|")
+            ikm_staging.extend(witness_buf.raw)
+            if hw_mix_buf:
+                ikm_staging.extend(hw_mix_buf)
+        with SecretBuffer(ikm_staging) as ikm_buf:
+            zeroize_bytes(ikm_staging)
+            zeroize_bytes(hw_mix_buf)
+            argon_root, active_backend = _memory_hard_argon2id_raw(
+                ikm_buf.as_bytes(),
+                bytes(salt),
+                m_kib=m_kib,
+                t_cost=t_cost,
+                p_lanes=p_lanes,
+                out_len=64,
+                backend_override=backend_req,
+            )
+    finally:
+        zeroize_bytes(ikm_staging)
+        zeroize_bytes(hw_mix_buf)
 
     with SecretBuffer(argon_root) as root_buf:
         rb = root_buf.as_bytes()

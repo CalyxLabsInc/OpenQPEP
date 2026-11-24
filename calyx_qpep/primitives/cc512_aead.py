@@ -1,5 +1,5 @@
 """
-Calyx-Cascade-512 (CC-512) Provably CMT-4 Key-Committing Dual-Stream AEAD (Official Release 1.1.1).
+Calyx-Cascade-512 (CC-512) Provably CMT-4 Key-Committing Dual-Stream AEAD (Official Release 1.1.2).
 
 Security Guarantees:
   - Dual-Algorithm Confidentiality & Integrity: AES-256-GCM nested inside ChaCha20-Poly1305
@@ -53,8 +53,10 @@ def cc512_encrypt(key64: bytes, nonce24: bytes, plaintext: bytes, aad: bytes) ->
     if len(nonce24) != 24:
         raise ValueError("CC-512 requires a 24-byte (192-bit) dual nonce.")
     with SecretBuffer(_derive_cmt4_subkeys(key64, nonce24)) as sub_buf:
-        sub = sub_buf.as_bytes()
-        k_aes, k_chacha, k_commit = sub[:32], sub[32:64], sub[64:96]
+        with sub_buf.view() as mv:
+            k_aes = bytes(mv[:32])
+            k_chacha = bytes(mv[32:64])
+            k_commit = bytes(mv[64:96])
         ct_inner = AESGCM(k_aes).encrypt(nonce24[:12], plaintext, aad)
         ct_outer = ChaCha20Poly1305(k_chacha).encrypt(nonce24[12:24], ct_inner, aad)
         cmt_tag = _compute_cmt4_tag(k_commit, nonce24, aad, ct_outer)
@@ -77,8 +79,10 @@ def cc512_decrypt(key64: bytes, nonce24: bytes, ciphertext: bytes, aad: bytes) -
     recv_cmt = ciphertext[-CC512_CMT_TAG_BYTES:]
 
     with SecretBuffer(_derive_cmt4_subkeys(key64, nonce24)) as sub_buf:
-        sub = sub_buf.as_bytes()
-        k_aes, k_chacha, k_commit = sub[:32], sub[32:64], sub[64:96]
+        with sub_buf.view() as mv:
+            k_aes = bytes(mv[:32])
+            k_chacha = bytes(mv[32:64])
+            k_commit = bytes(mv[64:96])
         expected_cmt = _compute_cmt4_tag(k_commit, nonce24, aad, ct_outer)
         if not ct_eq(recv_cmt, expected_cmt):
             raise QPEPMacVerificationError("CC-512 CMT-4 key-commitment verification failed.")

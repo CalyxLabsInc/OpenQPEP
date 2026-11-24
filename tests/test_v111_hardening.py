@@ -39,10 +39,10 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 class TestOpenQPEPv111Hardening(unittest.TestCase):
     PASS = "Calyx!@#$_2026v111Aa99"
 
-    def test_01_version_metadata_is_111(self):
-        self.assertEqual(UNIVERSAL_VERSION, "1.1.1")
-        self.assertEqual(UNIVERSAL_VERSION_LABEL, "Official Release 1.1.1")
-        self.assertEqual(PROTOCOL_VERSION, "OpenQPEP/1.1.1")
+    def test_01_version_metadata_format(self):
+        self.assertTrue(UNIVERSAL_VERSION.startswith("1.1."))
+        self.assertEqual(UNIVERSAL_VERSION_LABEL, f"Official Release {UNIVERSAL_VERSION}")
+        self.assertEqual(PROTOCOL_VERSION, f"OpenQPEP/{UNIVERSAL_VERSION}")
 
     def test_02_zero_broad_except_exception_in_all_production_modules(self):
         """AST-verify zero broad 'except Exception:' or bare 'except:' in production calyx_qpep modules."""
