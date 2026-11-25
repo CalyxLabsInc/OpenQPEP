@@ -1,6 +1,6 @@
 """
 Calyx-Cascade-512 (CC-512) Provably CMT-4 Key-Committing Dual-Stream AEAD &
-Nonce-Misuse-Resistant Synthetic-IV Mode (CC-512-SIV) — Official Release 1.2.5.
+Nonce-Misuse-Resistant Synthetic-IV Mode (CC-512-SIV) — Official Release 1.2.6.
 
 Security Guarantees:
   1. Wire v5 CMT-4 Key-Committing CC-512 AEAD (`cc512_encrypt` / `cc512_decrypt`, 100% frozen Wire v5):
@@ -35,6 +35,14 @@ from cryptography.exceptions import InvalidTag
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM, ChaCha20Poly1305
 
 from ..exceptions import QPEPMacVerificationError, QPEPWireFormatError
+from ..native.loader import (
+    native_cc512_cmt4_tag,
+    native_cc512_derive_cmt4_subkeys,
+    native_cc512_siv_master_subkeys,
+    native_cc512_siv_msg_keys,
+    native_cc512_siv_synth,
+    native_cc512_verify_cmt4_tag,
+)
 from .consttime import ct_eq
 from .qsponge import qsponge_512, qsponge_var
 from .zeroize import SecretBuffer
@@ -92,10 +100,16 @@ def _validate_siv_nonce(nonce: Optional[BytesLike]) -> bytes:
 
 
 def _derive_cmt4_subkeys(key64: bytes, nonce24: bytes) -> bytes:
+    nat = native_cc512_derive_cmt4_subkeys(key64, nonce24)
+    if nat is not None:
+        return nat
     return qsponge_var(b"CALYX-CC512-CMT4-KEYS-v1.0.0|" + key64 + nonce24, 96)
 
 
 def _compute_cmt4_tag(k_commit: bytes, nonce24: bytes, aad: bytes, ct_outer: bytes) -> bytes:
+    nat = native_cc512_cmt4_tag(k_commit, nonce24, aad, ct_outer)
+    if nat is not None:
+        return nat
     return qsponge_512(
         b"CALYX-CC512-CMT4-TAG-v1.0.0|"
         + k_commit
@@ -106,11 +120,25 @@ def _compute_cmt4_tag(k_commit: bytes, nonce24: bytes, aad: bytes, ct_outer: byt
     )[:CC512_CMT_TAG_BYTES]
 
 
+def _verify_cmt4_tag(k_commit: bytes, nonce24: bytes, aad: bytes, ct_outer: bytes, recv_cmt: bytes) -> bool:
+    nat = native_cc512_verify_cmt4_tag(k_commit, nonce24, aad, ct_outer, recv_cmt)
+    if nat is not None:
+        return nat
+    expected_cmt = _compute_cmt4_tag(k_commit, nonce24, aad, ct_outer)
+    return ct_eq(recv_cmt, expected_cmt)
+
+
 def _derive_siv_master_subkeys(key64: bytes) -> bytes:
+    nat = native_cc512_siv_master_subkeys(key64)
+    if nat is not None:
+        return nat
     return qsponge_var(_SIV_DOMAIN_MASTER + key64, 128)
 
 
 def _compute_siv32(k_siv_mac: bytes, nonce: bytes, aad: bytes, plaintext: bytes) -> bytes:
+    nat = native_cc512_siv_synth(k_siv_mac, nonce, aad, plaintext)
+    if nat is not None:
+        return nat
     return qsponge_512(
         _SIV_DOMAIN_SYNTH
         + k_siv_mac
@@ -124,6 +152,9 @@ def _compute_siv32(k_siv_mac: bytes, nonce: bytes, aad: bytes, plaintext: bytes)
 
 
 def _derive_siv_message_keys(k_enc_root: bytes, siv32: bytes) -> bytes:
+    nat = native_cc512_siv_msg_keys(k_enc_root, siv32)
+    if nat is not None:
+        return nat
     return qsponge_var(_SIV_DOMAIN_MSGKEY + k_enc_root + siv32, CC512_KEY_BYTES + CC512_NONCE_BYTES)
 
 
@@ -184,8 +215,7 @@ def cc512_decrypt(key64: BytesLike, nonce24: BytesLike, ciphertext: BytesLike, a
                 k_aes = bytes(mv[:32])
                 k_chacha = bytes(mv[32:64])
                 k_commit = bytes(mv[64:96])
-            expected_cmt = _compute_cmt4_tag(k_commit, nonce_bytes, aad_bytes, ct_outer)
-            if not ct_eq(recv_cmt, expected_cmt):
+            if not _verify_cmt4_tag(k_commit, nonce_bytes, aad_bytes, ct_outer, recv_cmt):
                 raise QPEPMacVerificationError("CC-512 CMT-4 key-commitment verification failed.")
             try:
                 with SecretBuffer(

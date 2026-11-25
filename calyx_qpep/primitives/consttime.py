@@ -1,10 +1,13 @@
 """
-Branchless Constant-Time Cryptographic Primitives (Official Release 1.2.5 / v1.2.5).
+Branchless Constant-Time Cryptographic Primitives (Official Release 1.2.6 / v1.2.6).
 Provides constant-time byte/string/int equality, branchless byte-array conditional move (ct_cmov)
 for Fujisaki-Okamoto implicit-rejection multiplexing, and division-free Barrett/Montgomery modular
 reduction helpers aligned bit-for-bit across Python, C99, and Rust.
 """
 import hmac
+from typing import Tuple
+
+from ..native.loader import native_ct_cmov, native_ct_cswap, native_ct_mem_bounds_ok
 
 _QLX_Q = 3329
 _QVS_Q = 8380417
@@ -42,17 +45,58 @@ def ct_select_int(cond: int, a: int, b: int) -> int:
 def ct_cmov(cond: bool, a: bytes, b: bytes) -> bytes:
     """
     Branchless constant-time conditional move over equal-length byte buffers.
-    Returns a copy of `a` when `cond` is True, or `b` when `cond` is False,
-    executing identical arithmetic across every byte index with zero secret-dependent branches.
+    Dispatches transparently to Native C99 `openqpep_ct_cmov` with bit-exact Pure-Python fallback.
     """
     if len(a) != len(b):
         raise ValueError("ct_cmov requires equal-length byte buffers.")
+    nat = native_ct_cmov(bool(cond), a, b)
+    if nat is not None:
+        return nat
     mask = 0xFF if cond else 0x00
     inv_mask = mask ^ 0xFF
     out = bytearray(len(a))
     for i in range(len(a)):
         out[i] = (a[i] & mask) | (b[i] & inv_mask)
     return bytes(out)
+
+
+def ct_cswap(cond: bool, a: bytes, b: bytes) -> Tuple[bytes, bytes]:
+    """
+    Branchless constant-time conditional swap over equal-length byte buffers.
+    Dispatches transparently to Native C99 `openqpep_ct_cswap` with bit-exact Pure-Python fallback.
+    """
+    if len(a) != len(b):
+        raise ValueError("ct_cswap requires equal-length byte buffers.")
+    nat = native_ct_cswap(bool(cond), a, b)
+    if nat is not None:
+        return nat
+    mask = 0xFF if cond else 0x00
+    out_a = bytearray(a)
+    out_b = bytearray(b)
+    for i in range(len(out_a)):
+        diff = (out_a[i] ^ out_b[i]) & mask
+        out_a[i] ^= diff
+        out_b[i] ^= diff
+    return bytes(out_a), bytes(out_b)
+
+
+def ct_mem_bounds_ok(offset: int, span: int, total: int) -> bool:
+    """
+    Overflow-safe constant-time memory bounds check (`offset <= total` and `span <= total - offset`).
+    Dispatches to Native C99 `openqpep_ct_mem_bounds_ok` when available.
+    """
+    if (
+        isinstance(offset, bool) or isinstance(span, bool) or isinstance(total, bool)
+        or not isinstance(offset, int) or not isinstance(span, int) or not isinstance(total, int)
+    ):
+        return False
+    if offset < 0 or span < 0 or total < 0:
+        return False
+    if offset < (1 << 64) and span < (1 << 64) and total < (1 << 64):
+        nat = native_ct_mem_bounds_ok(offset, span, total)
+        if nat is not None:
+            return nat
+    return offset <= total and span <= (total - offset)
 
 
 def ct_caddq_3329(a: int) -> int:

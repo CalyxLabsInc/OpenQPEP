@@ -1,6 +1,6 @@
 /*
  * OpenQPEP Native C99 / SIMD Rank-Metric GF(2^127) & UOV GF(256) Accelerators (CRT-RSD512 + QMQ-512)
- * Official Release 1.2.5 (v1.2.5) — Calyx Labs Inc. (CPOSLS-1.0)
+ * Official Release 1.2.6 (v1.2.6) — Calyx Labs Inc. (CPOSLS-1.0)
  *
  * Implements:
  *   1. CRT-RSD512 (ROLLO-I / LRPC Rank-Metric KEM):

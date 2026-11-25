@@ -1,6 +1,6 @@
-# OpenQPEP by Calyx Labs Inc. — Official Release `v1.2.5` (`OpenQPEP/1.2.5`)
+# OpenQPEP by Calyx Labs Inc. — Official Release `v1.2.6` (`OpenQPEP/1.2.6`)
 
-**Protocol Version:** `OpenQPEP/1.2.5` (`Official Release 1.2.5`, PEP 440 `1.2.5`, **Phase 2 Native C99 SDK — Rank-Metric GF($2^{127}$) & UOV GF(256) Accelerators**, upgraded from **Official Release `1.2.4`**)  
+**Protocol Version:** `OpenQPEP/1.2.6` (`Official Release 1.2.6`, PEP 440 `1.2.6`, **Phase 2 Native C99 SDK — Zero-Heap `CC-512` Whitening, Wire v5/v5.1 Framing & Constant-Time Helpers**, upgraded from **Official Release `1.2.5`**)  
 **Creator & Lead Architect:** Tristen Martinez (Calyx Labs Inc., Cleveland, Ohio)  
 **Repository:** https://github.com/CalyxLabsInc/OpenQPEP  
 **Public Key Directory & QPEP-KT:** https://qpepkeys.calyxlabsinc.org  
@@ -10,15 +10,15 @@
 
 OpenQPEP is a modern, quantum-proof encryption, authentication, and messaging protocol engineered to replace legacy OpenPGP (RFC 4880 / RFC 9580) as a worldwide standard—with provable multi-assumption post-quantum security, constant-time native C99/Rust/WASM/Go performance, and 100% deterministic Known Answer Test (KAT) verification.
 
-## Official Release `v1.2.5` Highlights (Native C99 Rank-Metric $\mathrm{GF}(2^{127})$ & UOV $\mathrm{GF}(256)$ Accelerators — `CRT-RSD512` + `QMQ-512`)
+## Official Release `v1.2.6` Highlights (Native C99 `CC-512` Whitening, Wire v5/v5.1 Framing & Constant-Time Helpers)
 
-- **100% Official `v1.0.x`–`v1.2.x` Interoperability (`1.0.0`–`1.2.4` ↔ `1.2.5`):** Preserves complete Wire Format v5 (`\x89QPE\x05\x00`), Compact TLV v5.1 (`\x89QPE\x05\x01`), Stream v5 (`\x89QPS\x05\x00`), and `kdf_version: 4` compatibility across all Official Public Stable Releases while continuing to hard-reject all retired pre-release formats (`-rc`, `-pc`, `-beta`, Wire v1–v4, `kdf_version < 4`) with `QPEPLegacyProtocolError`.
-- **Native C99 Rank-Metric $\mathrm{GF}(2^{127})$ & UOV $\mathrm{GF}(256)$ Accelerators (`calyx_qpep/native/csrc/rank_uov_c.c`, `rank_rsd512.py`, `qmq_512.py`):**
-  - Implemented branchless, table-free $\mathrm{GF}(2^{127})$ carry-less multiplication (`openqpep_gf2_127_mul`), $O(1)$ bit-interleaved squaring with trinomial reduction mod $x^{127} + x^{63} + 1$ (`openqpep_gf2_127_sq`), Itoh-Tsujii Fermat inversion (`openqpep_gf2_127_inv`), and LRPC polynomial multiplication & Extended GCD inversion over $\mathrm{GF}(2^{127})[X]/(X^{47} + X^5 + 1)$ (`openqpep_lrpc_ring_mul`, `openqpep_lrpc_ring_inv`).
-  - Implemented table-free $\mathrm{GF}(256)$ Fermat inversion (`openqpep_gf256_inv`), constant-time pivot-masked Gauss-Jordan linear elimination over $\mathrm{GF}(256)$ (`openqpep_uov_solve_gf256_linear`), and streaming Keccak-backed UOV hidden `P_3` keygen, quadratic public-map evaluation, and signing core (`openqpep_uov_compute_p3`, `openqpep_uov_eval_public_map`, `openqpep_uov_sign_core`) with `openqpep_explicit_bzero` secret scrubbing (`OPENQPEP_ABI_VERSION = 0x00010205U`, `85` total exported `OPENQPEP_API` symbols, zero leaked internal helpers).
-  - Accelerates `CRT-RSD512`, `QMQ-512`, and `CSP-Omega` transparently while preserving 100% bit-exact Pure-Python fallback under `OPENQPEP_DISABLE_NATIVE=1`.
-- **Native C99 Binary Goppa, Plain-LWE, Polynomial Ring, Keccak-f[1600] & Versioned SDK ABI (`v1.2.0`–`v1.2.4`):**
-  - Branchless table-free $\mathrm{GF}(2^{10})$ Binary Goppa & Patterson engine (`goppa_c.c`), O(1)-RAM row-streamed Plain-LWE (`plain_lwe_c.c`), KyberSlash-free polynomial ring & streaming matrix-vector engine (`poly_ring_c.c`, fused `ntt_3329.c`, 100% division-free Solinas-Barrett `ntt_8380417.c`), standalone 24-round constant-time `openqpep_keccak_f1600` sponge (`keccak_f1600.c`), canonical public C99/C++ header `include/openqpep.h`, and strict `-std=c99 -Wall -Wextra -Werror -Wpedantic -fvisibility=hidden` Makefile & CMake builds (`libopenqpep.so` + `libopenqpep.a` + `openqpep.pc`).
+- **100% Official `v1.0.x`–`v1.2.x` Interoperability (`1.0.0`–`1.2.5` ↔ `1.2.6`):** Preserves complete Wire Format v5 (`\x89QPE\x05\x00`), Compact TLV v5.1 (`\x89QPE\x05\x01`), Stream v5 (`\x89QPS\x05\x00`), and `kdf_version: 4` compatibility across all Official Public Stable Releases while continuing to hard-reject all retired pre-release formats (`-rc`, `-pc`, `-beta`, Wire v1–v4, `kdf_version < 4`) with `QPEPLegacyProtocolError`.
+- **Zero-Heap Native C99 Wire v5/v5.1 Framing, CC-512 CMT-4/SIV Streaming & Constant-Time Helpers (`wire_c.c`, `pentad_accel.c`, `framing.py`, `compact_v51.py`, `cc512_aead.py`, `consttime.py`):**
+  - Relocated and upgraded `openqpep_verify_wire_v5_magic` into a fully branchless constant-time validator inside `wire_c.c`, paired with zero-heap streaming qSponge-XOF XOR whitening (`openqpep_wire_whiten_xor`), 256-bit Wire v5/v5.1 MAC (`openqpep_wire_compute_mac`), one-shot pack/authenticate-then-unwhiten unpack (`openqpep_wire_v5_pack`, `openqpep_wire_v5_unpack`), and overflow-safe Compact Binary TLV v5.1 structural validation (`openqpep_wire_validate_tlv`).
+  - Added zero-heap streaming CC-512 CMT-4 key derivation/tagging/verification (`openqpep_cc512_derive_cmt4_subkeys`, `openqpep_cc512_cmt4_tag`, `openqpep_cc512_verify_cmt4_tag`) and CC-512-SIV synthetic IV helpers (`openqpep_cc512_siv_master_subkeys`, `openqpep_cc512_siv_synth`, `openqpep_cc512_siv_msg_keys`) eliminating heap concatenations of secret keys with ciphertext/plaintext buffers.
+  - Added branchless constant-time helpers (`openqpep_ct_select_u32`, overflow-safe `openqpep_ct_mem_bounds_ok`, `openqpep_ct_cswap`) and upgraded `openqpep_ct_cmov` in `pentad_accel.c`, bumping `OPENQPEP_ABI_VERSION` to `0x00010206U` (`99` total exported `OPENQPEP_API` symbols, zero leaked internal helpers, 100% bit-exact Pure-Python fallback under `OPENQPEP_DISABLE_NATIVE=1`).
+- **Native C99 Rank-Metric, UOV, Binary Goppa, Plain-LWE, Polynomial Ring, Keccak-f[1600] & Versioned SDK ABI (`v1.2.0`–`v1.2.5`):**
+  - Branchless table-free $\mathrm{GF}(2^{127})$ LRPC & constant-time Gauss-Jordan UOV $\mathrm{GF}(256)$ (`rank_uov_c.c`), branchless $\mathrm{GF}(2^{10})$ Binary Goppa & Patterson engine (`goppa_c.c`), O(1)-RAM row-streamed Plain-LWE (`plain_lwe_c.c`), KyberSlash-free polynomial ring & streaming matrix-vector engine (`poly_ring_c.c`, fused `ntt_3329.c`, 100% division-free Solinas-Barrett `ntt_8380417.c`), standalone 24-round constant-time `openqpep_keccak_f1600` sponge (`keccak_f1600.c`), canonical public C99/C++ header `include/openqpep.h`, and strict `-std=c99 -Wall -Wextra -Werror -Wpedantic -fvisibility=hidden` Makefile & CMake builds (`libopenqpep.so` + `libopenqpep.a` + `openqpep.pc`).
 - **Phase 1 Complete Hardening Baseline (`v1.1.1`–`v1.1.9`):**
   - 9-threat active adversarial attack simulator (`openqpep audit`: `83/83` attacks defended across FO malleability, universal multi-suite fault injection, stream truncation/reorder/flags, suite/legacy downgrade, Ed448 `E[4]` small-order & X448 low-order, RFC 4648 §3.5 canonical Base64 / armor / TLV DoS, duplicate JSON keys / 2,000-level JSON depth bombs / Unicode homograph & Bidi UIDs, and Ratchet/MLS/Sphinx replay + CMT-4 + KDF OOM-bomb + 1,000:1 zip-bomb defenses).
   - Bit-exact RFC 9106 `QPKD-Argon2id` across `argon2-cffi`, OpenSSL 3.2+, and Pure-Python with cgroup-aware memory ceilings and calibrated per-device benchmarking.
@@ -28,7 +28,7 @@ OpenQPEP is a modern, quantum-proof encryption, authentication, and messaging pr
   - **5 Genuine Beyond-LWE Suites:** **CSIDH-512** Supersingular Isogeny (`CIF-SQI-512`), **LRPC / ROLLO-I** Rank-Metric Syndrome Decoding (`CRT-RSD512`) + **UOV** Multivariate Quadratic (`QMQ-512`), **Classic McEliece / Niederreiter Binary Goppa Patterson** (`CGM-8192`), **Zero-Ring Plain-LWE + Goppa** (`CULC-2048`), and **5-Family Citadel** (`CSP-Omega`).
 - **Complete Hardened Sub-Protocol Stack:** `QPEP-Ratchet`, `QPEP-MLS` (256-member TreeKEM), `QPEP-AKE`, `QPEP-KT`, `QVS-Ring`, `DeniableVault`, `ThresholdKEM`, `Sphinx-PQ`, `LT-QR`, `BlindSearchVault`, `TimeLockCapsule`, `LatticeZKProof`, and `EncryptedLWWMapCRDT`.
 
-## All 10 Canonical OpenQPEP Post-Quantum Suites (`v1.2.5`)
+## All 10 Canonical OpenQPEP Post-Quantum Suites (`v1.2.6`)
 
 | Canonical Suite Name | KEM + Signature | Mathematical Family | Hardware Classification |
 | :--- | :--- | :--- | :--- |
@@ -49,7 +49,7 @@ OpenQPEP is a modern, quantum-proof encryption, authentication, and messaging pr
 # 1. Build Native C99 / SIMD SDK (shared + static + pkg-config, zero warnings with -Wpedantic -Werror)
 make -C calyx_qpep/native/csrc clean all
 
-# 2. Install OpenQPEP Official Release 1.2.5
+# 2. Install OpenQPEP Official Release 1.2.6
 pip install -e .
 
 # 3. Verify All 10 Deterministic Golden KAT Suites (Native C99 & Pure-Python)
@@ -70,7 +70,7 @@ openqpep
 ## Specifications & Documentation
 
 - [WIRE_FORMAT_V5_SPEC.md](WIRE_FORMAT_V5_SPEC.md) — Official Binary Wire Format v5 / Compact TLV v5.1 / Stream v5 Specification
-- [specs/OPENQPEP_v1.2.5_OFFICIAL_RELEASE_SPEC.md](specs/OPENQPEP_v1.2.5_OFFICIAL_RELEASE_SPEC.md) — Official Release `v1.2.5` Frozen Wire v5 & C99 SDK ABI Specification
+- [specs/OPENQPEP_v1.2.6_OFFICIAL_RELEASE_SPEC.md](specs/OPENQPEP_v1.2.6_OFFICIAL_RELEASE_SPEC.md) — Official Release `v1.2.6` Frozen Wire v5 & C99 SDK ABI Specification
 - [calyx_qpep/native/csrc/include/openqpep.h](calyx_qpep/native/csrc/include/openqpep.h) — Public C99/C++ SDK ABI Header
 - [CHANGELOG.md](CHANGELOG.md) — Official Release Changelog
 - [docs/01_OpenQPEP_Mathematical_and_Cryptographic_Specification.md](docs/01_OpenQPEP_Mathematical_and_Cryptographic_Specification.md) — Mathematical & Cryptographic Specification

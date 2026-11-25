@@ -1,4 +1,17 @@
-# OpenQPEP Core Protocol Changelog — Official Release `v1.2.5`
+# OpenQPEP Core Protocol Changelog — Official Release `v1.2.6`
+
+## Official Release `v1.2.6` (2026-11-25) — Native C99 `CC-512` Whitening, Wire v5/v5.1 Framing & Constant-Time Helpers
+
+- **Zero-Heap Native C99 Wire v5/v5.1 Framing & Constant-Time Magic Validator (`calyx_qpep/native/csrc/wire_c.c`, `framing.py`, `compact_v51.py`):**
+  - Relocated and upgraded `openqpep_verify_wire_v5_magic` into a fully branchless constant-time validator inside `wire_c.c` covering Wire v5 (`50`), Compact TLV v5.1 (`51`), legacy `-rc` (`-40`), `-pc` (`-30`), `-beta` (`-10`), and invalid headers (`-1`).
+  - Implemented zero-heap streaming qSponge-XOF XOR whitening (`openqpep_wire_whiten_xor`, stack-only 136-byte SHAKE-256 rate buffer, safe in-place), 256-bit Wire v5/v5.1 MAC (`openqpep_wire_compute_mac`), one-shot pack (`openqpep_wire_v5_pack`), authenticate-then-unwhiten unpack (`openqpep_wire_v5_unpack`, checking MAC via `openqpep_ct_eq` BEFORE unwhitening or writing to `body_out`), and Compact Binary TLV v5.1 structural validator (`openqpep_wire_validate_tlv`).
+- **Zero-Heap Streaming `CC-512` CMT-4 & `CC-512-SIV` Helpers (`wire_c.c`, `cc512_aead.py`):**
+  - Added streaming zero-copy C99 helpers (`openqpep_cc512_derive_cmt4_subkeys`, `openqpep_cc512_cmt4_tag`, `openqpep_cc512_verify_cmt4_tag`, `openqpep_cc512_siv_master_subkeys`, `openqpep_cc512_siv_synth`, `openqpep_cc512_siv_msg_keys`) eliminating heap concatenations of secret keys with ciphertext/plaintext buffers and wiping every intermediate sponge state via `openqpep_keccak_wipe` / `openqpep_explicit_bzero`.
+- **Hardened Branchless Constant-Time Helpers (`pentad_accel.c`, `consttime.py`, `include/openqpep.h`):**
+  - Added branchless `openqpep_ct_select_u32`, overflow-safe `openqpep_ct_mem_bounds_ok`, and in-place `openqpep_ct_cswap`, upgraded `openqpep_ct_cmov` mask derivation, added `OPENQPEP_ERR_WIRE_FORMAT` (`-7`), and bumped `OPENQPEP_ABI_VERSION` to `0x00010206U` (`99` total exported `OPENQPEP_API` symbols across Makefile & CMake).
+- **Verification:** Added 6-test suite `tests/test_v126_c99_wire_cc512_ct.py` verifying all 14 new dynamic exports + relocated magic validator, overflow-safe constant-time bounds checks, Wire v5/v5.1 & TLV parity, CC-512 CMT-4/SIV cross-backend parity, verified Wire v5 framing & `ct_cmov` speedups, standalone `-Wpedantic` C99 static/shared consumers, 10/10 Native C99 + 10/10 Pure-Python Golden KATs, and 205/205 unit & AST tests.
+
+---
 
 ## Official Release `v1.2.5` (2026-11-25) — Native C99 Rank-Metric $\mathrm{GF}(2^{127})$ & UOV $\mathrm{GF}(256)$ Accelerators (`CRT-RSD512` + `QMQ-512`)
 

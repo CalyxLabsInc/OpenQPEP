@@ -1,8 +1,8 @@
 {
   "schema": "openqpep-kat-v3",
   "family": "beyond_lwe",
-  "protocol_version": "OpenQPEP/1.2.5",
-  "universal_version": "1.2.5",
+  "protocol_version": "OpenQPEP/1.2.6",
+  "universal_version": "1.2.6",
   "suite_id": "CRT-RSD512",
   "suite_name": "Calyx Rank-Metric Tensor: CRT-RSD512 + QMQ-512 (All-Devices Signature Default \u2014 All Devices)",
   "qlx_tier": "CRT-RSD512",
@@ -17,9 +17,9 @@
     "public_material_bytes": 4062,
     "public_material_sha3_512": "54359e0b2ac08f899d96b4797eff05249739884f8329c149b9d378ce0272331f4e5c0575edbd37a79f0df995ce0c4d05d035065d1e0c1d4a33d86461639ed855",
     "ct_bytes": 2213,
-    "ct_sha3_512": "75279b0fe9ce604c12a915ccda440a167eaae2bdc73cf450bb79cf15650b46def9300ba61689759560bf2db35d177b0de05734588140987888a145a07cbad39b",
+    "ct_sha3_512": "600fe6384a5f6498e3c317153c8ccac3444156df7c90f3e2c552da1e8290b42042c71ec3f37531791fbd870c36717d1d2d1ca7a42682d791bb3087e7889980ad",
     "sig_bytes": 700,
-    "sig_sha3_512": "1d7e78e1e4f9d90a80192db76a3d462de02cd2c9d53402106cf43a359c44f14890defaf0f5ef84c1cbe7cdc41f8cc6da52798a388af1fd6a137cdd339db2c7d8",
+    "sig_sha3_512": "efed4ea25013b186799917dd2e3228b87c15e412c5cd03bcf03d49e67e861f44ca46cbded3b2ba250c7d138ebdbfe6308e99156db5adbe21f39e0336885b1a3b",
     "qpkrf_roundtrip_verified": true,
     "decrypt_verified": true,
     "signature_verified": true

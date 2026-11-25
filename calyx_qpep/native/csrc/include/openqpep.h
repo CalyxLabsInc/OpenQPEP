@@ -1,5 +1,5 @@
 /*
- * OpenQPEP Official Release 1.2.5 (v1.2.5) — Public C99/SIMD SDK ABI Header
+ * OpenQPEP Official Release 1.2.6 (v1.2.6) — Public C99/SIMD SDK ABI Header
  * Project: OpenQPEP by Calyx Labs Inc. (Creator: Tristen Martinez)
  * Repository: https://github.com/CalyxLabsInc/OpenQPEP
  * License: Calyx Public Open Source Specifications v1.0 License (CPOSLS-1.0)
@@ -23,8 +23,8 @@ extern "C" {
 /* ------------------------------------------------------------------------- */
 #define OPENQPEP_VERSION_MAJOR 1
 #define OPENQPEP_VERSION_MINOR 2
-#define OPENQPEP_VERSION_PATCH 5
-#define OPENQPEP_VERSION_STRING "1.2.5"
+#define OPENQPEP_VERSION_PATCH 6
+#define OPENQPEP_VERSION_STRING "1.2.6"
 
 #define OPENQPEP_ABI_CURRENT  1
 #define OPENQPEP_ABI_REVISION 2
@@ -79,7 +79,21 @@ extern "C" {
 #define OPENQPEP_LRPC_POLY_BYTES    752U   /* 47 * 16 bytes */
 #define OPENQPEP_UOV_MAX_V          128U
 #define OPENQPEP_UOV_MAX_M          64U
-#define OPENQPEP_WIRE_V5_MAGIC_LEN  6
+#define OPENQPEP_WIRE_V5_MAGIC_LEN       6
+#define OPENQPEP_WIRE_V5_HDR_LEN         8U
+#define OPENQPEP_WIRE_V5_NONCE_LEN       16U
+#define OPENQPEP_WIRE_V5_MAC_LEN         32U
+#define OPENQPEP_WIRE_V5_OVERHEAD        56U
+#define OPENQPEP_WIRE_MAX_FRAME_BYTES    (64U * 1024U * 1024U)
+#define OPENQPEP_WIRE_MAX_LABEL_BYTES    128U
+#define OPENQPEP_WIRE_MAX_TLV_FIELDS     256U
+#define OPENQPEP_WIRE_FLAG_BUCKET_PADDED 0x01U
+
+#define OPENQPEP_CC512_KEY_BYTES         64U
+#define OPENQPEP_CC512_NONCE_BYTES       24U
+#define OPENQPEP_CC512_CMT_TAG_BYTES     32U
+#define OPENQPEP_CC512_SIV_BYTES         32U
+#define OPENQPEP_CC512_SIV_MAX_NONCE     4096U
 
 /* Keccak-f[1600] / NIST FIPS 202 Sponge Constants */
 #define OPENQPEP_SHA3_256_RATE     136U
@@ -113,7 +127,8 @@ typedef struct {
 #define OPENQPEP_ERR_AUTH_FAIL  -3
 #define OPENQPEP_ERR_LEGACY     -4
 #define OPENQPEP_ERR_FAULT_GUARD -5
-#define OPENQPEP_ERR_SINGULAR   -6
+#define OPENQPEP_ERR_SINGULAR    -6
+#define OPENQPEP_ERR_WIRE_FORMAT -7
 
 /* Wire Format v5 / v5.1 magic verification return codes */
 #define OPENQPEP_WIRE_V5_FULL        50
@@ -506,7 +521,7 @@ OPENQPEP_API int openqpep_uov_sign_core(
 );
 
 /* ------------------------------------------------------------------------- */
-/* Constant-Time Primitives, Zeroization, GF(256) & Wire v5 Verification     */
+/* Constant-Time Primitives, Zeroization, GF(256) & Wire v5 / CC-512 Engine  */
 /* ------------------------------------------------------------------------- */
 
 /** Branchless constant-time GF(256) multiplication modulo x^8 + x^4 + x^3 + x + 1 (0x11B). */
@@ -515,11 +530,20 @@ OPENQPEP_API uint8_t openqpep_gf256_mul(uint8_t a, uint8_t b);
 /** Byte-wise XOR accumulate: dst[i] ^= src[i] for i in [0, len). */
 OPENQPEP_API void openqpep_xor_accum_bytes(uint8_t *dst, const uint8_t *src, uint32_t len);
 
+/** Branchless 32-bit constant-time select: returns a if cond != 0 else b. */
+OPENQPEP_API uint32_t openqpep_ct_select_u32(uint32_t cond, uint32_t a, uint32_t b);
+
+/** Overflow-safe branchless constant-time bounds check: 1 iff offset <= total && span <= total - offset. */
+OPENQPEP_API int openqpep_ct_mem_bounds_ok(size_t offset, size_t span, size_t total);
+
 /** Constant-time buffer equality check: returns 1 if equal, 0 otherwise. */
 OPENQPEP_API int openqpep_ct_eq(const uint8_t *a, const uint8_t *b, size_t len);
 
 /** Branchless constant-time conditional select: out[i] = cond ? a[i] : b[i]. */
 OPENQPEP_API void openqpep_ct_cmov(int cond, uint8_t *out, const uint8_t *a, const uint8_t *b, size_t len);
+
+/** Branchless constant-time conditional in-place swap of equal-length byte buffers. */
+OPENQPEP_API void openqpep_ct_cswap(int cond, uint8_t *a, uint8_t *b, size_t len);
 
 /** Compiler-barrier explicit memory zeroization resistant to dead-store elimination. */
 OPENQPEP_API void openqpep_explicit_bzero(void *ptr, size_t len);
@@ -527,8 +551,123 @@ OPENQPEP_API void openqpep_explicit_bzero(void *ptr, size_t len);
 /** Constant-time volatile verification that a buffer is all 0x00 bytes (1 = zeroed, 0 = non-zero). */
 OPENQPEP_API int openqpep_is_zeroed(const uint8_t *ptr, size_t len);
 
-/** Constant-time Wire Format v5 (\x89QPE\x05\x00) / v5.1 (\x89QPE\x05\x01) magic validator. */
+/** Branchless constant-time Wire Format v5 (\x89QPE\x05\x00) / v5.1 (\x89QPE\x05\x01) magic validator. */
 OPENQPEP_API int openqpep_verify_wire_v5_magic(const uint8_t *hdr, size_t len);
+
+/** Zero-heap streaming qSponge-XOF XOR whitening for Wire v5 (is_v51=0) or v5.1 (is_v51!=0). Safe in-place. */
+OPENQPEP_API int openqpep_wire_whiten_xor(
+    const uint8_t hdr8[8],
+    const uint8_t nonce16[16],
+    const uint8_t *label,
+    size_t label_len,
+    int is_v51,
+    const uint8_t *in,
+    uint8_t *out,
+    size_t body_len
+);
+
+/** Zero-heap streaming 256-bit qSponge-512 Wire v5 / v5.1 frame MAC over header, nonce, label, and whitened body. */
+OPENQPEP_API int openqpep_wire_compute_mac(
+    const uint8_t hdr8[8],
+    const uint8_t nonce16[16],
+    const uint8_t *label,
+    size_t label_len,
+    int is_v51,
+    const uint8_t *whitened,
+    size_t whitened_len,
+    uint8_t mac32_out[32]
+);
+
+/** Zero-heap one-shot Wire Format v5 / v5.1 frame packer (writes header + nonce + whitened body + 32B MAC). */
+OPENQPEP_API int openqpep_wire_v5_pack(
+    const uint8_t *body,
+    size_t body_len,
+    const uint8_t *label,
+    size_t label_len,
+    uint8_t packet_type,
+    uint8_t flags,
+    const uint8_t nonce16[16],
+    int is_v51,
+    uint8_t *frame_out,
+    size_t frame_out_len
+);
+
+/** Zero-heap authenticate-then-unwhiten Wire v5 / v5.1 unpacker with constant-time magic, bounds & MAC checks. */
+OPENQPEP_API int openqpep_wire_v5_unpack(
+    const uint8_t *frame,
+    size_t frame_len,
+    const uint8_t *label,
+    size_t label_len,
+    int expect_v51,
+    uint8_t *body_out,
+    size_t body_out_cap,
+    size_t *body_len_out,
+    uint8_t *packet_type_out,
+    uint8_t *flags_out
+);
+
+/** Zero-heap Compact Binary TLV v5.1 structural validator (duplicates, canonical order, max_fields, bounds). */
+OPENQPEP_API int openqpep_wire_validate_tlv(
+    const uint8_t *raw,
+    size_t raw_len,
+    int require_canonical_order,
+    uint32_t max_fields,
+    uint32_t *field_count_out
+);
+
+/** Zero-heap CC-512 CMT-4 subkey derivation: SHAKE-256("CALYX-CC512-CMT4-KEYS-v1.0.0|" || key64 || nonce24, 96). */
+OPENQPEP_API int openqpep_cc512_derive_cmt4_subkeys(
+    const uint8_t key64[64],
+    const uint8_t nonce24[24],
+    uint8_t out96[96]
+);
+
+/** Zero-heap streaming CC-512 256-bit CMT-4 key-commitment tag over (k_commit32, nonce24, aad, ct_outer). */
+OPENQPEP_API int openqpep_cc512_cmt4_tag(
+    const uint8_t k_commit32[32],
+    const uint8_t nonce24[24],
+    const uint8_t *aad,
+    size_t aad_len,
+    const uint8_t *ct_outer,
+    size_t ct_outer_len,
+    uint8_t tag32_out[32]
+);
+
+/** Zero-heap streaming constant-time CC-512 CMT-4 commitment tag verifier (OPENQPEP_OK or OPENQPEP_ERR_AUTH_FAIL). */
+OPENQPEP_API int openqpep_cc512_verify_cmt4_tag(
+    const uint8_t k_commit32[32],
+    const uint8_t nonce24[24],
+    const uint8_t *aad,
+    size_t aad_len,
+    const uint8_t *ct_outer,
+    size_t ct_outer_len,
+    const uint8_t expected_tag32[32]
+);
+
+/** Zero-heap CC-512-SIV master subkey derivation: SHAKE-256("CALYX-CC512-SIV-MASTER-v1.1.3|" || key64, 128). */
+OPENQPEP_API int openqpep_cc512_siv_master_subkeys(
+    const uint8_t key64[64],
+    uint8_t out128[128]
+);
+
+/** Zero-heap streaming CC-512-SIV 256-bit synthetic IV over length-framed (nonce, aad, plaintext). */
+OPENQPEP_API int openqpep_cc512_siv_synth(
+    const uint8_t k_siv_mac64[64],
+    const uint8_t *nonce,
+    size_t nonce_len,
+    const uint8_t *aad,
+    size_t aad_len,
+    const uint8_t *plaintext,
+    size_t pt_len,
+    uint8_t siv32_out[32]
+);
+
+/** Zero-heap CC-512-SIV per-message key/nonce derivation: SHAKE-256("CALYX-CC512-SIV-MSGKEY-v1.1.3|" || k_enc_root64 || siv32, 88). */
+OPENQPEP_API int openqpep_cc512_siv_msg_keys(
+    const uint8_t k_enc_root64[64],
+    const uint8_t siv32[32],
+    uint8_t out88[88]
+);
 
 /* ------------------------------------------------------------------------- */
 /* Zero-Dependency Constant-Time Keccak-f[1600] (qSponge-512 / SHA3 / SHAKE) */

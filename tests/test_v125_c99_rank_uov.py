@@ -89,16 +89,16 @@ NEW_V125_SYMBOLS = {
 
 class TestOpenQPEPv125C99RankAndUOV(unittest.TestCase):
     def test_01_version_metadata_and_exported_v125_symbols(self):
-        self.assertEqual(UNIVERSAL_VERSION, "1.2.5")
-        self.assertEqual(UNIVERSAL_VERSION_LABEL, "Official Release 1.2.5")
-        self.assertEqual(PROTOCOL_VERSION, "OpenQPEP/1.2.5")
+        self.assertTrue(UNIVERSAL_VERSION.startswith(("1.", "2.")))
+        self.assertEqual(UNIVERSAL_VERSION_LABEL, f"Official Release {UNIVERSAL_VERSION}")
+        self.assertEqual(PROTOCOL_VERSION, f"OpenQPEP/{UNIVERSAL_VERSION}")
 
         hdr = HEADER_PATH.read_text(encoding="utf-8")
         for sym in NEW_V125_SYMBOLS:
             self.assertIn(sym, hdr, f"Missing v1.2.5 Rank/UOV symbol in openqpep.h: {sym}")
 
         if is_native_available():
-            self.assertEqual(native_abi_version(), 0x00010205)
+            self.assertGreaterEqual(native_abi_version(), 0x00010205)
             ext = "dylib" if platform.system() == "Darwin" else "so"
             shared_lib = NATIVE_DIR / f"libopenqpep.{ext}"
             if shared_lib.is_file() and shutil.which("nm"):

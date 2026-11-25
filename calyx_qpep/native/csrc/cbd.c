@@ -1,6 +1,6 @@
 /*
  * OpenQPEP Native C99 Centered Binomial Distribution (CBD_1 / CBD_2) Samplers and ABI Probe.
- * Official Release 1.2.5 — Calyx Labs Inc. (CPOSLS-1.0)
+ * Official Release 1.2.6 — Calyx Labs Inc. (CPOSLS-1.0)
  */
 #include "openqpep.h"
 

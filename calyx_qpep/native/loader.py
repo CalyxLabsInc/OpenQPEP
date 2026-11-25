@@ -1,5 +1,5 @@
 """
-OpenQPEP Native C99 / SIMD Vectorized Acceleration Loader (libopenqpep) — Official Release 1.2.5.
+OpenQPEP Native C99 / SIMD Vectorized Acceleration Loader (libopenqpep) — Official Release 1.2.6.
 Loads libopenqpep.so / .dylib / .dll via ctypes with zero-copy array.array buffer marshaling.
 Seamlessly falls back to the bit-exact pure-Python reference engine when absent or disabled.
 """
@@ -315,6 +315,72 @@ def _configure_signatures(lib: ctypes.CDLL) -> None:
             ctypes.c_uint32, ctypes.c_uint32, _c_void_p, _c_void_p,
         ]
         lib.openqpep_uov_sign_core.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_ct_select_u32"):
+        lib.openqpep_ct_select_u32.argtypes = [ctypes.c_uint32, ctypes.c_uint32, ctypes.c_uint32]
+        lib.openqpep_ct_select_u32.restype = ctypes.c_uint32
+    if hasattr(lib, "openqpep_ct_mem_bounds_ok"):
+        lib.openqpep_ct_mem_bounds_ok.argtypes = [ctypes.c_size_t, ctypes.c_size_t, ctypes.c_size_t]
+        lib.openqpep_ct_mem_bounds_ok.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_ct_cswap"):
+        lib.openqpep_ct_cswap.argtypes = [ctypes.c_int, _c_void_p, _c_void_p, ctypes.c_size_t]
+        lib.openqpep_ct_cswap.restype = None
+    if hasattr(lib, "openqpep_wire_whiten_xor"):
+        lib.openqpep_wire_whiten_xor.argtypes = [
+            ctypes.c_char_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_size_t,
+            ctypes.c_int, ctypes.c_char_p, _c_void_p, ctypes.c_size_t,
+        ]
+        lib.openqpep_wire_whiten_xor.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_wire_compute_mac"):
+        lib.openqpep_wire_compute_mac.argtypes = [
+            ctypes.c_char_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_size_t,
+            ctypes.c_int, ctypes.c_char_p, ctypes.c_size_t, _c_void_p,
+        ]
+        lib.openqpep_wire_compute_mac.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_wire_v5_pack"):
+        lib.openqpep_wire_v5_pack.argtypes = [
+            ctypes.c_char_p, ctypes.c_size_t, ctypes.c_char_p, ctypes.c_size_t,
+            ctypes.c_uint8, ctypes.c_uint8, ctypes.c_char_p, ctypes.c_int,
+            _c_void_p, ctypes.c_size_t,
+        ]
+        lib.openqpep_wire_v5_pack.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_wire_v5_unpack"):
+        lib.openqpep_wire_v5_unpack.argtypes = [
+            ctypes.c_char_p, ctypes.c_size_t, ctypes.c_char_p, ctypes.c_size_t,
+            ctypes.c_int, _c_void_p, ctypes.c_size_t, _c_void_p, _c_void_p, _c_void_p,
+        ]
+        lib.openqpep_wire_v5_unpack.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_wire_validate_tlv"):
+        lib.openqpep_wire_validate_tlv.argtypes = [
+            ctypes.c_char_p, ctypes.c_size_t, ctypes.c_int, ctypes.c_uint32, _c_void_p,
+        ]
+        lib.openqpep_wire_validate_tlv.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_cc512_derive_cmt4_subkeys"):
+        lib.openqpep_cc512_derive_cmt4_subkeys.argtypes = [ctypes.c_char_p, ctypes.c_char_p, _c_void_p]
+        lib.openqpep_cc512_derive_cmt4_subkeys.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_cc512_cmt4_tag"):
+        lib.openqpep_cc512_cmt4_tag.argtypes = [
+            ctypes.c_char_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_size_t,
+            ctypes.c_char_p, ctypes.c_size_t, _c_void_p,
+        ]
+        lib.openqpep_cc512_cmt4_tag.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_cc512_verify_cmt4_tag"):
+        lib.openqpep_cc512_verify_cmt4_tag.argtypes = [
+            ctypes.c_char_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_size_t,
+            ctypes.c_char_p, ctypes.c_size_t, ctypes.c_char_p,
+        ]
+        lib.openqpep_cc512_verify_cmt4_tag.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_cc512_siv_master_subkeys"):
+        lib.openqpep_cc512_siv_master_subkeys.argtypes = [ctypes.c_char_p, _c_void_p]
+        lib.openqpep_cc512_siv_master_subkeys.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_cc512_siv_synth"):
+        lib.openqpep_cc512_siv_synth.argtypes = [
+            ctypes.c_char_p, ctypes.c_char_p, ctypes.c_size_t,
+            ctypes.c_char_p, ctypes.c_size_t, ctypes.c_char_p, ctypes.c_size_t, _c_void_p,
+        ]
+        lib.openqpep_cc512_siv_synth.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_cc512_siv_msg_keys"):
+        lib.openqpep_cc512_siv_msg_keys.argtypes = [ctypes.c_char_p, ctypes.c_char_p, _c_void_p]
+        lib.openqpep_cc512_siv_msg_keys.restype = ctypes.c_int
 
 
 _try_load_library()
@@ -1551,3 +1617,353 @@ def native_uov_sign_core(
     finally:
         _wipe_ctypes_buf(sv_buf)
         _wipe_ctypes_buf(so_buf)
+
+
+def native_ct_select_u32(cond: int, a: int, b: int) -> Optional[int]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_ct_select_u32")):
+        return None
+    return int(_LIB.openqpep_ct_select_u32(cond & 0xFFFFFFFF, a & 0xFFFFFFFF, b & 0xFFFFFFFF))
+
+
+def native_ct_mem_bounds_ok(offset: int, span: int, total: int) -> Optional[bool]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_ct_mem_bounds_ok")):
+        return None
+    if offset < 0 or span < 0 or total < 0:
+        return False
+    return bool(_LIB.openqpep_ct_mem_bounds_ok(offset, span, total))
+
+
+def native_ct_cmov(cond: bool, a: bytes, b: bytes) -> Optional[bytes]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_ct_cmov")):
+        return None
+    ab = a if isinstance(a, bytes) else bytes(a)
+    bb = b if isinstance(b, bytes) else bytes(b)
+    if len(ab) != len(bb):
+        raise ValueError("ct_cmov requires equal-length byte buffers.")
+    n = len(ab)
+    if n == 0:
+        return b""
+    out = ctypes.create_string_buffer(n)
+    try:
+        _LIB.openqpep_ct_cmov(1 if cond else 0, out, ab, bb, n)
+        return out.raw
+    finally:
+        _wipe_ctypes_buf(out)
+
+
+def native_ct_cswap(cond: bool, a: bytes, b: bytes) -> Optional[Tuple[bytes, bytes]]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_ct_cswap")):
+        return None
+    ab = a if isinstance(a, bytes) else bytes(a)
+    bb = b if isinstance(b, bytes) else bytes(b)
+    if len(ab) != len(bb):
+        raise ValueError("ct_cswap requires equal-length byte buffers.")
+    n = len(ab)
+    if n == 0:
+        return b"", b""
+    buf_a = ctypes.create_string_buffer(ab, n)
+    buf_b = ctypes.create_string_buffer(bb, n)
+    try:
+        _LIB.openqpep_ct_cswap(1 if cond else 0, buf_a, buf_b, n)
+        return buf_a.raw, buf_b.raw
+    finally:
+        _wipe_ctypes_buf(buf_a)
+        _wipe_ctypes_buf(buf_b)
+
+
+def native_wire_whiten_xor(
+    hdr8: bytes,
+    nonce16: bytes,
+    label: bytes,
+    data: bytes,
+    *,
+    is_v51: bool = False,
+) -> Optional[bytes]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_wire_whiten_xor")):
+        return None
+    hb = hdr8 if isinstance(hdr8, bytes) else bytes(hdr8)
+    nb = nonce16 if isinstance(nonce16, bytes) else bytes(nonce16)
+    lb = label if isinstance(label, bytes) else bytes(label)
+    db = data if isinstance(data, bytes) else bytes(data)
+    if len(hb) != 8 or len(nb) != 16:
+        raise ValueError("openqpep_wire_whiten_xor requires 8-byte header and 16-byte nonce.")
+    if len(db) == 0:
+        rc = int(_LIB.openqpep_wire_whiten_xor(hb, nb, lb if lb else None, len(lb), 1 if is_v51 else 0, None, None, 0))
+        if rc != 0:
+            raise ValueError(f"openqpep_wire_whiten_xor failed with status {rc}.")
+        return b""
+    out = ctypes.create_string_buffer(len(db))
+    rc = int(
+        _LIB.openqpep_wire_whiten_xor(
+            hb, nb, lb if lb else None, len(lb), 1 if is_v51 else 0, db, out, len(db)
+        )
+    )
+    if rc != 0:
+        raise ValueError(f"openqpep_wire_whiten_xor failed with status {rc}.")
+    return out.raw
+
+
+def native_wire_compute_mac(
+    hdr8: bytes,
+    nonce16: bytes,
+    label: bytes,
+    whitened: bytes,
+    *,
+    is_v51: bool = False,
+) -> Optional[bytes]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_wire_compute_mac")):
+        return None
+    hb = hdr8 if isinstance(hdr8, bytes) else bytes(hdr8)
+    nb = nonce16 if isinstance(nonce16, bytes) else bytes(nonce16)
+    lb = label if isinstance(label, bytes) else bytes(label)
+    wb = whitened if isinstance(whitened, bytes) else bytes(whitened)
+    if len(hb) != 8 or len(nb) != 16:
+        raise ValueError("openqpep_wire_compute_mac requires 8-byte header and 16-byte nonce.")
+    mac = ctypes.create_string_buffer(32)
+    rc = int(
+        _LIB.openqpep_wire_compute_mac(
+            hb, nb, lb if lb else None, len(lb), 1 if is_v51 else 0, wb if wb else None, len(wb), mac
+        )
+    )
+    if rc != 0:
+        raise ValueError(f"openqpep_wire_compute_mac failed with status {rc}.")
+    return mac.raw
+
+
+def native_wire_v5_pack(
+    body: bytes,
+    label: bytes,
+    packet_type: int,
+    flags: int,
+    nonce16: bytes,
+    *,
+    is_v51: bool = False,
+) -> Optional[bytes]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_wire_v5_pack")):
+        return None
+    bb = body if isinstance(body, bytes) else bytes(body)
+    lb = label if isinstance(label, bytes) else bytes(label)
+    nb = nonce16 if isinstance(nonce16, bytes) else bytes(nonce16)
+    if len(nb) != 16:
+        raise ValueError("openqpep_wire_v5_pack requires a 16-byte nonce.")
+    total_len = len(bb) + 56
+    frame = ctypes.create_string_buffer(total_len)
+    rc = int(
+        _LIB.openqpep_wire_v5_pack(
+            bb if bb else None,
+            len(bb),
+            lb if lb else None,
+            len(lb),
+            packet_type & 0xFF,
+            flags & 0xFF,
+            nb,
+            1 if is_v51 else 0,
+            frame,
+            total_len,
+        )
+    )
+    if rc != 0:
+        raise ValueError(f"openqpep_wire_v5_pack failed with status {rc}.")
+    return frame.raw
+
+
+def native_wire_v5_unpack(
+    frame: bytes,
+    label: bytes,
+    *,
+    expect_v51: bool = False,
+) -> Optional[Tuple[int, bytes, int, int]]:
+    """
+    Returns None when native is unavailable; otherwise (status_rc, body_bytes, packet_type, flags).
+    Status codes match openqpep.h:
+      0 (OPENQPEP_OK), -3 (OPENQPEP_ERR_AUTH_FAIL), -4 (OPENQPEP_ERR_LEGACY),
+      -7 (OPENQPEP_ERR_WIRE_FORMAT), -2 (OPENQPEP_ERR_INVALID_LEN).
+    """
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_wire_v5_unpack")):
+        return None
+    fb = frame if isinstance(frame, bytes) else bytes(frame)
+    lb = label if isinstance(label, bytes) else bytes(label)
+    body_cap = len(fb) - 56 if len(fb) >= 56 else 0
+    body_buf = ctypes.create_string_buffer(body_cap) if body_cap > 0 else None
+    body_len = ctypes.c_size_t(0)
+    ptype = ctypes.c_uint8(0)
+    flags = ctypes.c_uint8(0)
+    try:
+        rc = int(
+            _LIB.openqpep_wire_v5_unpack(
+                fb if fb else None,
+                len(fb),
+                lb if lb else None,
+                len(lb),
+                1 if expect_v51 else 0,
+                body_buf,
+                body_cap,
+                ctypes.byref(body_len),
+                ctypes.byref(ptype),
+                ctypes.byref(flags),
+            )
+        )
+        if rc != 0:
+            return rc, b"", 0, 0
+        out_bytes = body_buf.raw[: body_len.value] if (body_buf is not None and body_len.value > 0) else b""
+        return 0, out_bytes, int(ptype.value), int(flags.value)
+    finally:
+        if body_buf is not None:
+            _wipe_ctypes_buf(body_buf)
+
+
+def native_wire_validate_tlv(
+    raw: bytes,
+    *,
+    require_canonical_order: bool = True,
+    max_fields: int = 256,
+) -> Optional[Tuple[bool, int]]:
+    """
+    Returns None when native is unavailable; otherwise (is_valid, field_count).
+    """
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_wire_validate_tlv")):
+        return None
+    rb = raw if isinstance(raw, bytes) else bytes(raw)
+    cnt = ctypes.c_uint32(0)
+    rc = int(
+        _LIB.openqpep_wire_validate_tlv(
+            rb if rb else None,
+            len(rb),
+            1 if require_canonical_order else 0,
+            max_fields & 0xFFFFFFFF,
+            ctypes.byref(cnt),
+        )
+    )
+    if rc == 0:
+        return True, int(cnt.value)
+    return False, 0
+
+
+def native_cc512_derive_cmt4_subkeys(key64: bytes, nonce24: bytes) -> Optional[bytes]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_cc512_derive_cmt4_subkeys")):
+        return None
+    kb = key64 if isinstance(key64, bytes) else bytes(key64)
+    nb = nonce24 if isinstance(nonce24, bytes) else bytes(nonce24)
+    if len(kb) != 64 or len(nb) != 24:
+        return None
+    out = ctypes.create_string_buffer(96)
+    try:
+        rc = int(_LIB.openqpep_cc512_derive_cmt4_subkeys(kb, nb, out))
+        if rc != 0:
+            raise ValueError(f"openqpep_cc512_derive_cmt4_subkeys failed with status {rc}.")
+        return out.raw
+    finally:
+        _wipe_ctypes_buf(out)
+
+
+def native_cc512_cmt4_tag(k_commit32: bytes, nonce24: bytes, aad: bytes, ct_outer: bytes) -> Optional[bytes]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_cc512_cmt4_tag")):
+        return None
+    kc = k_commit32 if isinstance(k_commit32, bytes) else bytes(k_commit32)
+    nb = nonce24 if isinstance(nonce24, bytes) else bytes(nonce24)
+    ab = aad if isinstance(aad, bytes) else bytes(aad)
+    cb = ct_outer if isinstance(ct_outer, bytes) else bytes(ct_outer)
+    if len(kc) != 32 or len(nb) != 24:
+        return None
+    tag = ctypes.create_string_buffer(32)
+    rc = int(
+        _LIB.openqpep_cc512_cmt4_tag(
+            kc, nb, ab if ab else None, len(ab), cb if cb else None, len(cb), tag
+        )
+    )
+    if rc != 0:
+        raise ValueError(f"openqpep_cc512_cmt4_tag failed with status {rc}.")
+    return tag.raw
+
+
+def native_cc512_verify_cmt4_tag(
+    k_commit32: bytes,
+    nonce24: bytes,
+    aad: bytes,
+    ct_outer: bytes,
+    expected_tag32: bytes,
+) -> Optional[bool]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_cc512_verify_cmt4_tag")):
+        return None
+    kc = k_commit32 if isinstance(k_commit32, bytes) else bytes(k_commit32)
+    nb = nonce24 if isinstance(nonce24, bytes) else bytes(nonce24)
+    ab = aad if isinstance(aad, bytes) else bytes(aad)
+    cb = ct_outer if isinstance(ct_outer, bytes) else bytes(ct_outer)
+    tb = expected_tag32 if isinstance(expected_tag32, bytes) else bytes(expected_tag32)
+    if len(kc) != 32 or len(nb) != 24 or len(tb) != 32:
+        return False
+    rc = int(
+        _LIB.openqpep_cc512_verify_cmt4_tag(
+            kc, nb, ab if ab else None, len(ab), cb if cb else None, len(cb), tb
+        )
+    )
+    if rc == 0:
+        return True
+    if rc == -3:  # OPENQPEP_ERR_AUTH_FAIL
+        return False
+    raise ValueError(f"openqpep_cc512_verify_cmt4_tag failed with status {rc}.")
+
+
+def native_cc512_siv_master_subkeys(key64: bytes) -> Optional[bytes]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_cc512_siv_master_subkeys")):
+        return None
+    kb = key64 if isinstance(key64, bytes) else bytes(key64)
+    if len(kb) != 64:
+        return None
+    out = ctypes.create_string_buffer(128)
+    try:
+        rc = int(_LIB.openqpep_cc512_siv_master_subkeys(kb, out))
+        if rc != 0:
+            raise ValueError(f"openqpep_cc512_siv_master_subkeys failed with status {rc}.")
+        return out.raw
+    finally:
+        _wipe_ctypes_buf(out)
+
+
+def native_cc512_siv_synth(
+    k_siv_mac64: bytes,
+    nonce: bytes,
+    aad: bytes,
+    plaintext: bytes,
+) -> Optional[bytes]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_cc512_siv_synth")):
+        return None
+    km = k_siv_mac64 if isinstance(k_siv_mac64, bytes) else bytes(k_siv_mac64)
+    nb = nonce if isinstance(nonce, bytes) else bytes(nonce)
+    ab = aad if isinstance(aad, bytes) else bytes(aad)
+    pb = plaintext if isinstance(plaintext, bytes) else bytes(plaintext)
+    if len(km) != 64:
+        return None
+    siv = ctypes.create_string_buffer(32)
+    rc = int(
+        _LIB.openqpep_cc512_siv_synth(
+            km,
+            nb if nb else None,
+            len(nb),
+            ab if ab else None,
+            len(ab),
+            pb if pb else None,
+            len(pb),
+            siv,
+        )
+    )
+    if rc != 0:
+        raise ValueError(f"openqpep_cc512_siv_synth failed with status {rc}.")
+    return siv.raw
+
+
+def native_cc512_siv_msg_keys(k_enc_root64: bytes, siv32: bytes) -> Optional[bytes]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_cc512_siv_msg_keys")):
+        return None
+    kr = k_enc_root64 if isinstance(k_enc_root64, bytes) else bytes(k_enc_root64)
+    sb = siv32 if isinstance(siv32, bytes) else bytes(siv32)
+    if len(kr) != 64 or len(sb) != 32:
+        return None
+    out = ctypes.create_string_buffer(88)
+    try:
+        rc = int(_LIB.openqpep_cc512_siv_msg_keys(kr, sb, out))
+        if rc != 0:
+            raise ValueError(f"openqpep_cc512_siv_msg_keys failed with status {rc}.")
+        return out.raw
+    finally:
+        _wipe_ctypes_buf(out)

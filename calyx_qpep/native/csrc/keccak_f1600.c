@@ -1,5 +1,5 @@
 /*
- * OpenQPEP Official Release 1.2.5 (v1.2.5) — Zero-Dependency Constant-Time C99 Keccak-f[1600]
+ * OpenQPEP Official Release 1.2.6 (v1.2.6) — Zero-Dependency Constant-Time C99 Keccak-f[1600]
  * Implements NIST FIPS 202 SHA3-512 (qSponge-512), SHA3-256, SHAKE-256 (qSponge-XOF),
  * and SHAKE-128 with fully unrolled 2-round-per-iteration Keccak-f[1600] permutation,
  * endian-independent little-endian lane marshaling, incremental absorb/squeeze streaming,

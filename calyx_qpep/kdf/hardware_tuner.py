@@ -1,12 +1,12 @@
 """
-OpenQPEP Hardware Auto-Tuner & Memory-Ceiling Guard for QPKD-Argon2id (Official Release 1.2.5 / kdf_version: 4).
+OpenQPEP Hardware Auto-Tuner & Memory-Ceiling Guard for QPKD-Argon2id (Official Release 1.2.6 / kdf_version: 4).
 
 Calibrates memory-hard RFC 9106 Argon2id parameters (m_kib, t_cost, p_lanes) for:
   - Standard devices (QLX-768 .. QLX-4096): 64 MiB, t=3, p<=4
   - Calyx Hyper-Tesseract flagship hardware (QLX-16384): 256 MiB, t=4, p<=4 (when RAM >= 4 GiB)
   - Low-RAM constrained environments (< 1.5 GiB usable RAM): 32 MiB, t=3, p<=2
 
-v1.2.5 Hardening:
+v1.2.6 Hardening:
   - Container/cgroup-aware RAM detection (/sys/fs/cgroup memory.max & memory.limit_in_bytes).
   - Explicit memory-ceiling safety bounds (compute_safe_memory_ceiling_kib, enforce_kdf_memory_ceiling)
     preventing OOM kills on constrained hosts and rejecting malicious .qpkrf memory-bomb parameters.

@@ -1,5 +1,5 @@
 """
-OpenQPEP Official Release 1.2.5 (v1.2.5) — Universal Binary File Registry
+OpenQPEP Official Release 1.2.6 (v1.2.6) — Universal Binary File Registry
 (170+ Hardcoded File Extensions & Magic-Byte MIME Detector).
 Standalone module with zero circular dependencies on calyx_qpep.protocol.
 """
