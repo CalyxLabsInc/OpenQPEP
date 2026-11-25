@@ -1,5 +1,5 @@
 """
-Unit tests for OpenQPEP Official Release 1.2.3 Adversarial Audit Suite, Wire Fuzzer,
+Unit tests for OpenQPEP Official Release 1.2.4 Adversarial Audit Suite, Wire Fuzzer,
 Welch's t-Test Side-Channel Timing Audit & 6-Suite Benchmark Harness.
 """
 import unittest

@@ -1,5 +1,5 @@
 /*
- * OpenQPEP Official Release 1.2.3 (v1.2.3) — Public C99/SIMD SDK ABI Header
+ * OpenQPEP Official Release 1.2.4 (v1.2.4) — Public C99/SIMD SDK ABI Header
  * Project: OpenQPEP by Calyx Labs Inc. (Creator: Tristen Martinez)
  * Repository: https://github.com/CalyxLabsInc/OpenQPEP
  * License: Calyx Public Open Source Specifications v1.0 License (CPOSLS-1.0)
@@ -23,8 +23,8 @@ extern "C" {
 /* ------------------------------------------------------------------------- */
 #define OPENQPEP_VERSION_MAJOR 1
 #define OPENQPEP_VERSION_MINOR 2
-#define OPENQPEP_VERSION_PATCH 3
-#define OPENQPEP_VERSION_STRING "1.2.3"
+#define OPENQPEP_VERSION_PATCH 4
+#define OPENQPEP_VERSION_STRING "1.2.4"
 
 #define OPENQPEP_ABI_CURRENT  1
 #define OPENQPEP_ABI_REVISION 2
@@ -68,7 +68,14 @@ extern "C" {
 #define OPENQPEP_PLAIN_LWE_Q        65536U
 #define OPENQPEP_PLAIN_LWE_MAX_N    8192U
 #define OPENQPEP_PLAIN_LWE_MAX_NBAR 8U
-#define OPENQPEP_WIRE_V5_MAGIC_LEN 6
+#define OPENQPEP_GOPPA_M            10U
+#define OPENQPEP_GOPPA_N            1024U
+#define OPENQPEP_GOPPA_T            32U
+#define OPENQPEP_GOPPA_MT           320U
+#define OPENQPEP_GOPPA_K            704U
+#define OPENQPEP_GOPPA_T_BYTES      28160U /* 320 rows * 88 bytes/row */
+#define OPENQPEP_GOPPA_GF_MOD       0x409U /* x^10 + x^3 + 1 */
+#define OPENQPEP_WIRE_V5_MAGIC_LEN  6
 
 /* Keccak-f[1600] / NIST FIPS 202 Sponge Constants */
 #define OPENQPEP_SHA3_256_RATE     136U
@@ -102,6 +109,7 @@ typedef struct {
 #define OPENQPEP_ERR_AUTH_FAIL  -3
 #define OPENQPEP_ERR_LEGACY     -4
 #define OPENQPEP_ERR_FAULT_GUARD -5
+#define OPENQPEP_ERR_SINGULAR   -6
 
 /* Wire Format v5 / v5.1 magic verification return codes */
 #define OPENQPEP_WIRE_V5_FULL        50
@@ -355,6 +363,78 @@ OPENQPEP_API int openqpep_plain_lwe_decaps(
     const uint8_t *ct,
     size_t ct_len,
     uint8_t ss_out[32]
+);
+
+/* ------------------------------------------------------------------------- */
+/* Binary Goppa GF(2^10), Parity-Check Syndrome & Patterson Accelerator      */
+/* ------------------------------------------------------------------------- */
+
+/** Branchless, table-free GF(2^10) multiplication modulo x^10 + x^3 + 1 (0x409). */
+OPENQPEP_API uint16_t openqpep_gf2m10_mul(uint16_t a, uint16_t b);
+
+/** Branchless, table-free GF(2^10) squaring modulo x^10 + x^3 + 1 (0x409). */
+OPENQPEP_API uint16_t openqpep_gf2m10_sq(uint16_t a);
+
+/** Constant-time table-free GF(2^10) Fermat inversion (a^1022; returns 0 for a == 0). */
+OPENQPEP_API uint16_t openqpep_gf2m10_inv(uint16_t a);
+
+/** Constant-time table-free GF(2^10) Frobenius square root (a^512). */
+OPENQPEP_API uint16_t openqpep_gf2m10_sqrt(uint16_t a);
+
+/** Branchless Horner evaluation of polynomial poly[0..len-1] over GF(2^10) at point `a`. */
+OPENQPEP_API uint16_t openqpep_goppa_poly_eval(const uint16_t *poly, size_t len, uint16_t a);
+
+/** Batch polynomial evaluation over GF(2^10) at `num_points` support elements. */
+OPENQPEP_API int openqpep_goppa_poly_eval_batch(
+    const uint16_t *poly,
+    size_t len,
+    const uint16_t *points,
+    size_t num_points,
+    uint16_t *out
+);
+
+/** Rabin irreducibility test for degree-`degree` polynomial `g[0..degree]` over GF(2^10)[x] (1=irred, 0=reducible). */
+OPENQPEP_API int openqpep_goppa_is_irreducible(const uint16_t *g, uint32_t degree);
+
+/**
+ * Builds binary Goppa parity-check matrix H_{i,j} = alpha_j^i / g(alpha_j) and reduces to
+ * systematic form [I_320 | T], writing bit-packed 320 x 704 matrix T (28,160 bytes) to `t_out`.
+ * Returns OPENQPEP_OK on success or OPENQPEP_ERR_SINGULAR if the left 320 x 320 block is singular.
+ */
+OPENQPEP_API int openqpep_goppa_build_systematic_t(
+    const uint16_t g[33],
+    const uint16_t support[1024],
+    uint8_t t_out[28160]
+);
+
+/** Branchless 64-bit word-packed binary syndrome s = [I_320 | T] * e^T over F_2 (40 bytes). */
+OPENQPEP_API int openqpep_goppa_syndrome(
+    const uint8_t *t_bytes,
+    size_t t_len,
+    const uint8_t err128[128],
+    uint8_t syn40[40]
+);
+
+/** Constant-iteration branchless Chien search evaluating sigma(support[0..1023]). */
+OPENQPEP_API int openqpep_goppa_chien_search(
+    const uint16_t *sigma,
+    size_t sigma_len,
+    const uint16_t support[1024],
+    uint8_t err128[128],
+    uint32_t *weight_out
+);
+
+/**
+ * Full C99 Patterson algebraic decoding pipeline over GF(2^10)[x] + branchless Chien search.
+ * Writes recovered 1024-bit error vector to `err128` and Hamming weight to `weight_out`.
+ * Returns OPENQPEP_OK if algebraic decoding succeeded, or OPENQPEP_ERR_AUTH_FAIL otherwise.
+ */
+OPENQPEP_API int openqpep_goppa_patterson_decode(
+    const uint16_t g[33],
+    const uint16_t support[1024],
+    const uint8_t syn40[40],
+    uint8_t err128[128],
+    uint32_t *weight_out
 );
 
 /* ------------------------------------------------------------------------- */

@@ -1,5 +1,5 @@
 """
-QPEP-AKE: 1-RTT Bidirectional Post-Quantum Mutually Authenticated Handshake (Official Release 1.2.3).
+QPEP-AKE: 1-RTT Bidirectional Post-Quantum Mutually Authenticated Handshake (Official Release 1.2.4).
 Combines THREE independent hybrid post-quantum KEM / DH exchanges:
   - ee: Ephemeral QLX + Ephemeral X448 (Forward Secrecy)
   - es: Initiator -> Responder static QLX + X448 (Post-Quantum Responder Authentication)

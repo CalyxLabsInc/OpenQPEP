@@ -1,6 +1,6 @@
 """
 Family 2 of Calyx Sovereign-Pentad (CSP-Omega): Genuine Classic McEliece / Niederreiter
-Binary Goppa Code Syndrome-Decoding KEM (CGM-8192 — Official Release 1.2.3).
+Binary Goppa Code Syndrome-Decoding KEM (CGM-8192 — Official Release 1.2.4).
 
 Cryptographic Construction:
   - Field: GF(2^10) modulo primitive polynomial x^10 + x^3 + 1 (0x409), n = 1024 bits.
@@ -20,6 +20,12 @@ import struct
 from typing import List, Optional, Tuple
 
 from ..exceptions import QPEPSuiteError
+from ..native.loader import (
+    native_goppa_build_systematic_t,
+    native_goppa_is_irreducible,
+    native_goppa_patterson_decode,
+    native_goppa_syndrome,
+)
 from ..primitives.consttime import ct_cmov, ct_eq
 from ..primitives.qsponge import qsponge_512, qsponge_var
 from ..primitives.zeroize import SecretBuffer
@@ -134,6 +140,9 @@ def _peval(p: List[int], a: int) -> int:
 
 def _is_irreducible_gf2m(g: List[int], degree: int) -> bool:
     """Fast Rabin irreducibility test over GF(2^10) checking x^(q^k) - x for k = 1..degree//2."""
+    native_res = native_goppa_is_irreducible(g, degree)
+    if native_res is not None:
+        return native_res
     xp = [0, 1]
     for _k in range(1, degree // 2 + 1):
         for _ in range(GOPPA_M):
@@ -183,7 +192,7 @@ class BinaryGoppaKEM:
     def keygen(n_bits: int = GOPPA_N, r_bits: int = GOPPA_MT, weight: int = GOPPA_T) -> Tuple[bytes, bytes]:
         if n_bits != GOPPA_N or r_bits != GOPPA_MT or weight != GOPPA_T:
             raise QPEPSuiteError(
-                f"CGM-8192 Official Release 1.2.3 requires canonical Goppa parameters (n={GOPPA_N}, mt={GOPPA_MT}, t={GOPPA_T})."
+                f"CGM-8192 Official Release 1.2.4 requires canonical Goppa parameters (n={GOPPA_N}, mt={GOPPA_MT}, t={GOPPA_T})."
             )
         seed_z = os.urandom(32)
         g = _sample_irreducible_goppa(weight)
@@ -192,12 +201,21 @@ class BinaryGoppaKEM:
         k_bytes = k_bits // 8
 
         # Sample random support permutation alpha_0..alpha_{n-1} until left mt x mt block is invertible
+        t_bytes = b""
         while True:
             support = list(range(n_bits))
             rnd = os.urandom(2 * n_bits)
             for i in range(n_bits - 1, 0, -1):
                 j = struct.unpack("<H", rnd[2 * i : 2 * i + 2])[0] % (i + 1)
                 support[i], support[j] = support[j], support[i]
+
+            native_sys = native_goppa_build_systematic_t(g, support)
+            if native_sys is not None:
+                ok_sys, t_candidate = native_sys
+                if ok_sys:
+                    t_bytes = t_candidate
+                    break
+                continue
 
             rows = [0] * mt
             g_inv = [_ginv(_peval(g, a)) for a in support]
@@ -231,9 +249,9 @@ class BinaryGoppaKEM:
                     if r != col and (rows[r] & bit):
                         rows[r] ^= piv_row
             if invertible:
+                t_bytes = b"".join((r >> mt).to_bytes(k_bytes, "little") for r in rows)
                 break
 
-        t_bytes = b"".join((r >> mt).to_bytes(k_bytes, "little") for r in rows)
         pk_body = struct.pack("<HHH", n_bits, mt, weight) + t_bytes
         h_pk = qsponge_512(b"CALYX-CGM-HPK-v1.0.0|" + pk_body)[:32]
         pk = pk_body + h_pk
@@ -252,8 +270,7 @@ class BinaryGoppaKEM:
         if n_bits != GOPPA_N or mt != GOPPA_MT or weight != GOPPA_T:
             raise QPEPSuiteError("Corrupted CGM-8192 public key parameters.")
 
-        k_bytes = (n_bits - mt) // 8
-        t_rows = _unpack_t_rows(pk[6:-32], mt, k_bytes)
+        t_raw = pk[6:-32]
         h_pk = pk[-32:]
         if not ct_eq(h_pk, qsponge_512(b"CALYX-CGM-HPK-v1.0.0|" + pk[:-32])[:32]):
             raise QPEPSuiteError("CGM-8192 public key commitment check failed.")
@@ -275,8 +292,11 @@ class BinaryGoppaKEM:
             err_mask |= (1 << pos)
         err_bytes = err_mask.to_bytes(n_bits // 8, "little")
 
-        syn_int = _compute_syndrome(t_rows, err_mask, mt)
-        c0_syn = syn_int.to_bytes(mt // 8, "little")
+        c0_syn = native_goppa_syndrome(t_raw, err_bytes)
+        if c0_syn is None:
+            k_bytes = (n_bits - mt) // 8
+            t_rows = _unpack_t_rows(t_raw, mt, k_bytes)
+            c0_syn = _compute_syndrome(t_rows, err_mask, mt).to_bytes(mt // 8, "little")
         c1_conf = qsponge_512(b"CALYX-CGM-CONF-v1.0.0|" + err_bytes + c0_syn + h_pk)[:32]
         ct = c0_syn + c1_conf
         ss = qsponge_512(b"CALYX-CGM-SS-v1.0.0|" + err_bytes + ct + h_pk)[:32]
@@ -302,63 +322,75 @@ class BinaryGoppaKEM:
 
         c0_syn = ct[:syn_bytes_len]
         c1_conf = ct[syn_bytes_len : syn_bytes_len + 32]
-        syn_int = int.from_bytes(c0_syn, "little")
-        k_bytes = (n_bits - mt) // 8
-        t_rows = _unpack_t_rows(pk[6:-32], mt, k_bytes)
+        t_raw = pk[6:-32]
         h_pk = pk[-32:]
 
-        # Patterson Algebraic Decoding over GF(2^10)[x]
-        # 1. Syndrome polynomial S(x) = sum_{j<mt, syn_j=1} (x + alpha_j)^-1 mod g(x)
-        s_poly = [0] * weight
-        for j in range(mt):
-            if not ((syn_int >> j) & 1):
-                continue
-            a = support[j]
-            ga_inv = _ginv(_peval(g, a))
-            q_cur = g[weight]
-            s_poly[weight - 1] ^= _gmul(q_cur, ga_inv)
-            for idx in range(weight - 2, -1, -1):
-                q_cur = g[idx + 1] ^ _gmul(q_cur, a)
-                s_poly[idx] ^= _gmul(q_cur, ga_inv)
-        s_poly = _ptrim(s_poly)
+        native_dec = native_goppa_patterson_decode(g, support, c0_syn)
+        if native_dec is not None:
+            decoded_ok, err_bytes, found_wt = native_dec
+            exp_syn = native_goppa_syndrome(t_raw, err_bytes)
+            if exp_syn is None:
+                k_bytes = (n_bits - mt) // 8
+                t_rows = _unpack_t_rows(t_raw, mt, k_bytes)
+                exp_syn = _compute_syndrome(t_rows, int.from_bytes(err_bytes, "little"), mt).to_bytes(syn_bytes_len, "little")
+        else:
+            syn_int = int.from_bytes(c0_syn, "little")
+            k_bytes = (n_bits - mt) // 8
+            t_rows = _unpack_t_rows(t_raw, mt, k_bytes)
 
-        sigma: List[int] = [1]
-        decoded_ok = False
-        if not (len(s_poly) == 1 and s_poly[0] == 0):
-            s_inv = _pinv(s_poly, g)
-            if s_inv is not None:
-                t_poly = _padd(s_inv, [0, 1])
-                if len(t_poly) == 1 and t_poly[0] == 0:
-                    sigma = [0, 1]
-                    decoded_ok = True
-                else:
-                    g0 = [_GF_SQRT[g[i]] for i in range(0, len(g), 2)]
-                    g1 = [_GF_SQRT[g[i]] for i in range(1, len(g), 2)]
-                    g1_inv = _pinv(g1, g)
-                    if g1_inv is not None:
-                        sqrt_x = _pmod(_pmul(g0, g1_inv), g)
-                        t_even = [_GF_SQRT[t_poly[i]] for i in range(0, len(t_poly), 2)]
-                        t_odd = [_GF_SQRT[t_poly[i]] for i in range(1, len(t_poly), 2)]
-                        r_poly = _pmod(_padd(t_even, _pmul(t_odd, sqrt_x)), g)
-                        r0, r1 = list(g), r_poly
-                        b0, b1 = [0], [1]
-                        while len(r1) - 1 > weight // 2:
-                            q, r2 = _pdivmod(r0, r1)
-                            r0, r1 = r1, r2
-                            b0, b1 = b1, _padd(b0, _pmul(q, b1))
-                        sigma = _padd(_pmul(r1, r1), [0] + _pmul(b1, b1))
+            # Patterson Algebraic Decoding over GF(2^10)[x]
+            # 1. Syndrome polynomial S(x) = sum_{j<mt, syn_j=1} (x + alpha_j)^-1 mod g(x)
+            s_poly = [0] * weight
+            for j in range(mt):
+                if not ((syn_int >> j) & 1):
+                    continue
+                a = support[j]
+                ga_inv = _ginv(_peval(g, a))
+                q_cur = g[weight]
+                s_poly[weight - 1] ^= _gmul(q_cur, ga_inv)
+                for idx in range(weight - 2, -1, -1):
+                    q_cur = g[idx + 1] ^ _gmul(q_cur, a)
+                    s_poly[idx] ^= _gmul(q_cur, ga_inv)
+            s_poly = _ptrim(s_poly)
+
+            sigma: List[int] = [1]
+            decoded_ok = False
+            if not (len(s_poly) == 1 and s_poly[0] == 0):
+                s_inv = _pinv(s_poly, g)
+                if s_inv is not None:
+                    t_poly = _padd(s_inv, [0, 1])
+                    if len(t_poly) == 1 and t_poly[0] == 0:
+                        sigma = [0, 1]
                         decoded_ok = True
+                    else:
+                        g0 = [_GF_SQRT[g[i]] for i in range(0, len(g), 2)]
+                        g1 = [_GF_SQRT[g[i]] for i in range(1, len(g), 2)]
+                        g1_inv = _pinv(g1, g)
+                        if g1_inv is not None:
+                            sqrt_x = _pmod(_pmul(g0, g1_inv), g)
+                            t_even = [_GF_SQRT[t_poly[i]] for i in range(0, len(t_poly), 2)]
+                            t_odd = [_GF_SQRT[t_poly[i]] for i in range(1, len(t_poly), 2)]
+                            r_poly = _pmod(_padd(t_even, _pmul(t_odd, sqrt_x)), g)
+                            r0, r1 = list(g), r_poly
+                            b0, b1 = [0], [1]
+                            while len(r1) - 1 > weight // 2:
+                                q, r2 = _pdivmod(r0, r1)
+                                r0, r1 = r1, r2
+                                b0, b1 = b1, _padd(b0, _pmul(q, b1))
+                            sigma = _padd(_pmul(r1, r1), [0] + _pmul(b1, b1))
+                            decoded_ok = True
 
-        # 2. Constant-iteration Chien search across all n_bits support positions
-        err_mask = 0
-        found_wt = 0
-        for j in range(n_bits):
-            is_root = 1 if (_peval(sigma, support[j]) == 0) else 0
-            err_mask |= (is_root << j)
-            found_wt += is_root
+            # 2. Constant-iteration Chien search across all n_bits support positions
+            err_mask = 0
+            found_wt = 0
+            for j in range(n_bits):
+                is_root = 1 if (_peval(sigma, support[j]) == 0) else 0
+                err_mask |= (is_root << j)
+                found_wt += is_root
 
-        err_bytes = err_mask.to_bytes(n_bits // 8, "little")
-        exp_syn = _compute_syndrome(t_rows, err_mask, mt).to_bytes(syn_bytes_len, "little")
+            err_bytes = err_mask.to_bytes(n_bits // 8, "little")
+            exp_syn = _compute_syndrome(t_rows, err_mask, mt).to_bytes(syn_bytes_len, "little")
+
         exp_conf = qsponge_512(b"CALYX-CGM-CONF-v1.0.0|" + err_bytes + exp_syn + h_pk)[:32]
 
         valid = (

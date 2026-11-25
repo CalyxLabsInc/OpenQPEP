@@ -1,5 +1,5 @@
 """
-OpenQPEP Native C99 / SIMD Vectorized Acceleration Loader (libopenqpep) — Official Release 1.2.3.
+OpenQPEP Native C99 / SIMD Vectorized Acceleration Loader (libopenqpep) — Official Release 1.2.4.
 Loads libopenqpep.so / .dylib / .dll via ctypes with zero-copy array.array buffer marshaling.
 Seamlessly falls back to the bit-exact pure-Python reference engine when absent or disabled.
 """
@@ -238,6 +238,45 @@ def _configure_signatures(lib: ctypes.CDLL) -> None:
             ctypes.c_char_p, ctypes.c_size_t, ctypes.c_char_p, ctypes.c_size_t, _c_void_p
         ]
         lib.openqpep_plain_lwe_decaps.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_gf2m10_mul"):
+        lib.openqpep_gf2m10_mul.argtypes = [ctypes.c_uint16, ctypes.c_uint16]
+        lib.openqpep_gf2m10_mul.restype = ctypes.c_uint16
+    if hasattr(lib, "openqpep_gf2m10_sq"):
+        lib.openqpep_gf2m10_sq.argtypes = [ctypes.c_uint16]
+        lib.openqpep_gf2m10_sq.restype = ctypes.c_uint16
+    if hasattr(lib, "openqpep_gf2m10_inv"):
+        lib.openqpep_gf2m10_inv.argtypes = [ctypes.c_uint16]
+        lib.openqpep_gf2m10_inv.restype = ctypes.c_uint16
+    if hasattr(lib, "openqpep_gf2m10_sqrt"):
+        lib.openqpep_gf2m10_sqrt.argtypes = [ctypes.c_uint16]
+        lib.openqpep_gf2m10_sqrt.restype = ctypes.c_uint16
+    if hasattr(lib, "openqpep_goppa_poly_eval"):
+        lib.openqpep_goppa_poly_eval.argtypes = [_c_void_p, ctypes.c_size_t, ctypes.c_uint16]
+        lib.openqpep_goppa_poly_eval.restype = ctypes.c_uint16
+    if hasattr(lib, "openqpep_goppa_poly_eval_batch"):
+        lib.openqpep_goppa_poly_eval_batch.argtypes = [
+            _c_void_p, ctypes.c_size_t, _c_void_p, ctypes.c_size_t, _c_void_p
+        ]
+        lib.openqpep_goppa_poly_eval_batch.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_goppa_is_irreducible"):
+        lib.openqpep_goppa_is_irreducible.argtypes = [_c_void_p, ctypes.c_uint32]
+        lib.openqpep_goppa_is_irreducible.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_goppa_build_systematic_t"):
+        lib.openqpep_goppa_build_systematic_t.argtypes = [_c_void_p, _c_void_p, _c_void_p]
+        lib.openqpep_goppa_build_systematic_t.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_goppa_syndrome"):
+        lib.openqpep_goppa_syndrome.argtypes = [ctypes.c_char_p, ctypes.c_size_t, ctypes.c_char_p, _c_void_p]
+        lib.openqpep_goppa_syndrome.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_goppa_chien_search"):
+        lib.openqpep_goppa_chien_search.argtypes = [
+            _c_void_p, ctypes.c_size_t, _c_void_p, _c_void_p, _c_void_p
+        ]
+        lib.openqpep_goppa_chien_search.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_goppa_patterson_decode"):
+        lib.openqpep_goppa_patterson_decode.argtypes = [
+            _c_void_p, _c_void_p, ctypes.c_char_p, _c_void_p, _c_void_p
+        ]
+        lib.openqpep_goppa_patterson_decode.restype = ctypes.c_int
 
 
 _try_load_library()
@@ -1119,3 +1158,184 @@ def native_plain_lwe_decaps(sk: bytes, ct: bytes) -> Optional[bytes]:
         return ss_buf.raw
     finally:
         _wipe_ctypes_buf(ss_buf)
+
+
+def native_gf2m10_mul(a: int, b: int) -> Optional[int]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_gf2m10_mul")):
+        return None
+    return int(_LIB.openqpep_gf2m10_mul(a & 0x3FF, b & 0x3FF))
+
+
+def native_gf2m10_sq(a: int) -> Optional[int]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_gf2m10_sq")):
+        return None
+    return int(_LIB.openqpep_gf2m10_sq(a & 0x3FF))
+
+
+def native_gf2m10_inv(a: int) -> Optional[int]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_gf2m10_inv")):
+        return None
+    return int(_LIB.openqpep_gf2m10_inv(a & 0x3FF))
+
+
+def native_gf2m10_sqrt(a: int) -> Optional[int]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_gf2m10_sqrt")):
+        return None
+    return int(_LIB.openqpep_gf2m10_sqrt(a & 0x3FF))
+
+
+def native_goppa_poly_eval(poly: List[int], a: int) -> Optional[int]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_goppa_poly_eval")):
+        return None
+    if not poly:
+        return 0
+    p_arr = array.array("H", (c & 0x3FF for c in poly))
+    try:
+        return int(_LIB.openqpep_goppa_poly_eval(p_arr.buffer_info()[0], len(p_arr), a & 0x3FF))
+    finally:
+        _wipe_i32_array(p_arr)
+
+
+def native_goppa_poly_eval_batch(poly: List[int], points: List[int]) -> Optional[List[int]]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_goppa_poly_eval_batch")):
+        return None
+    if not poly:
+        raise ValueError("poly must be non-empty.")
+    if not points:
+        return []
+    p_arr = array.array("H", (c & 0x3FF for c in poly))
+    pt_arr = array.array("H", (x & 0x3FF for x in points))
+    out_arr = array.array("H", [0] * len(points))
+    try:
+        rc = int(
+            _LIB.openqpep_goppa_poly_eval_batch(
+                p_arr.buffer_info()[0],
+                len(p_arr),
+                pt_arr.buffer_info()[0],
+                len(pt_arr),
+                out_arr.buffer_info()[0],
+            )
+        )
+        if rc != 0:
+            raise ValueError(f"openqpep_goppa_poly_eval_batch failed with status {rc}.")
+        return out_arr.tolist()
+    finally:
+        _wipe_i32_array(p_arr)
+        _wipe_i32_array(pt_arr)
+        _wipe_i32_array(out_arr)
+
+
+def native_goppa_is_irreducible(g: List[int], degree: int) -> Optional[bool]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_goppa_is_irreducible")):
+        return None
+    if degree < 1 or len(g) != degree + 1:
+        return False
+    g_arr = array.array("H", (c & 0x3FF for c in g))
+    try:
+        return bool(_LIB.openqpep_goppa_is_irreducible(g_arr.buffer_info()[0], degree))
+    finally:
+        _wipe_i32_array(g_arr)
+
+
+def native_goppa_build_systematic_t(g: List[int], support: List[int]) -> Optional[Tuple[bool, bytes]]:
+    """
+    Returns None when native is unavailable; otherwise (True, t_bytes_28160) on invertible
+    systematic reduction or (False, b"") if the left 320x320 block is singular.
+    """
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_goppa_build_systematic_t")):
+        return None
+    if len(g) != 33 or len(support) != 1024:
+        raise ValueError("openqpep_goppa_build_systematic_t requires len(g)==33 and len(support)==1024.")
+    g_arr = array.array("H", (c & 0x3FF for c in g))
+    sup_arr = array.array("H", (a & 0x3FF for a in support))
+    t_buf = ctypes.create_string_buffer(28160)
+    try:
+        rc = int(_LIB.openqpep_goppa_build_systematic_t(g_arr.buffer_info()[0], sup_arr.buffer_info()[0], t_buf))
+        if rc == 0:
+            return True, t_buf.raw
+        if rc == -6:  # OPENQPEP_ERR_SINGULAR
+            return False, b""
+        raise ValueError(f"openqpep_goppa_build_systematic_t failed with status {rc}.")
+    finally:
+        _wipe_i32_array(g_arr)
+        _wipe_i32_array(sup_arr)
+
+
+def native_goppa_syndrome(t_bytes: bytes, err128: bytes) -> Optional[bytes]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_goppa_syndrome")):
+        return None
+    tb = t_bytes if isinstance(t_bytes, bytes) else bytes(t_bytes)
+    eb = err128 if isinstance(err128, bytes) else bytes(err128)
+    if len(tb) != 28160 or len(eb) != 128:
+        raise ValueError(f"openqpep_goppa_syndrome requires t_bytes=28160 and err128=128, got {len(tb)}, {len(eb)}.")
+    syn_buf = ctypes.create_string_buffer(40)
+    rc = int(_LIB.openqpep_goppa_syndrome(tb, len(tb), eb, syn_buf))
+    if rc != 0:
+        raise ValueError(f"openqpep_goppa_syndrome failed with status {rc}.")
+    return syn_buf.raw
+
+
+def native_goppa_chien_search(sigma: List[int], support: List[int]) -> Optional[Tuple[bytes, int]]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_goppa_chien_search")):
+        return None
+    if not sigma or len(support) != 1024:
+        raise ValueError("openqpep_goppa_chien_search requires non-empty sigma and len(support)==1024.")
+    sig_arr = array.array("H", (c & 0x3FF for c in sigma))
+    sup_arr = array.array("H", (a & 0x3FF for a in support))
+    err_buf = ctypes.create_string_buffer(128)
+    wt = ctypes.c_uint32(0)
+    try:
+        rc = int(
+            _LIB.openqpep_goppa_chien_search(
+                sig_arr.buffer_info()[0],
+                len(sig_arr),
+                sup_arr.buffer_info()[0],
+                err_buf,
+                ctypes.byref(wt),
+            )
+        )
+        if rc != 0:
+            raise ValueError(f"openqpep_goppa_chien_search failed with status {rc}.")
+        return err_buf.raw, int(wt.value)
+    finally:
+        _wipe_i32_array(sig_arr)
+        _wipe_i32_array(sup_arr)
+        _wipe_ctypes_buf(err_buf)
+
+
+def native_goppa_patterson_decode(
+    g: List[int],
+    support: List[int],
+    syn40: bytes,
+) -> Optional[Tuple[bool, bytes, int]]:
+    """
+    Returns None when native is unavailable; otherwise (decoded_ok, err128, found_wt).
+    """
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_goppa_patterson_decode")):
+        return None
+    sb = syn40 if isinstance(syn40, bytes) else bytes(syn40)
+    if len(g) != 33 or len(support) != 1024 or len(sb) != 40:
+        raise ValueError("openqpep_goppa_patterson_decode requires len(g)==33, len(support)==1024, len(syn40)==40.")
+    g_arr = array.array("H", (c & 0x3FF for c in g))
+    sup_arr = array.array("H", (a & 0x3FF for a in support))
+    err_buf = ctypes.create_string_buffer(128)
+    wt = ctypes.c_uint32(0)
+    try:
+        rc = int(
+            _LIB.openqpep_goppa_patterson_decode(
+                g_arr.buffer_info()[0],
+                sup_arr.buffer_info()[0],
+                sb,
+                err_buf,
+                ctypes.byref(wt),
+            )
+        )
+        if rc == 0:
+            return True, err_buf.raw, int(wt.value)
+        if rc == -3:  # OPENQPEP_ERR_AUTH_FAIL (algebraic decode rejected)
+            return False, err_buf.raw, int(wt.value)
+        raise ValueError(f"openqpep_goppa_patterson_decode failed with status {rc}.")
+    finally:
+        _wipe_i32_array(g_arr)
+        _wipe_i32_array(sup_arr)
+        _wipe_ctypes_buf(err_buf)

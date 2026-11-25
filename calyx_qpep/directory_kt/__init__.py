@@ -1,4 +1,4 @@
-"""QPEP-KT Verifiable Append-Only Key Transparency Log (Official Release 1.2.3)."""
+"""QPEP-KT Verifiable Append-Only Key Transparency Log (Official Release 1.2.4)."""
 from .merkle_log import (
     KeyTransparencyLog,
     verify_consistency_proof,

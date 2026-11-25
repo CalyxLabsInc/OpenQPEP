@@ -1,5 +1,5 @@
 """
-QLX Module-LWE & 4-Manifold Coupled Hyper-Tesseract KEM Engine (Official Release 1.2.3).
+QLX Module-LWE & 4-Manifold Coupled Hyper-Tesseract KEM Engine (Official Release 1.2.4).
 Hardened with branchless ct_cmov Fujisaki-Okamoto implicit rejection and SecretBuffer scrubbing.
 """
 import os

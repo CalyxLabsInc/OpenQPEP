@@ -1,4 +1,16 @@
-# OpenQPEP Core Protocol Changelog — Official Release `v1.2.3`
+# OpenQPEP Core Protocol Changelog — Official Release `v1.2.4`
+
+## Official Release `v1.2.4` (2026-11-25) — Native C99 Binary Goppa $\mathrm{GF}(2^{10})$ & Syndrome Accelerator (`CGM-8192`)
+
+- **Branchless, Table-Free C99 $\mathrm{GF}(2^{10})$ Field & Binary Goppa Accelerator (`calyx_qpep/native/csrc/goppa_c.c`):**
+  - Implemented cache-timing-immune, table-free $\mathrm{GF}(2^{10})$ arithmetic mod $x^{10} + x^3 + 1$ (`0x409`): branchless carry-less multiply (`openqpep_gf2m10_mul`), bit-interleaved squaring (`openqpep_gf2m10_sq`), 4-mul/9-sq Itoh-Tsujii Fermat inversion (`openqpep_gf2m10_inv`), and 9-sq Frobenius square root (`openqpep_gf2m10_sqrt`).
+  - Added Horner evaluation (`openqpep_goppa_poly_eval`, `openqpep_goppa_poly_eval_batch`), Rabin irreducibility testing (`openqpep_goppa_is_irreducible`), word-aligned 64-bit RREF systematic matrix construction (`openqpep_goppa_build_systematic_t`, `OPENQPEP_ERR_SINGULAR`), branchless 64-bit word-packed binary syndrome multiplication (`openqpep_goppa_syndrome`), constant-iteration branchless Chien search (`openqpep_goppa_chien_search`), and full C99 Patterson algebraic decoding (`openqpep_goppa_patterson_decode`) with compiler-barrier `openqpep_explicit_bzero` scrubbing of all secret polynomials and matrices.
+  - Exported all 11 new `OPENQPEP_API` symbols in `include/openqpep.h` (`OPENQPEP_ABI_VERSION = 0x00010204U`, `75` total exported symbols across Makefile & CMake).
+- **Transparent Dispatch (`loader.py`, `goppa_8192.py`):**
+  - Wired all 11 C99 Goppa functions into `calyx_qpep/native/loader.py` and `calyx_qpep/codes/goppa_8192.py`, accelerating `CGM-8192`, `CULC-2048`, and `CSP-Omega` keygen/encaps/decaps while preserving 100% deterministic `os.urandom` draw order and bit-exact Pure-Python fallback under `OPENQPEP_DISABLE_NATIVE=1`.
+- **Verification:** Added 6-test suite `tests/test_v124_c99_goppa.py` verifying all 11 new dynamic exports, exhaustive $1,048,576$-pair $\mathrm{GF}(2^{10})$ multiplication/inversion/sqrt correctness, irreducibility/RREF/syndrome/Chien/Patterson parity, cross-backend `CGM-8192` & `CULC-2048` round-trips, verified C99 speedups, standalone `-Wpedantic` C99 static/shared consumers, 10/10 Native C99 + 10/10 Pure-Python Golden KATs, and 193/193 unit & AST tests.
+
+---
 
 ## Official Release `v1.2.3` (2026-11-24) — Native C99 Plain-LWE Row-Streamed Matrix Accelerator (`CULC-2048` / `CSP-Omega`)
 

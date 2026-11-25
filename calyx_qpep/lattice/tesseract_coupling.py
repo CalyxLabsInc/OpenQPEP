@@ -1,4 +1,4 @@
-# OpenQPEP Official Release 1.2.3 (v1.2.3)
+# OpenQPEP Official Release 1.2.4 (v1.2.4)
 """
 4-Manifold Coupled Hyper-Tesseract Seed Coupling (Calyx Hyper-Tesseract QLX-16384, k=64).
 Partitions 16,384 lattice dimensions into four 4,096-dim manifolds with unstructured dense

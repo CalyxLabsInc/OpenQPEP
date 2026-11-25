@@ -1,4 +1,4 @@
-# OpenQPEP Official Release 1.2.3 (v1.2.3)
+# OpenQPEP Official Release 1.2.4 (v1.2.4)
 """
 qSponge-512 (SHA3-512) and qSponge-XOF (SHAKE-256) 24-round Keccak-f[1600] primitives.
 Automatically dispatches to the zero-dependency, constant-time, unrolled Native C99
