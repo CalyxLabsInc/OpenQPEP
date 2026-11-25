@@ -1,4 +1,4 @@
-"""OpenQPEP Memory-Hard QPKD-Argon2id Key Derivation & Hardware Auto-Tuner (Official Release 1.2.7 / kdf_version: 4)."""
+"""OpenQPEP Memory-Hard QPKD-Argon2id Key Derivation & Hardware Auto-Tuner (Official Release 1.2.8 / kdf_version: 4)."""
 from .passphrase_policy import (
     MIN_LENGTH,
     MAX_LENGTH,

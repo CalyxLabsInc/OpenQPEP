@@ -1,6 +1,6 @@
 """
 OpenQPEP Official Binary Wire Framing v5 (\\x89QPE\\x05\\x00) & Standardized Traffic-Analysis Padding
-(Official Release 1.2.7 / v1.2.7 — Clean-Slate Zero Legacy Backwards Compatibility).
+(Official Release 1.2.8 / v1.2.8 — Clean-Slate Zero Legacy Backwards Compatibility).
 
 Binary Wire Format v5 Layout:
   - Bytes 0..5   : WIRE_MAGIC_V5 (\\x89QPE\\x05\\x00)
@@ -96,7 +96,7 @@ def pack_wire_frame(
     bucket_size: int = 0,
 ) -> bytes:
     """
-    Packs `payload` into Official Release 1.2.7 Binary Wire Format v5 (\\x89QPE\\x05\\x00).
+    Packs `payload` into Official Release 1.2.8 Binary Wire Format v5 (\\x89QPE\\x05\\x00).
     """
     if not isinstance(payload, (bytes, bytearray)):
         raise QPEPWireFormatError("Wire frame payload must be bytes or bytearray.")
@@ -133,7 +133,7 @@ def pack_wire_frame(
 
 def unpack_wire_frame(frame: bytes, label: str) -> Tuple[bytes, int]:
     """
-    Unpacks and authenticates an Official Release 1.2.7 Binary Wire Format v5 (\\x89QPE\\x05\\x00) frame.
+    Unpacks and authenticates an Official Release 1.2.8 Binary Wire Format v5 (\\x89QPE\\x05\\x00) frame.
     Strictly rejects ALL legacy -rc, -pc, and -beta wire magics with QPEPLegacyProtocolError.
     Returns (plaintext_payload, packet_type).
     """
@@ -160,21 +160,21 @@ def unpack_wire_frame(frame: bytes, label: str) -> Tuple[bytes, int]:
             if mrc == -40:
                 raise QPEPLegacyProtocolError(
                     "Legacy Release Candidate (-rc) wire format (\\x89QPE\\x04\\x00 / \\x04\\x01) is strictly rejected in "
-                    "OpenQPEP Official Release 1.2.7 (zero backwards compatibility). Re-encrypt using Wire Format v5 (\\x89QPE\\x05\\x00)."
+                    "OpenQPEP Official Release 1.2.8 (zero backwards compatibility). Re-encrypt using Wire Format v5 (\\x89QPE\\x05\\x00)."
                 )
             if mrc == -30:
                 raise QPEPLegacyProtocolError(
                     "Legacy Production Candidate (-pc) wire format (\\x89QPE\\x03\\x00 / \\x03\\x01) is strictly rejected in "
-                    "OpenQPEP Official Release 1.2.7 (zero backwards compatibility)."
+                    "OpenQPEP Official Release 1.2.8 (zero backwards compatibility)."
                 )
             raise QPEPLegacyProtocolError(
-                "Legacy Beta (-beta) wire format is strictly rejected in OpenQPEP Official Release 1.2.7."
+                "Legacy Beta (-beta) wire format is strictly rejected in OpenQPEP Official Release 1.2.8."
             )
         # Detailed format error classification for -7 / -2
         magic = frame_b[:6]
         if magic != WIRE_MAGIC_V5:
             raise QPEPWireFormatError(
-                f"Unsupported OpenQPEP wire magic ({magic.hex().upper()}); Official Release 1.2.7 requires Wire Format v5 (895150450500)."
+                f"Unsupported OpenQPEP wire magic ({magic.hex().upper()}); Official Release 1.2.8 requires Wire Format v5 (895150450500)."
             )
         if len(frame_b) < WIRE_V5_OVERHEAD_BYTES:
             raise QPEPWireFormatError("Truncated OpenQPEP Wire Format v5 frame.")
@@ -186,20 +186,20 @@ def unpack_wire_frame(frame: bytes, label: str) -> Tuple[bytes, int]:
     if magic in LEGACY_RC_WIRE_MAGICS:
         raise QPEPLegacyProtocolError(
             "Legacy Release Candidate (-rc) wire format (\\x89QPE\\x04\\x00 / \\x04\\x01) is strictly rejected in "
-            "OpenQPEP Official Release 1.2.7 (zero backwards compatibility). Re-encrypt using Wire Format v5 (\\x89QPE\\x05\\x00)."
+            "OpenQPEP Official Release 1.2.8 (zero backwards compatibility). Re-encrypt using Wire Format v5 (\\x89QPE\\x05\\x00)."
         )
     if magic in LEGACY_PC_WIRE_MAGICS:
         raise QPEPLegacyProtocolError(
             "Legacy Production Candidate (-pc) wire format (\\x89QPE\\x03\\x00 / \\x03\\x01) is strictly rejected in "
-            "OpenQPEP Official Release 1.2.7 (zero backwards compatibility)."
+            "OpenQPEP Official Release 1.2.8 (zero backwards compatibility)."
         )
     if magic in LEGACY_BETA_WIRE_MAGICS:
         raise QPEPLegacyProtocolError(
-            "Legacy Beta (-beta) wire format is strictly rejected in OpenQPEP Official Release 1.2.7."
+            "Legacy Beta (-beta) wire format is strictly rejected in OpenQPEP Official Release 1.2.8."
         )
     if magic != WIRE_MAGIC_V5:
         raise QPEPWireFormatError(
-            f"Unsupported OpenQPEP wire magic ({magic.hex().upper()}); Official Release 1.2.7 requires Wire Format v5 (895150450500)."
+            f"Unsupported OpenQPEP wire magic ({magic.hex().upper()}); Official Release 1.2.8 requires Wire Format v5 (895150450500)."
         )
     if len(frame_b) < WIRE_V5_OVERHEAD_BYTES:
         raise QPEPWireFormatError("Truncated OpenQPEP Wire Format v5 frame.")

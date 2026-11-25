@@ -1,8 +1,8 @@
-# OpenQPEP Official Release 1.2.7 (v1.2.7) — Native C99 / SIMD SDK Makefile
+# OpenQPEP Official Release 1.2.8 (v1.2.8) — Native C99 / SIMD SDK Makefile
 # Builds shared libopenqpep (.so/.dylib/.dll), static libopenqpep.a, and pkg-config openqpep.pc
 # with strict ISO C99 conformance (-Wall -Wextra -Werror -Wpedantic -fvisibility=hidden).
 
-VERSION := 1.2.7
+VERSION := 1.2.8
 ABI_MAJOR := 1
 
 CC ?= cc
@@ -100,7 +100,33 @@ endif
 	$(INSTALL) -m 0644 $(HEADER) $(DESTDIR)$(INCLUDEDIR)/openqpep.h
 	$(INSTALL) -m 0644 $(PKGCONFIG_TARGET) $(DESTDIR)$(PKGCONFIGDIR)/openqpep.pc
 
+TEST_BIN_STATIC := $(BUILD_DIR)/test_openqpep_c
+TEST_BIN_SHARED := $(BUILD_DIR)/test_openqpep_c_shared
+TEST_BIN_SAN    := $(BUILD_DIR)/test_openqpep_c_san
+TEST_BIN_SAN_PT := $(BUILD_DIR)/test_openqpep_c_san_portable
+
+SAN_FLAGS := -O1 -g -fno-omit-frame-pointer -std=c99 -Iinclude \
+	-Wall -Wextra -Werror -Wpedantic -Wstrict-prototypes -Wmissing-prototypes \
+	-fsanitize=address,undefined -fno-sanitize-recover=all -DOPENQPEP_STATIC
+
+test: all
+	@mkdir -p $(BUILD_DIR)
+	$(CC) $(CFLAGS) -DOPENQPEP_STATIC test_openqpep_c.c $(STATIC_TARGET) -o $(TEST_BIN_STATIC)
+	./$(TEST_BIN_STATIC)
+	$(CC) $(CFLAGS) test_openqpep_c.c -L.. -lopenqpep -Wl,-rpath,'$$ORIGIN/../..' -o $(TEST_BIN_SHARED)
+	LD_LIBRARY_PATH=..:$$LD_LIBRARY_PATH ./$(TEST_BIN_SHARED)
+
+test-san:
+	@mkdir -p $(BUILD_DIR)
+	$(CC) $(SAN_FLAGS) $(SIMD_FLAGS) test_openqpep_c.c $(SRCS) -o $(TEST_BIN_SAN)
+	./$(TEST_BIN_SAN)
+
+test-san-portable:
+	@mkdir -p $(BUILD_DIR)
+	$(CC) $(SAN_FLAGS) test_openqpep_c.c $(SRCS) -o $(TEST_BIN_SAN_PT)
+	./$(TEST_BIN_SAN_PT)
+
 clean:
 	rm -rf $(BUILD_DIR) ../libopenqpep.so ../libopenqpep.so.* ../libopenqpep.dylib ../libopenqpep.dll ../libopenqpep.a ../openqpep.pc
 
-.PHONY: all shared static pkgconfig install clean
+.PHONY: all shared static pkgconfig install test test-san test-san-portable clean

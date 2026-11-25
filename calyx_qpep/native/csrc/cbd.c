@@ -1,6 +1,6 @@
 /*
  * OpenQPEP Native C99 Centered Binomial Distribution (CBD_1 / CBD_2) Samplers and ABI Probe.
- * Official Release 1.2.7 — Calyx Labs Inc. (CPOSLS-1.0)
+ * Official Release 1.2.8 — Calyx Labs Inc. (CPOSLS-1.0)
  */
 #include "openqpep.h"
 
@@ -27,7 +27,8 @@ OPENQPEP_API uint32_t openqpep_native_abi_info(void) {
 }
 
 static inline int32_t ct_caddq_cbd(int32_t a, int32_t q) {
-    return a + ((a >> 31) & q);
+    int32_t mask = -(int32_t)((uint32_t)a >> 31);
+    return a + (mask & q);
 }
 
 OPENQPEP_API void openqpep_cbd2_3329(const uint8_t *buf, int32_t *out) {

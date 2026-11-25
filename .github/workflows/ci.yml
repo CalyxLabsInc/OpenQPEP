@@ -1,8 +1,26 @@
-# OpenQPEP Official Release 1.2.7 (v1.2.7) CI Verification Pipeline
+# OpenQPEP Official Release 1.2.8 (v1.2.8) CI Verification Pipeline
 name: OpenQPEP CI
 on: [push, pull_request]
 jobs:
+  c99-sanitizers:
+    name: C99 SDK Self-Test & ASan/UBSan Gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build Shared + Static + pkg-config SDK & Run Standalone C99 Self-Test Harness (108/108 APIs)
+        run: make -C calyx_qpep/native/csrc clean all test
+      - name: Run C99 Self-Test Harness Under ASan + UBSan (AVX2 SIMD)
+        run: make -C calyx_qpep/native/csrc test-san
+      - name: Run C99 Self-Test Harness Under ASan + UBSan (Portable ISO C99 Fallback)
+        run: make -C calyx_qpep/native/csrc test-san-portable
+      - name: Run CMake Out-Of-Source Build & CTest Under ASan + UBSan
+        run: |
+          cmake -S calyx_qpep/native/csrc -B calyx_qpep/native/csrc/build/cmake_san -DOPENQPEP_BUILD_TESTS=ON -DOPENQPEP_ENABLE_SANITIZERS=ON
+          cmake --build calyx_qpep/native/csrc/build/cmake_san --parallel
+          ctest --test-dir calyx_qpep/native/csrc/build/cmake_san --output-on-failure
+
   test:
+    name: Python Reference, Native C99 Parity, KATs & Security Audit
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -10,8 +28,8 @@ jobs:
         with:
           python-version: "3.11"
       - name: Compile Native C99 libopenqpep SDK Shared + Static + pkg-config (-Wall -Wextra -Werror -Wpedantic)
-        run: make -C calyx_qpep/native/csrc clean all
-      - name: Install OpenQPEP Official Release 1.2.7
+        run: make -C calyx_qpep/native/csrc clean all test
+      - name: Install OpenQPEP Official Release 1.2.8
         run: pip install -e .
       - name: Verify 10/10 Deterministic Golden KAT Vectors (Native C99)
         run: python3 -m calyx_qpep.cli verify-vectors
@@ -21,5 +39,5 @@ jobs:
         run: python3 -m calyx_qpep.cli audit
       - name: Run Phase 1 Consolidation Security Gate (Pure-Python Reference)
         run: OPENQPEP_DISABLE_NATIVE=1 python3 -m unittest tests/test_v119_phase1_audit.py -v
-      - name: Run Full OpenQPEP Official Release 1.2.7 Test & Audit Suite
+      - name: Run Full OpenQPEP Official Release 1.2.8 Test & Audit Suite
         run: python3 -m unittest discover -s tests -v

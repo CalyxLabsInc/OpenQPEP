@@ -1,8 +1,8 @@
-# OpenQPEP Official Release 1.2.7 (v1.2.7) — Cross-Platform C99 / SIMD SDK CMakeLists.txt
+# OpenQPEP Official Release 1.2.8 (v1.2.8) — Cross-Platform C99 / SIMD SDK CMakeLists.txt
 # Builds both shared (libopenqpep.so/.dylib/.dll) and static (libopenqpep.a) libraries,
 # Android NDK JNI target, public header include/openqpep.h, and pkg-config openqpep.pc.
 cmake_minimum_required(VERSION 3.16)
-project(openqpep VERSION 1.2.7 LANGUAGES C)
+project(openqpep VERSION 1.2.8 LANGUAGES C)
 
 include(GNUInstallDirs)
 
@@ -10,6 +10,8 @@ option(OPENQPEP_BUILD_SHARED "Build shared libopenqpep library" ON)
 option(OPENQPEP_BUILD_STATIC "Build static libopenqpep library" ON)
 option(OPENQPEP_PORTABLE "Disable host-specific AVX2/NEON SIMD flags for portable builds" OFF)
 option(OPENQPEP_BUILD_JNI "Include Android NDK JNI bridge in shared target" OFF)
+option(OPENQPEP_BUILD_TESTS "Build standalone C99 self-test harness (test_openqpep_c)" ON)
+option(OPENQPEP_ENABLE_SANITIZERS "Enable ASan + UBSan sanitizer instrumentation" OFF)
 
 set(OPENQPEP_CORE_SRCS
     ntt_3329.c
@@ -67,6 +69,10 @@ function(openqpep_configure_target tgt)
                 target_compile_options(${tgt} PRIVATE -march=armv8-a -ftree-vectorize)
             endif()
         endif()
+        if(OPENQPEP_ENABLE_SANITIZERS)
+            target_compile_options(${tgt} PRIVATE -O1 -g -fno-omit-frame-pointer -fsanitize=address,undefined -fno-sanitize-recover=all)
+            target_link_options(${tgt} PRIVATE -fsanitize=address,undefined)
+        endif()
     endif()
 endfunction()
 
@@ -111,3 +117,11 @@ configure_file(
 
 install(FILES include/openqpep.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/openqpep.pc" DESTINATION "${CMAKE_INSTALL_LIBDIR}/pkgconfig")
+
+if(OPENQPEP_BUILD_TESTS AND OPENQPEP_BUILD_STATIC)
+    enable_testing()
+    add_executable(test_openqpep_c test_openqpep_c.c)
+    openqpep_configure_target(test_openqpep_c)
+    target_link_libraries(test_openqpep_c PRIVATE openqpep_static)
+    add_test(NAME openqpep_c_selftest COMMAND test_openqpep_c)
+endif()

@@ -1,11 +1,11 @@
 /*
- * OpenQPEP Official Release 1.2.7 (v1.2.7) — Native C99 / SIMD Accelerators for
+ * OpenQPEP Official Release 1.2.8 (v1.2.8) — Native C99 / SIMD Accelerators for
  * Calyx Sovereign-Pentad GF(256) / XOR, Branchless Constant-Time Helpers
  * (openqpep_ct_eq, openqpep_ct_cmov, openqpep_ct_cswap, openqpep_ct_select_u32,
  * openqpep_ct_mem_bounds_ok, openqpep_is_zeroed), and Compiler-Barrier Zeroization
  * (openqpep_explicit_bzero).
  *
- * Note: openqpep_verify_wire_v5_magic was relocated to wire_c.c in v1.2.7 and
+ * Note: openqpep_verify_wire_v5_magic was relocated to wire_c.c in v1.2.8 and
  * upgraded to a fully branchless constant-time implementation alongside zero-heap
  * Wire v5/v5.1 framing and CC-512 CMT-4/SIV streaming helpers.
  *

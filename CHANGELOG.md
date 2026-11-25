@@ -1,4 +1,19 @@
-# OpenQPEP Core Protocol Changelog — Official Release `v1.2.7`
+# OpenQPEP Core Protocol Changelog — Official Release `v1.2.8`
+
+## Official Release `v1.2.8` (2026-11-25) — Standalone C99 Self-Test Harness & Sanitizer CI (`ASan` + `UBSan`)
+
+- **Standalone Pure-C99 Self-Test & Differential Harness (`calyx_qpep/native/csrc/test_openqpep_c.c`):**
+  - Added standalone ISO C99 self-test binary (`test_openqpep_c.c`, zero warnings under `-std=c99 -Wall -Wextra -Werror -Wpedantic -Wstrict-prototypes -Wmissing-prototypes`) exercising **100% (`108/108`) of all exported `OPENQPEP_API` symbols** across 12 cryptographic suites (`ABI`, `Constant-Time/GF(256)`, `Keccak-f[1600]/FIPS 202`, `QLX NTT_3329 & PolyRing`, `QVS Solinas NTT_8380417`, `CBD`, `Plain-LWE stack + heap`, `Binary Goppa GF(2^10) & Patterson`, `Rank-Metric GF(2^127) & LRPC`, `UOV GF(256)`, `Wire v5/v5.1 + TLV + CC-512 CMT-4/SIV`, and `QHS-512 WOTS+/XMSS`).
+  - Added `--dump-vectors` live cross-language differential verification mode emitting canonical `VEC:<KEY>=<HEX>` outputs verified bit-for-bit against Pure Python (`OPENQPEP_DISABLE_NATIVE=1`).
+- **ASan + LSan + UBSan Build System & GitHub Actions Sanitizer CI (`Makefile`, `CMakeLists.txt`, `.github/workflows/ci.yml`, `include/openqpep.h`):**
+  - Added Makefile targets `test` (static `libopenqpep.a` + shared `libopenqpep.so`), `test-san` (hardware AVX2 under `-fsanitize=address,undefined -fno-sanitize-recover=all`), and `test-san-portable` (portable ISO C99 fallback under ASan + UBSan).
+  - Added CMake options `OPENQPEP_BUILD_TESTS` and `OPENQPEP_ENABLE_SANITIZERS` with CTest (`openqpep_c_selftest`) and bumped `OPENQPEP_ABI_VERSION` to `0x00010208U`.
+  - Upgraded `.github/workflows/ci.yml` with dedicated `c99-sanitizers` CI job running Makefile `test`, `test-san`, `test-san-portable`, and CMake+CTest sanitizer gates on every push and pull request.
+- **UBSan-Driven ISO C99 Conformance Hardening (`plain_lwe_c.c`, `cbd.c`):**
+  - UBSan (`-fsanitize=undefined -fno-sanitize-recover=all`) caught a latent ISO C99 signed `int` promotion overflow across all six `uint16_t * uint16_t` multiply-accumulate loops in `plain_lwe_c.c`; promoted operands explicitly to `uint32_t` for 100% UB-free wraparound arithmetic while preserving SIMD vectorization, and replaced implementation-defined negative right-shift in `cbd.c` with portable `-(int32_t)((uint32_t)a >> 31)`.
+- **Verification:** Added 6-test suite `tests/test_v128_c99_selftest_sanitizers.py` enforcing permanent 100% (`108/108`) C99 API coverage, static+shared Makefile self-tests, AVX2 + Portable ASan/LSan/UBSan zero-error runs, live C99-ASan vs Pure-Python differential parity across all 12 subsystems (37/37 vectors), AVX2 vs Portable bit-exact parity, CMake+CTest sanitizer build, 10/10 Native C99 + 10/10 Pure-Python Golden KATs, and 217/217 unit & AST tests.
+
+---
 
 ## Official Release `v1.2.7` (2026-11-25) — Native C99 WOTS+ & XMSS Merkle Tree Accelerator (`QHS-512`)
 

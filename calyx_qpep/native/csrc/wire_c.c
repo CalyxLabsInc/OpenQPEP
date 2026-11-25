@@ -1,5 +1,5 @@
 /*
- * OpenQPEP Official Release 1.2.7 (v1.2.7) — Native C99 Zero-Heap Wire Format v5/v5.1 Framing,
+ * OpenQPEP Official Release 1.2.8 (v1.2.8) — Native C99 Zero-Heap Wire Format v5/v5.1 Framing,
  * Constant-Time Magic Validator, Compact TLV v5.1 Validator & CC-512 CMT-4/SIV Streaming Engine.
  *
  * Security & Performance Guarantees:

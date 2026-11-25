@@ -1,6 +1,6 @@
 /*
  * OpenQPEP Native C99 / SIMD Row-Streamed Unstructured Plain-LWE Accelerator (CULC-2048 / CSP-Omega)
- * Official Release 1.2.7 (v1.2.7) — Calyx Labs Inc. (CPOSLS-1.0)
+ * Official Release 1.2.8 (v1.2.8) — Calyx Labs Inc. (CPOSLS-1.0)
  *
  * Implements Family 1 of Calyx Sovereign-Pentad (CSP-Omega) & Calyx Unstructured-Citadel (CULC-2048):
  *   - Pure unstructured Plain-LWE over Z_{65536}^{n x n} (zero polynomial ring, zero NTT, zero Galois symmetry)
@@ -54,7 +54,7 @@ OPENQPEP_API void openqpep_plain_lwe_row_accum_u16(
 ) {
     if (!dst || !row) return;
     for (uint32_t j = 0U; j < n; j++) {
-        dst[j] = (uint16_t)(dst[j] + (uint16_t)(scalar * row[j]));
+        dst[j] = (uint16_t)((uint32_t)dst[j] + ((uint32_t)scalar * (uint32_t)row[j]));
     }
 }
 
@@ -71,10 +71,10 @@ OPENQPEP_API void openqpep_plain_lwe_keygen_row_u16(
         b_row[j] = e_row[j];
     }
     for (uint32_t k = 0U; k < n; k++) {
-        uint16_t a_k = a_row[k];
+        uint32_t a_k = (uint32_t)a_row[k];
         const uint16_t *s_row = s_flat + ((size_t)k * (size_t)nbar);
         for (uint32_t j = 0U; j < nbar; j++) {
-            b_row[j] = (uint16_t)(b_row[j] + (uint16_t)(a_k * s_row[j]));
+            b_row[j] = (uint16_t)((uint32_t)b_row[j] + (a_k * (uint32_t)s_row[j]));
         }
     }
 }
@@ -232,10 +232,10 @@ OPENQPEP_API int openqpep_plain_lwe_keygen_matrix(
                 a_tile[t] = load16_le(tile_bytes + ((size_t)t * 2U));
             }
             for (uint32_t t = 0U; t < take; t++) {
-                uint16_t a_val = a_tile[t];
+                uint32_t a_val = (uint32_t)a_tile[t];
                 const uint16_t *s_row = s_flat + ((size_t)(col + t) * (size_t)nbar);
                 for (uint32_t j = 0U; j < nbar; j++) {
-                    b_row[j] = (uint16_t)(b_row[j] + (uint16_t)(a_val * s_row[j]));
+                    b_row[j] = (uint16_t)((uint32_t)b_row[j] + (a_val * (uint32_t)s_row[j]));
                 }
             }
             col += take;
@@ -416,10 +416,10 @@ OPENQPEP_API int openqpep_plain_lwe_indcpa_enc(
                 a_tile[t] = load16_le(tile_bytes + ((size_t)t * 2U));
             }
             for (uint32_t i = 0U; i < nbar; i++) {
-                uint16_t s_ik = sp[(size_t)i * (size_t)n + (size_t)k];
+                uint32_t s_ik = (uint32_t)sp[(size_t)i * (size_t)n + (size_t)k];
                 uint16_t *u_dst = u_flat + ((size_t)i * (size_t)n + (size_t)col);
                 for (uint32_t t = 0U; t < take; t++) {
-                    u_dst[t] = (uint16_t)(u_dst[t] + (uint16_t)(s_ik * a_tile[t]));
+                    u_dst[t] = (uint16_t)((uint32_t)u_dst[t] + (s_ik * (uint32_t)a_tile[t]));
                 }
             }
             col += take;
@@ -436,10 +436,10 @@ OPENQPEP_API int openqpep_plain_lwe_indcpa_enc(
                 b_row[j] = load16_le(b_ptr + ((size_t)j * 2U));
             }
             for (uint32_t i = 0U; i < nbar; i++) {
-                uint16_t s_ik = sp[(size_t)i * (size_t)n + (size_t)k];
+                uint32_t s_ik = (uint32_t)sp[(size_t)i * (size_t)n + (size_t)k];
                 uint16_t *v_row = v_flat + ((size_t)i * (size_t)nbar);
                 for (uint32_t j = 0U; j < nbar; j++) {
-                    v_row[j] = (uint16_t)(v_row[j] + (uint16_t)(s_ik * b_row[j]));
+                    v_row[j] = (uint16_t)((uint32_t)v_row[j] + (s_ik * (uint32_t)b_row[j]));
                 }
             }
         }
@@ -565,10 +565,10 @@ OPENQPEP_API int openqpep_plain_lwe_decaps(
             s_row[j] = load16_le(s_ptr + ((size_t)j * 2U));
         }
         for (uint32_t i = 0U; i < nbar; i++) {
-            uint16_t u_ik = load16_le(u_bytes + (((size_t)i * (size_t)n + (size_t)k) * 2U));
+            uint32_t u_ik = (uint32_t)load16_le(u_bytes + (((size_t)i * (size_t)n + (size_t)k) * 2U));
             uint16_t *us_row = us + ((size_t)i * (size_t)nbar);
             for (uint32_t j = 0U; j < nbar; j++) {
-                us_row[j] = (uint16_t)(us_row[j] + (uint16_t)(u_ik * s_row[j]));
+                us_row[j] = (uint16_t)((uint32_t)us_row[j] + (u_ik * (uint32_t)s_row[j]));
             }
         }
         openqpep_explicit_bzero(s_row, sizeof(s_row));

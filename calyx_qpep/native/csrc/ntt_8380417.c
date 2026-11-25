@@ -1,6 +1,6 @@
 /*
  * OpenQPEP Native C99 / SIMD Accelerated 8-Layer Complete NTT over Z_8380417[X]/(X^256 + 1)
- * Official Release 1.2.7 (v1.2.7) — Calyx Labs Inc. (CPOSLS-1.0)
+ * Official Release 1.2.8 (v1.2.8) — Calyx Labs Inc. (CPOSLS-1.0)
  *
  * Thread-safe compile-time const twiddle tables (zero lazy-init data races) and
  * 100% division-free branchless Solinas-Barrett modular reduction (q = 2^23 - 2^13 + 1),
