@@ -1,6 +1,6 @@
 /*
  * OpenQPEP Native C99 / SIMD Row-Streamed Unstructured Plain-LWE Accelerator (CULC-2048 / CSP-Omega)
- * Official Release 1.2.6 (v1.2.6) — Calyx Labs Inc. (CPOSLS-1.0)
+ * Official Release 1.2.7 (v1.2.7) — Calyx Labs Inc. (CPOSLS-1.0)
  *
  * Implements Family 1 of Calyx Sovereign-Pentad (CSP-Omega) & Calyx Unstructured-Citadel (CULC-2048):
  *   - Pure unstructured Plain-LWE over Z_{65536}^{n x n} (zero polynomial ring, zero NTT, zero Galois symmetry)

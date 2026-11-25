@@ -1,9 +1,9 @@
 """
-OpenQPEP by Calyx Labs Inc. — Official Release 1.2.6 (v1.2.6)
+OpenQPEP by Calyx Labs Inc. — Official Release 1.2.7 (v1.2.7)
 Canonical Post-Quantum Hybrid Protocol Reference Engine.
 Licensed under Calyx Public Open Source Specifications v1.0 License (CPOSLS-1.0).
 
-Official Release 1.2.6 Architecture:
+Official Release 1.2.7 Architecture:
   - Wire Format: Strict Official Wire Format v5 (\\x89QPE\\x05\\x00) & Compact TLV v5.1 (\\x89QPE\\x05\\x01).
   - KDF Envelope: Mandatory kdf_version: 4 (RFC 9106 QPKD-Argon2id + qSponge-512, "OpenQPEP/1.0.0").
   - Symmetric AEAD: CMT-4 Key-Committing Calyx-Cascade-512 (AES-256-GCM + ChaCha20-Poly1305 + qSponge-512).
@@ -106,7 +106,7 @@ from .wire.framing import pack_wire_frame, unpack_wire_frame
 
 MAX_PACKET_CHUNKS = 2048  # 2048 x 64 KiB = 128 MiB max chunks per packet (CPU-DoS ceiling)
 
-# Hardened Post-Quantum & AI-Cryptanalysis Immunity Profile for OpenQPEP Official Release 1.2.6
+# Hardened Post-Quantum & AI-Cryptanalysis Immunity Profile for OpenQPEP Official Release 1.2.7
 QUANTUM_IMMUNITY_MATRIX: Dict[str, Dict[str, str]] = {
     "JVG_AND_SHOR": {
         "threat": "Hybrid QNTT Factorization & Shor's Algorithm",
@@ -340,11 +340,11 @@ def _armor_unwrap(armored_text: str, expected_label: Optional[str] = None) -> Tu
     if len(raw_frame) >= 6 and raw_frame[:6] in ALL_LEGACY_WIRE_MAGICS:
         raise QPEPLegacyProtocolError(
             "Legacy pre-release (-rc / -pc / -beta) wire format is strictly rejected in "
-            "OpenQPEP Official Release 1.2.6 (zero backwards compatibility). Official Wire Format v5 (\\x89QPE\\x05\\x00) is required."
+            "OpenQPEP Official Release 1.2.7 (zero backwards compatibility). Official Wire Format v5 (\\x89QPE\\x05\\x00) is required."
         )
     if not raw_frame.startswith(WIRE_MAGIC):
         raise QPEPLegacyProtocolError(
-            "Unsupported or legacy wire format. OpenQPEP Official Release 1.2.6 requires Official Wire Format v5 (\\x89QPE\\x05\\x00)."
+            "Unsupported or legacy wire format. OpenQPEP Official Release 1.2.7 requires Official Wire Format v5 (\\x89QPE\\x05\\x00)."
         )
 
     # Strictly enforce mandatory canonical 8-char Base64 armor CRC verification in constant time
@@ -438,7 +438,7 @@ def _validate_identity_field(field_name: str, value: Any, max_len: int, allow_em
 
 class CalyxQPEPProtocol:
     """
-    Official Reference Implementation of OpenQPEP by Calyx Labs Inc. (Official Release 1.2.6).
+    Official Reference Implementation of OpenQPEP by Calyx Labs Inc. (Official Release 1.2.7).
     """
 
     @staticmethod
@@ -682,7 +682,7 @@ class CalyxQPEPProtocol:
         if kdf_version < MANDATORY_KDF_VERSION:
             raise QPEPLegacyProtocolError(
                 f"Legacy pre-release key ring (kdf_version: {kdf_version} from -rc / -pc / -beta) is strictly rejected "
-                f"in OpenQPEP Official Release 1.2.6 (zero backwards compatibility; mandatory kdf_version: {MANDATORY_KDF_VERSION})."
+                f"in OpenQPEP Official Release 1.2.7 (zero backwards compatibility; mandatory kdf_version: {MANDATORY_KDF_VERSION})."
             )
 
         k_s1, k_s2, k_mac, _ = derive_qpkrf_keys_v4(passphrase, kdf_salt, kdf_params=kdf_params)
@@ -835,7 +835,7 @@ class CalyxQPEPProtocol:
         low_ver = env_ver.lower()
         if "-rc" in low_ver or "-pc" in low_ver or "-beta" in low_ver or low_ver.startswith("0."):
             raise QPEPLegacyProtocolError(
-                f"Legacy pre-release .qpkrf key ring ({env_ver}) is strictly rejected in OpenQPEP Official Release 1.2.6 "
+                f"Legacy pre-release .qpkrf key ring ({env_ver}) is strictly rejected in OpenQPEP Official Release 1.2.7 "
                 f"(zero backwards compatibility)."
             )
         if not ct_eq_str(envelope.get("magic"), "QPKRF-v1.0.0"):

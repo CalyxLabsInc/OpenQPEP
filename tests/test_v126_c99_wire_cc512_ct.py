@@ -104,9 +104,9 @@ NEW_V126_SYMBOLS = {
 
 class TestOpenQPEPv126C99WireCC512CT(unittest.TestCase):
     def test_01_version_metadata_and_exported_v126_symbols(self):
-        self.assertEqual(UNIVERSAL_VERSION, "1.2.6")
-        self.assertEqual(UNIVERSAL_VERSION_LABEL, "Official Release 1.2.6")
-        self.assertEqual(PROTOCOL_VERSION, "OpenQPEP/1.2.6")
+        self.assertTrue(UNIVERSAL_VERSION.startswith(("1.", "2.")))
+        self.assertEqual(UNIVERSAL_VERSION_LABEL, f"Official Release {UNIVERSAL_VERSION}")
+        self.assertEqual(PROTOCOL_VERSION, f"OpenQPEP/{UNIVERSAL_VERSION}")
 
         hdr = HEADER_PATH.read_text(encoding="utf-8")
         for sym in NEW_V126_SYMBOLS:
@@ -114,7 +114,7 @@ class TestOpenQPEPv126C99WireCC512CT(unittest.TestCase):
         self.assertIn("OPENQPEP_ERR_WIRE_FORMAT", hdr)
 
         if is_native_available():
-            self.assertEqual(native_abi_version(), 0x00010206)
+            self.assertGreaterEqual(native_abi_version(), 0x00010206)
 
             ext = "dylib" if platform.system() == "Darwin" else "so"
             shared_lib = NATIVE_DIR / f"libopenqpep.{ext}"

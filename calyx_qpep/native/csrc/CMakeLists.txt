@@ -1,8 +1,8 @@
-# OpenQPEP Official Release 1.2.6 (v1.2.6) — Cross-Platform C99 / SIMD SDK CMakeLists.txt
+# OpenQPEP Official Release 1.2.7 (v1.2.7) — Cross-Platform C99 / SIMD SDK CMakeLists.txt
 # Builds both shared (libopenqpep.so/.dylib/.dll) and static (libopenqpep.a) libraries,
 # Android NDK JNI target, public header include/openqpep.h, and pkg-config openqpep.pc.
 cmake_minimum_required(VERSION 3.16)
-project(openqpep VERSION 1.2.6 LANGUAGES C)
+project(openqpep VERSION 1.2.7 LANGUAGES C)
 
 include(GNUInstallDirs)
 
@@ -22,6 +22,7 @@ set(OPENQPEP_CORE_SRCS
     goppa_c.c
     rank_uov_c.c
     wire_c.c
+    qhs_c.c
 )
 
 set(OPENQPEP_SHARED_SRCS ${OPENQPEP_CORE_SRCS})

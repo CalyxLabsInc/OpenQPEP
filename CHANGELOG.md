@@ -1,4 +1,16 @@
-# OpenQPEP Core Protocol Changelog — Official Release `v1.2.6`
+# OpenQPEP Core Protocol Changelog — Official Release `v1.2.7`
+
+## Official Release `v1.2.7` (2026-11-25) — Native C99 WOTS+ & XMSS Merkle Tree Accelerator (`QHS-512`)
+
+- **4-Way SIMD Keccak-f[1600] WOTS+ & Zero-Heap $O(h)$ XMSS Merkle Accelerator (`calyx_qpep/native/csrc/qhs_c.c`, `include/openqpep.h`):**
+  - Implemented 4-way interleaved SIMD-vectorizable `Keccak-f[1600]` (`keccak_f1600_x4`, auto-vectorizing directly to 256-bit AVX2 / 128-bit NEON registers with zero external dependencies) driving register-resident 15-step Winternitz chains (`openqpep_qhs_wots_chain`, `openqpep_qhs_wots_pk_from_sk_seed`, `openqpep_qhs_wots_sign`, `openqpep_qhs_wots_pk_from_sig`).
+  - Implemented zero-heap, reentrant, thread-safe $O(h)$-stack TreeHash (`openqpep_qhs_treehash_subtree`) and top-tree folding (`openqpep_qhs_fold_subtrees`), one-shot keygen (`openqpep_qhs_keygen_from_seeds`), Fault-Guarded signing (`openqpep_qhs_sign_core`, returning `OPENQPEP_ERR_FAULT_GUARD` on internal mismatch), and constant-time verification (`openqpep_qhs_verify`) with `openqpep_explicit_bzero` / `openqpep_keccak_wipe` secret scrubbing.
+  - Exported all 9 new `OPENQPEP_API` symbols and bumped `OPENQPEP_ABI_VERSION` to `0x00010207U` (`108` total exported symbols across Makefile & CMake).
+- **Transparent Dispatch & Multi-Core Parallel High-Height Hypertrees (`loader.py`, `qhs_512_hypertree.py`):**
+  - Wired all 9 C99 QHS-512 functions into `loader.py` and `QHS512HypertreeEngine`, automatically fanning out high-height hypertrees (`height >= 6`, e.g., `h = 8` / 256 leaves and `h = 10` / 1,024 leaves) across CPU cores via GIL-released `native_qhs_treehash_subtree` + `native_qhs_fold_subtrees` while preserving 100% bit-exact Pure-Python fallback under `OPENQPEP_DISABLE_NATIVE=1`.
+- **Verification:** Added 6-test suite `tests/test_v127_c99_qhs512.py` verifying all 9 new dynamic exports, 4-way SIMD WOTS+ parity, split-subtree TreeHash & fold parity across all 16 leaves of `h = 4`, cross-backend `QHS-512`/`CIF-SQI-512`/`CSP-Omega`, parallel high-height `h = 8` & `h = 10` consistency, verified wall-clock speedups, standalone `-Wpedantic` C99 static/shared consumers, 10/10 Native C99 + 10/10 Pure-Python Golden KATs, and 211/211 unit & AST tests.
+
+---
 
 ## Official Release `v1.2.6` (2026-11-25) — Native C99 `CC-512` Whitening, Wire v5/v5.1 Framing & Constant-Time Helpers
 

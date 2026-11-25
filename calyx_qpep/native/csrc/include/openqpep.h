@@ -1,5 +1,5 @@
 /*
- * OpenQPEP Official Release 1.2.6 (v1.2.6) — Public C99/SIMD SDK ABI Header
+ * OpenQPEP Official Release 1.2.7 (v1.2.7) — Public C99/SIMD SDK ABI Header
  * Project: OpenQPEP by Calyx Labs Inc. (Creator: Tristen Martinez)
  * Repository: https://github.com/CalyxLabsInc/OpenQPEP
  * License: Calyx Public Open Source Specifications v1.0 License (CPOSLS-1.0)
@@ -23,8 +23,8 @@ extern "C" {
 /* ------------------------------------------------------------------------- */
 #define OPENQPEP_VERSION_MAJOR 1
 #define OPENQPEP_VERSION_MINOR 2
-#define OPENQPEP_VERSION_PATCH 6
-#define OPENQPEP_VERSION_STRING "1.2.6"
+#define OPENQPEP_VERSION_PATCH 7
+#define OPENQPEP_VERSION_STRING "1.2.7"
 
 #define OPENQPEP_ABI_CURRENT  1
 #define OPENQPEP_ABI_REVISION 2
@@ -94,6 +94,18 @@ extern "C" {
 #define OPENQPEP_CC512_CMT_TAG_BYTES     32U
 #define OPENQPEP_CC512_SIV_BYTES         32U
 #define OPENQPEP_CC512_SIV_MAX_NONCE     4096U
+
+/* QHS-512 Stateless Hash-Based Signature Hypertree (WOTS+ + XMSS) Constants */
+#define OPENQPEP_QHS_WOTS_W              16U
+#define OPENQPEP_QHS_WOTS_N              32U
+#define OPENQPEP_QHS_WOTS_LEN1           64U
+#define OPENQPEP_QHS_WOTS_LEN2           3U
+#define OPENQPEP_QHS_WOTS_LEN            67U
+#define OPENQPEP_QHS_WOTS_SIG_BYTES      2144U /* 67 * 32 */
+#define OPENQPEP_QHS_SIG_FIXED_BYTES     2180U /* 4 leaf_idx + 32 opt_rand + 2144 wots_sig */
+#define OPENQPEP_QHS_PK_BYTES            65U   /* 1 height + 32 pub_seed + 32 root */
+#define OPENQPEP_QHS_SK_BYTES            97U   /* 1 height + 32 sk_seed + 32 pub_seed + 32 root */
+#define OPENQPEP_QHS_MAX_HEIGHT          20U
 
 /* Keccak-f[1600] / NIST FIPS 202 Sponge Constants */
 #define OPENQPEP_SHA3_256_RATE     136U
@@ -667,6 +679,108 @@ OPENQPEP_API int openqpep_cc512_siv_msg_keys(
     const uint8_t k_enc_root64[64],
     const uint8_t siv32[32],
     uint8_t out88[88]
+);
+
+/* ------------------------------------------------------------------------- */
+/* QHS-512 Stateless Hash-Based WOTS+ & XMSS Merkle Hypertree Accelerator    */
+/* ------------------------------------------------------------------------- */
+
+/** Executes `steps` Winternitz WOTS+ hash chain iterations from `start` (safe in-place). */
+OPENQPEP_API int openqpep_qhs_wots_chain(
+    const uint8_t in32[32],
+    uint32_t start,
+    uint32_t steps,
+    const uint8_t pub_seed32[32],
+    uint32_t leaf_idx,
+    uint16_t chain_idx,
+    uint8_t out32[32]
+);
+
+/** Computes 32-byte WOTS+ leaf public key for `leaf_idx` via 4-way SIMD Keccak-f[1600]. */
+OPENQPEP_API int openqpep_qhs_wots_pk_from_sk_seed(
+    const uint8_t sk_seed32[32],
+    const uint8_t pub_seed32[32],
+    uint32_t leaf_idx,
+    uint8_t leaf_pk32_out[32]
+);
+
+/** Generates 2,144-byte WOTS+ signature on 32-byte `msg_digest32` for `leaf_idx`. */
+OPENQPEP_API int openqpep_qhs_wots_sign(
+    const uint8_t sk_seed32[32],
+    const uint8_t pub_seed32[32],
+    uint32_t leaf_idx,
+    const uint8_t msg_digest32[32],
+    uint8_t wots_sig_out[2144]
+);
+
+/** Recovers 32-byte WOTS+ leaf public key from 2,144-byte WOTS+ signature and `msg_digest32`. */
+OPENQPEP_API int openqpep_qhs_wots_pk_from_sig(
+    const uint8_t wots_sig[2144],
+    const uint8_t msg_digest32[32],
+    const uint8_t pub_seed32[32],
+    uint32_t leaf_idx,
+    uint8_t leaf_pk32_out[32]
+);
+
+/**
+ * Zero-heap, thread-safe O(h)-stack TreeHash over 2^subtree_height leaves starting at `start_leaf`.
+ * Optionally captures `subtree_height` authentication path siblings for `target_leaf` in `auth_out`.
+ */
+OPENQPEP_API int openqpep_qhs_treehash_subtree(
+    const uint8_t sk_seed32[32],
+    const uint8_t pub_seed32[32],
+    uint32_t start_leaf,
+    uint32_t subtree_height,
+    uint32_t target_leaf,
+    int capture_auth,
+    uint8_t *auth_out,
+    uint8_t root32_out[32]
+);
+
+/**
+ * Zero-heap O(h)-stack top-tree folder combining 2^top_height parallel subtree roots into the
+ * final Merkle root, optionally capturing top `top_height` authentication siblings for `target_subtree_idx`.
+ */
+OPENQPEP_API int openqpep_qhs_fold_subtrees(
+    const uint8_t pub_seed32[32],
+    const uint8_t *subtree_roots,
+    uint32_t top_height,
+    uint32_t target_subtree_idx,
+    int capture_auth,
+    uint8_t *top_auth_out,
+    uint8_t root32_out[32]
+);
+
+/** One-shot zero-heap QHS-512 XMSS keygen from (sk_seed32, pub_seed32) writing 65B pk and 97B sk. */
+OPENQPEP_API int openqpep_qhs_keygen_from_seeds(
+    uint32_t height,
+    const uint8_t sk_seed32[32],
+    const uint8_t pub_seed32[32],
+    uint8_t pk_out[65],
+    uint8_t sk_out[97]
+);
+
+/**
+ * One-shot zero-heap QHS-512 signing core (hedged or deterministic) with O(h) TreeHash auth path
+ * and built-in Verify-Before-Emit Fault-Guard (returns OPENQPEP_ERR_FAULT_GUARD on fault).
+ */
+OPENQPEP_API int openqpep_qhs_sign_core(
+    const uint8_t sk97[97],
+    const uint8_t *msg,
+    size_t msg_len,
+    int hedged,
+    const uint8_t *rnd32,
+    uint8_t *sig_out,
+    size_t sig_out_len
+);
+
+/** One-shot zero-heap constant-time QHS-512 signature verification (OPENQPEP_OK or OPENQPEP_ERR_AUTH_FAIL). */
+OPENQPEP_API int openqpep_qhs_verify(
+    const uint8_t pk65[65],
+    const uint8_t *msg,
+    size_t msg_len,
+    const uint8_t *sig,
+    size_t sig_len
 );
 
 /* ------------------------------------------------------------------------- */

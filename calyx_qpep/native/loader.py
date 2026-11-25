@@ -1,5 +1,5 @@
 """
-OpenQPEP Native C99 / SIMD Vectorized Acceleration Loader (libopenqpep) — Official Release 1.2.6.
+OpenQPEP Native C99 / SIMD Vectorized Acceleration Loader (libopenqpep) — Official Release 1.2.7.
 Loads libopenqpep.so / .dylib / .dll via ctypes with zero-copy array.array buffer marshaling.
 Seamlessly falls back to the bit-exact pure-Python reference engine when absent or disabled.
 """
@@ -381,6 +381,55 @@ def _configure_signatures(lib: ctypes.CDLL) -> None:
     if hasattr(lib, "openqpep_cc512_siv_msg_keys"):
         lib.openqpep_cc512_siv_msg_keys.argtypes = [ctypes.c_char_p, ctypes.c_char_p, _c_void_p]
         lib.openqpep_cc512_siv_msg_keys.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_qhs_wots_chain"):
+        lib.openqpep_qhs_wots_chain.argtypes = [
+            ctypes.c_char_p, ctypes.c_uint32, ctypes.c_uint32,
+            ctypes.c_char_p, ctypes.c_uint32, ctypes.c_uint16, _c_void_p,
+        ]
+        lib.openqpep_qhs_wots_chain.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_qhs_wots_pk_from_sk_seed"):
+        lib.openqpep_qhs_wots_pk_from_sk_seed.argtypes = [
+            ctypes.c_char_p, ctypes.c_char_p, ctypes.c_uint32, _c_void_p,
+        ]
+        lib.openqpep_qhs_wots_pk_from_sk_seed.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_qhs_wots_sign"):
+        lib.openqpep_qhs_wots_sign.argtypes = [
+            ctypes.c_char_p, ctypes.c_char_p, ctypes.c_uint32, ctypes.c_char_p, _c_void_p,
+        ]
+        lib.openqpep_qhs_wots_sign.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_qhs_wots_pk_from_sig"):
+        lib.openqpep_qhs_wots_pk_from_sig.argtypes = [
+            ctypes.c_char_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_uint32, _c_void_p,
+        ]
+        lib.openqpep_qhs_wots_pk_from_sig.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_qhs_treehash_subtree"):
+        lib.openqpep_qhs_treehash_subtree.argtypes = [
+            ctypes.c_char_p, ctypes.c_char_p, ctypes.c_uint32, ctypes.c_uint32,
+            ctypes.c_uint32, ctypes.c_int, _c_void_p, _c_void_p,
+        ]
+        lib.openqpep_qhs_treehash_subtree.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_qhs_fold_subtrees"):
+        lib.openqpep_qhs_fold_subtrees.argtypes = [
+            ctypes.c_char_p, ctypes.c_char_p, ctypes.c_uint32,
+            ctypes.c_uint32, ctypes.c_int, _c_void_p, _c_void_p,
+        ]
+        lib.openqpep_qhs_fold_subtrees.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_qhs_keygen_from_seeds"):
+        lib.openqpep_qhs_keygen_from_seeds.argtypes = [
+            ctypes.c_uint32, ctypes.c_char_p, ctypes.c_char_p, _c_void_p, _c_void_p,
+        ]
+        lib.openqpep_qhs_keygen_from_seeds.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_qhs_sign_core"):
+        lib.openqpep_qhs_sign_core.argtypes = [
+            ctypes.c_char_p, ctypes.c_char_p, ctypes.c_size_t,
+            ctypes.c_int, ctypes.c_char_p, _c_void_p, ctypes.c_size_t,
+        ]
+        lib.openqpep_qhs_sign_core.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_qhs_verify"):
+        lib.openqpep_qhs_verify.argtypes = [
+            ctypes.c_char_p, ctypes.c_char_p, ctypes.c_size_t, ctypes.c_char_p, ctypes.c_size_t,
+        ]
+        lib.openqpep_qhs_verify.restype = ctypes.c_int
 
 
 _try_load_library()
@@ -1967,3 +2016,252 @@ def native_cc512_siv_msg_keys(k_enc_root64: bytes, siv32: bytes) -> Optional[byt
         return out.raw
     finally:
         _wipe_ctypes_buf(out)
+
+
+def native_qhs_wots_chain(
+    in32: bytes,
+    start: int,
+    steps: int,
+    pub_seed32: bytes,
+    leaf_idx: int,
+    chain_idx: int,
+) -> Optional[bytes]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_qhs_wots_chain")):
+        return None
+    ib = in32 if isinstance(in32, bytes) else bytes(in32)
+    pb = pub_seed32 if isinstance(pub_seed32, bytes) else bytes(pub_seed32)
+    if len(ib) != 32 or len(pb) != 32:
+        raise ValueError("openqpep_qhs_wots_chain requires 32-byte input and 32-byte pub_seed.")
+    out = ctypes.create_string_buffer(32)
+    try:
+        rc = int(_LIB.openqpep_qhs_wots_chain(ib, start, steps, pb, leaf_idx & 0xFFFFFFFF, chain_idx & 0xFFFF, out))
+        if rc != 0:
+            raise ValueError(f"openqpep_qhs_wots_chain failed with status {rc}.")
+        return out.raw
+    finally:
+        _wipe_ctypes_buf(out)
+
+
+def native_qhs_wots_pk_from_sk_seed(sk_seed32: bytes, pub_seed32: bytes, leaf_idx: int) -> Optional[bytes]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_qhs_wots_pk_from_sk_seed")):
+        return None
+    sb = sk_seed32 if isinstance(sk_seed32, bytes) else bytes(sk_seed32)
+    pb = pub_seed32 if isinstance(pub_seed32, bytes) else bytes(pub_seed32)
+    if len(sb) != 32 or len(pb) != 32:
+        raise ValueError("openqpep_qhs_wots_pk_from_sk_seed requires 32-byte seeds.")
+    out = ctypes.create_string_buffer(32)
+    rc = int(_LIB.openqpep_qhs_wots_pk_from_sk_seed(sb, pb, leaf_idx & 0xFFFFFFFF, out))
+    if rc != 0:
+        raise ValueError(f"openqpep_qhs_wots_pk_from_sk_seed failed with status {rc}.")
+    return out.raw
+
+
+def native_qhs_wots_sign(
+    sk_seed32: bytes,
+    pub_seed32: bytes,
+    leaf_idx: int,
+    msg_digest32: bytes,
+) -> Optional[bytes]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_qhs_wots_sign")):
+        return None
+    sb = sk_seed32 if isinstance(sk_seed32, bytes) else bytes(sk_seed32)
+    pb = pub_seed32 if isinstance(pub_seed32, bytes) else bytes(pub_seed32)
+    mb = msg_digest32 if isinstance(msg_digest32, bytes) else bytes(msg_digest32)
+    if len(sb) != 32 or len(pb) != 32 or len(mb) != 32:
+        raise ValueError("openqpep_qhs_wots_sign requires 32-byte seeds and 32-byte digest.")
+    sig = ctypes.create_string_buffer(2144)
+    try:
+        rc = int(_LIB.openqpep_qhs_wots_sign(sb, pb, leaf_idx & 0xFFFFFFFF, mb, sig))
+        if rc != 0:
+            raise ValueError(f"openqpep_qhs_wots_sign failed with status {rc}.")
+        return sig.raw
+    finally:
+        _wipe_ctypes_buf(sig)
+
+
+def native_qhs_wots_pk_from_sig(
+    wots_sig: bytes,
+    msg_digest32: bytes,
+    pub_seed32: bytes,
+    leaf_idx: int,
+) -> Optional[bytes]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_qhs_wots_pk_from_sig")):
+        return None
+    wb = wots_sig if isinstance(wots_sig, bytes) else bytes(wots_sig)
+    mb = msg_digest32 if isinstance(msg_digest32, bytes) else bytes(msg_digest32)
+    pb = pub_seed32 if isinstance(pub_seed32, bytes) else bytes(pub_seed32)
+    if len(wb) != 2144 or len(mb) != 32 or len(pb) != 32:
+        raise ValueError("openqpep_qhs_wots_pk_from_sig requires 2144-byte sig and 32-byte digest/seed.")
+    out = ctypes.create_string_buffer(32)
+    rc = int(_LIB.openqpep_qhs_wots_pk_from_sig(wb, mb, pb, leaf_idx & 0xFFFFFFFF, out))
+    if rc != 0:
+        raise ValueError(f"openqpep_qhs_wots_pk_from_sig failed with status {rc}.")
+    return out.raw
+
+
+def native_qhs_treehash_subtree(
+    sk_seed32: bytes,
+    pub_seed32: bytes,
+    start_leaf: int,
+    subtree_height: int,
+    *,
+    target_leaf: int = 0,
+    capture_auth: bool = False,
+) -> Optional[Tuple[bytes, bytes]]:
+    """
+    Thread-safe zero-heap O(h) TreeHash returning `(subtree_root32, auth_bytes)`.
+    Releases the Python GIL during C99 execution for multi-core parallel Merkle tree construction.
+    """
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_qhs_treehash_subtree")):
+        return None
+    sb = sk_seed32 if isinstance(sk_seed32, bytes) else bytes(sk_seed32)
+    pb = pub_seed32 if isinstance(pub_seed32, bytes) else bytes(pub_seed32)
+    if len(sb) != 32 or len(pb) != 32 or subtree_height < 0 or subtree_height > 20:
+        raise ValueError("Invalid arguments to openqpep_qhs_treehash_subtree.")
+    auth_len = subtree_height * 32 if capture_auth else 0
+    auth_buf = ctypes.create_string_buffer(auth_len) if auth_len > 0 else None
+    root_buf = ctypes.create_string_buffer(32)
+    rc = int(
+        _LIB.openqpep_qhs_treehash_subtree(
+            sb,
+            pb,
+            start_leaf & 0xFFFFFFFF,
+            subtree_height,
+            target_leaf & 0xFFFFFFFF,
+            1 if capture_auth else 0,
+            auth_buf,
+            root_buf,
+        )
+    )
+    if rc != 0:
+        raise ValueError(f"openqpep_qhs_treehash_subtree failed with status {rc}.")
+    return root_buf.raw, (auth_buf.raw if auth_buf is not None else b"")
+
+
+def native_qhs_fold_subtrees(
+    pub_seed32: bytes,
+    subtree_roots: bytes,
+    top_height: int,
+    *,
+    target_subtree_idx: int = 0,
+    capture_auth: bool = False,
+) -> Optional[Tuple[bytes, bytes]]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_qhs_fold_subtrees")):
+        return None
+    pb = pub_seed32 if isinstance(pub_seed32, bytes) else bytes(pub_seed32)
+    rb = subtree_roots if isinstance(subtree_roots, bytes) else bytes(subtree_roots)
+    if len(pb) != 32 or top_height < 0 or top_height > 20 or len(rb) != (1 << top_height) * 32:
+        raise ValueError("Invalid arguments to openqpep_qhs_fold_subtrees.")
+    auth_len = top_height * 32 if capture_auth else 0
+    auth_buf = ctypes.create_string_buffer(auth_len) if auth_len > 0 else None
+    root_buf = ctypes.create_string_buffer(32)
+    rc = int(
+        _LIB.openqpep_qhs_fold_subtrees(
+            pb,
+            rb,
+            top_height,
+            target_subtree_idx & 0xFFFFFFFF,
+            1 if capture_auth else 0,
+            auth_buf,
+            root_buf,
+        )
+    )
+    if rc != 0:
+        raise ValueError(f"openqpep_qhs_fold_subtrees failed with status {rc}.")
+    return root_buf.raw, (auth_buf.raw if auth_buf is not None else b"")
+
+
+def native_qhs_keygen_from_seeds(
+    height: int,
+    sk_seed32: bytes,
+    pub_seed32: bytes,
+) -> Optional[Tuple[bytes, bytes]]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_qhs_keygen_from_seeds")):
+        return None
+    sb = sk_seed32 if isinstance(sk_seed32, bytes) else bytes(sk_seed32)
+    pb = pub_seed32 if isinstance(pub_seed32, bytes) else bytes(pub_seed32)
+    if len(sb) != 32 or len(pb) != 32 or height < 0 or height > 20:
+        raise ValueError("Invalid arguments to openqpep_qhs_keygen_from_seeds.")
+    pk_buf = ctypes.create_string_buffer(65)
+    sk_buf = ctypes.create_string_buffer(97)
+    try:
+        rc = int(_LIB.openqpep_qhs_keygen_from_seeds(height, sb, pb, pk_buf, sk_buf))
+        if rc != 0:
+            raise ValueError(f"openqpep_qhs_keygen_from_seeds failed with status {rc}.")
+        return pk_buf.raw, sk_buf.raw
+    finally:
+        _wipe_ctypes_buf(sk_buf)
+
+
+def native_qhs_sign_core(
+    sk97: bytes,
+    message: bytes,
+    *,
+    hedged: bool = True,
+    rnd32: Optional[bytes] = None,
+) -> Optional[Tuple[int, bytes]]:
+    """
+    Returns None when native is unavailable; otherwise `(status_rc, sig_bytes)`.
+    Status codes: 0 (OPENQPEP_OK), -5 (OPENQPEP_ERR_FAULT_GUARD).
+    """
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_qhs_sign_core")):
+        return None
+    sk_b = sk97 if isinstance(sk97, bytes) else bytes(sk97)
+    msg_b = message if isinstance(message, bytes) else bytes(message)
+    if len(sk_b) != 97:
+        raise ValueError("Invalid QHS-512 secret key length (expected 97 bytes).")
+    height = sk_b[0]
+    if height > 20:
+        raise ValueError(f"QHS-512 tree height {height} exceeds maximum supported height 20.")
+    rnd_b: Optional[bytes] = None
+    if hedged:
+        if rnd32 is None:
+            raise ValueError("Hedged native_qhs_sign_core requires 32-byte rnd32.")
+        rnd_b = rnd32 if isinstance(rnd32, bytes) else bytes(rnd32)
+        if len(rnd_b) != 32:
+            raise ValueError("QHS-512 hedged signing rnd must be exactly 32 bytes.")
+    sig_len = 2180 + height * 32
+    sig_buf = ctypes.create_string_buffer(sig_len)
+    try:
+        rc = int(
+            _LIB.openqpep_qhs_sign_core(
+                sk_b,
+                msg_b if msg_b else None,
+                len(msg_b),
+                1 if hedged else 0,
+                rnd_b,
+                sig_buf,
+                sig_len,
+            )
+        )
+        if rc == 0:
+            return 0, sig_buf.raw
+        if rc == -5:  # OPENQPEP_ERR_FAULT_GUARD
+            return rc, b""
+        raise ValueError(f"openqpep_qhs_sign_core failed with status {rc}.")
+    finally:
+        _wipe_ctypes_buf(sig_buf)
+
+
+def native_qhs_verify(pk65: bytes, message: bytes, signature: bytes) -> Optional[bool]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_qhs_verify")):
+        return None
+    pk_b = pk65 if isinstance(pk65, bytes) else bytes(pk65)
+    msg_b = message if isinstance(message, bytes) else bytes(message)
+    sig_b = signature if isinstance(signature, bytes) else bytes(signature)
+    if len(pk_b) != 65:
+        return False
+    rc = int(
+        _LIB.openqpep_qhs_verify(
+            pk_b,
+            msg_b if msg_b else None,
+            len(msg_b),
+            sig_b if sig_b else None,
+            len(sig_b),
+        )
+    )
+    if rc == 0:
+        return True
+    if rc == -3:  # OPENQPEP_ERR_AUTH_FAIL
+        return False
+    raise ValueError(f"openqpep_qhs_verify failed with status {rc}.")
