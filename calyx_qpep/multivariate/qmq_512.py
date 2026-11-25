@@ -1,6 +1,6 @@
 """
 Family 4 of Calyx Sovereign-Pentad (CSP-Omega): Genuine Unbalanced Oil-and-Vinegar (UOV)
-Multivariate Quadratic Signature Engine over GF(256) (QMQ-512 — Official Release 1.2.4).
+Multivariate Quadratic Signature Engine over GF(256) (QMQ-512 — Official Release 1.2.5).
 
 Cryptographic Construction (NIST PQC Round 2 Canonical UOV Structure):
   - Field: GF(256) modulo AES irreducible polynomial x^8 + x^4 + x^3 + x + 1 (0x11B),
@@ -21,6 +21,12 @@ import struct
 from typing import List, Optional, Tuple
 
 from ..exceptions import QPEPFaultGuardError, QPEPSuiteError
+from ..native.loader import (
+    native_uov_compute_p3,
+    native_uov_eval_public_map,
+    native_uov_sign_core,
+    native_uov_solve_gf256_linear,
+)
 from ..primitives.consttime import ct_eq
 from ..primitives.qsponge import qsponge_512, qsponge_var
 from ..primitives.zeroize import SecretBuffer
@@ -100,8 +106,14 @@ def _unpack_p3(data: bytes, m: int) -> List[List[List[int]]]:
 
 
 def _solve_gf256_linear(mat: List[List[int]], rhs: List[int]) -> Optional[List[int]]:
-    """Gaussian elimination over GF(256) for an m x m linear system."""
+    """Constant-time Gaussian elimination over GF(256) for an m x m linear system."""
     m = len(rhs)
+    mat_flat = bytes(mat[i][j] & 0xFF for i in range(m) for j in range(m))
+    rhs_b = bytes(x & 0xFF for x in rhs)
+    native_res = native_uov_solve_gf256_linear(mat_flat, rhs_b, m)
+    if native_res is not None:
+        ok, sol_b = native_res
+        return list(sol_b) if ok else None
     aug = [mat[i][:] + [rhs[i]] for i in range(m)]
     for col in range(m):
         piv = -1
@@ -175,39 +187,41 @@ class MultivariateQuadraticEngine:
         seed_pk = os.urandom(32)
         seed_sk = os.urandom(32)
 
-        p1_all, p2_all = _expand_p1_p2(seed_pk, v, m)
-        oil_o = _expand_oil_matrix(seed_sk, v, m)
+        p3_bytes = native_uov_compute_p3(seed_pk, seed_sk, v, m)
+        if p3_bytes is None:
+            p1_all, p2_all = _expand_p1_p2(seed_pk, v, m)
+            oil_o = _expand_oil_matrix(seed_sk, v, m)
 
-        # Compute hidden public block P3^(k) = Upper(O^T * P1^(k) * O + O^T * P2^(k))
-        p3_all: List[List[List[int]]] = []
-        for k in range(m):
-            p1k, p2k = p1_all[k], p2_all[k]
-            tmp = [[p2k[i][j] for j in range(m)] for i in range(v)]
-            for i in range(v):
-                row1, ti = p1k[i], tmp[i]
-                for r in range(i, v):
-                    c = row1[r]
-                    if c:
-                        mc, orow = _MUL256[c], oil_o[r]
-                        for j in range(m):
-                            ti[j] ^= mc[orow[j]]
-            mmat = [[0] * m for _ in range(m)]
-            for a in range(m):
-                ma = mmat[a]
+            # Compute hidden public block P3^(k) = Upper(O^T * P1^(k) * O + O^T * P2^(k))
+            p3_all: List[List[List[int]]] = []
+            for k in range(m):
+                p1k, p2k = p1_all[k], p2_all[k]
+                tmp = [[p2k[i][j] for j in range(m)] for i in range(v)]
                 for i in range(v):
-                    oia = oil_o[i][a]
-                    if oia:
-                        mo, ti = _MUL256[oia], tmp[i]
-                        for b in range(m):
-                            ma[b] ^= mo[ti[b]]
-            p3k = [[0] * m for _ in range(m)]
-            for a in range(m):
-                p3k[a][a] = mmat[a][a]
-                for b in range(a + 1, m):
-                    p3k[a][b] = mmat[a][b] ^ mmat[b][a]
-            p3_all.append(p3k)
+                    row1, ti = p1k[i], tmp[i]
+                    for r in range(i, v):
+                        c = row1[r]
+                        if c:
+                            mc, orow = _MUL256[c], oil_o[r]
+                            for j in range(m):
+                                ti[j] ^= mc[orow[j]]
+                mmat = [[0] * m for _ in range(m)]
+                for a in range(m):
+                    ma = mmat[a]
+                    for i in range(v):
+                        oia = oil_o[i][a]
+                        if oia:
+                            mo, ti = _MUL256[oia], tmp[i]
+                            for b in range(m):
+                                ma[b] ^= mo[ti[b]]
+                p3k = [[0] * m for _ in range(m)]
+                for a in range(m):
+                    p3k[a][a] = mmat[a][a]
+                    for b in range(a + 1, m):
+                        p3k[a][b] = mmat[a][b] ^ mmat[b][a]
+                p3_all.append(p3k)
 
-        p3_bytes = _pack_p3(p3_all, m)
+            p3_bytes = _pack_p3(p3_all, m)
         pk = struct.pack("<HH", v, m) + seed_pk + p3_bytes
         pk_hash = qsponge_512(b"CALYX-QMQ-PKH-v1.0.0|" + pk)[:32]
         sk = struct.pack("<HH", v, m) + seed_pk + seed_sk + pk_hash + p3_bytes
@@ -234,9 +248,6 @@ class MultivariateQuadraticEngine:
                     seed_sk = bytes(mv[36:68])
                     pk_hash = bytes(mv[68:100])
                     p3_bytes = bytes(mv[100:])
-                oil_o = _expand_oil_matrix(seed_sk, v, m)
-
-                p1_all, p2_all = _expand_p1_p2(seed_pk, v, m)
                 if hedged:
                     with SecretBuffer(os.urandom(32) if rnd is None else bytes(rnd)) as rnd_buf:
                         salt = qsponge_512(
@@ -244,7 +255,22 @@ class MultivariateQuadraticEngine:
                         )[:16]
                 else:
                     salt = qsponge_512(b"CALYX-QMQ-DET-v1.1.4|" + seed_sk + pk_hash + message)[:16]
-                target = list(qsponge_var(b"CALYX-QMQ-TARGET-v1.0.0|" + pk_hash + salt + message, m))
+                target_bytes = qsponge_var(b"CALYX-QMQ-TARGET-v1.0.0|" + pk_hash + salt + message, m)
+
+                native_sig = native_uov_sign_core(seed_pk, seed_sk, salt, target_bytes, v, m)
+                if native_sig is not None:
+                    ok_sig, sv_bytes, so_bytes = native_sig
+                    if not ok_sig:
+                        raise RuntimeError("QMQ-512 UOV signing failed to find invertible linear oil system.")
+                    sig_out = salt + sv_bytes + so_bytes
+                    pk_rebuilt = struct.pack("<HH", v, m) + seed_pk + p3_bytes
+                    if not MultivariateQuadraticEngine.verify(pk_rebuilt, message, sig_out):
+                        raise QPEPFaultGuardError("QMQ-512 UOV Fault-Guard triggered: signature failed internal verification.")
+                    return sig_out
+
+                oil_o = _expand_oil_matrix(seed_sk, v, m)
+                p1_all, p2_all = _expand_p1_p2(seed_pk, v, m)
+                target = list(target_bytes)
 
                 for attempt in range(64):
                     vin = list(qsponge_var(b"CALYX-QMQ-VINEGAR-v1.0.0|" + seed_sk + salt + struct.pack(">H", attempt), v))
@@ -318,13 +344,16 @@ class MultivariateQuadraticEngine:
         if len(pk) != 36 + expected_p3_len or len(signature) != 16 + v + m:
             return False
         seed_pk = pk[4:36]
-        p3_all = _unpack_p3(pk[36:], m)
-        p1_all, p2_all = _expand_p1_p2(seed_pk, v, m)
+        p3_raw = pk[36:]
         pk_hash = qsponge_512(b"CALYX-QMQ-PKH-v1.0.0|" + pk)[:32]
 
         salt = signature[:16]
-        sv = list(signature[16 : 16 + v])
-        so = list(signature[16 + v : 16 + v + m])
+        sv_raw = signature[16 : 16 + v]
+        so_raw = signature[16 + v : 16 + v + m]
         expected = qsponge_var(b"CALYX-QMQ-TARGET-v1.0.0|" + pk_hash + salt + message, m)
-        evaluated = _eval_public_map(p1_all, p2_all, p3_all, v, m, sv, so)
+        evaluated = native_uov_eval_public_map(seed_pk, p3_raw, v, m, sv_raw, so_raw)
+        if evaluated is None:
+            p3_all = _unpack_p3(p3_raw, m)
+            p1_all, p2_all = _expand_p1_p2(seed_pk, v, m)
+            evaluated = _eval_public_map(p1_all, p2_all, p3_all, v, m, list(sv_raw), list(so_raw))
         return ct_eq(evaluated, expected)

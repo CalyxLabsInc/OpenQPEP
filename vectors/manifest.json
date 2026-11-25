@@ -1,6 +1,6 @@
 {
-  "protocol_version": "OpenQPEP/1.2.4",
-  "universal_version": "1.2.4",
+  "protocol_version": "OpenQPEP/1.2.5",
+  "universal_version": "1.2.5",
   "suite_count": 10,
   "vectors": [
     {
@@ -11,7 +11,7 @@
       "wire_magic_hex": "895150450500",
       "qlx_ct_bytes": 1088,
       "qvs_sig_bytes": 1600,
-      "sha3_512": "54f92e5f37f8c301a0920bf452e1835cb935c0f776fa7fba51b82af1745cfc7fb08dca88264d5dcfe8dd2e8c95448c4fc96f1952188c0c2c933a9affe6e7d342"
+      "sha3_512": "f794818688870c61f7dd10c664722feedd995420a0d74c2377291ab3a791510102dc03233c5ef91e100e6198edb13be048b895683c8a346b4bfc59f3a368793c"
     },
     {
       "file": "kat_qlx1024_qvs87.json",
@@ -21,7 +21,7 @@
       "wire_magic_hex": "895150450500",
       "qlx_ct_bytes": 1568,
       "qvs_sig_bytes": 2368,
-      "sha3_512": "36e79962548fd146313e721f40440b03ef6169bb7ab16fb6161feb97bfa35961628c1018b60f65b76cac4b6497d56c7bf16a660cb86aec886537d173522125a2"
+      "sha3_512": "23248b22d9e8449b46f530082256ff98f79a7aa746c717dcf2a6f2a0befb319cd88944722e7d20953ac33234b551d2e5bcc78615a00a4131f119dd2b52f2583a"
     },
     {
       "file": "kat_qlx2048_qvs128.json",
@@ -31,7 +31,7 @@
       "wire_magic_hex": "895150450500",
       "qlx_ct_bytes": 2976,
       "qvs_sig_bytes": 3904,
-      "sha3_512": "488254c28001fac2dd3a39f9e06471d6aa5b5190709245c7861647df1c98cde0aa6a87514652359d694e1aa959ebf4fd7661c8b87972409d7d64b24bcfcb8987"
+      "sha3_512": "f74fcf70bf9075005e239e10989598ac63455a1d7425bc92228c0142ba93048302d1fc5612ae70a98b04b82f1cf9905d77645ad24f27ee8c16b8e762c4713700"
     },
     {
       "file": "kat_qlx4096_qvs256.json",
@@ -41,7 +41,7 @@
       "wire_magic_hex": "895150450500",
       "qlx_ct_bytes": 5792,
       "qvs_sig_bytes": 5440,
-      "sha3_512": "8a2074b654d58a181558b47d2a5950d752313b9a4fa00e93f497ca96ca4c2a4561e06cbc8ca91037159f7e50dfb342d5efb4debe85d8d89dfc96eff78e7662ad"
+      "sha3_512": "086128038f089af707efc83d2bc54a243d848465efc6c3edc631e735985df47d1afa2f3b6833d0a4f8ea4c1ebbd39a258bc687d5f48376ff37574755cc0a54a2"
     },
     {
       "file": "kat_qlx16384_qvs1024.json",
@@ -51,7 +51,7 @@
       "wire_magic_hex": "895150450500",
       "qlx_ct_bytes": 23168,
       "qvs_sig_bytes": 10816,
-      "sha3_512": "127f65b3c54070550df7e0b467ca5d2c023fe7a3e97d578027afd67384856c463ef45de5feaa8a076a52545bf6ca220b6b3ac95a9b66a6ac92bcfb3c8f731026"
+      "sha3_512": "24616def277352f5ce67ae3750ada4acc5684a64e01958c8a9b698b2a148c68c23b8629a25e2e3c76037feaa111cf4467e8ec71500eea7d00943764e8087781b"
     },
     {
       "file": "kat_cif_sqi512.json",
@@ -61,7 +61,7 @@
       "wire_magic_hex": "895150450500",
       "ct_bytes": 970,
       "sig_bytes": 4859,
-      "sha3_512": "22270506c369b9a658a447ceca3524070ed7590d266b863c269e288ad48955c6199536eccc15a67008e90f838959c0c9dc2ce0de0382aff923f5d228e1b72c79"
+      "sha3_512": "2a8f4daccb8c790809d4133b9a68f55337f0a8bae3a72164c72dca5a9fc29b119736cccf13acf1779abf7e9c11fba166932bac2b7cef8b96c4e60bf3a8dc6751"
     },
     {
       "file": "kat_crt_rsd512.json",
@@ -71,7 +71,7 @@
       "wire_magic_hex": "895150450500",
       "ct_bytes": 2213,
       "sig_bytes": 700,
-      "sha3_512": "123ef6fcea2b3c5861beba2f4524773578b503fff2f8ed0779f5a8a6b1e0050c5d5b3084e4b1667dcceade040822f7875377d07e9cab85b8e711d9f25acafccd"
+      "sha3_512": "de757f14a52572cce0c205a145c7915b54d5b5b1bac58e7422e9e4fdbcaef648bf2c1d1e970c7dfda9ca32d9efd0ff5c1236a25cd782d955479e0e844cf424ba"
     },
     {
       "file": "kat_cgm8192.json",
@@ -81,7 +81,7 @@
       "wire_magic_hex": "895150450500",
       "ct_bytes": 996,
       "sig_bytes": 4756,
-      "sha3_512": "0113b47dfcbd8981b2b55e22522f0646907b0f4a56712822e2402ca69ac62f7bdb6a59e02514cd00bb9b3fb79b5fcd44a68f0b9f0569f4c9935f4a32bc40623b"
+      "sha3_512": "80d50d133e626f639fce249d4221e3c585e5b63785136f317b715184b19fa95df515eed2adac0611bf471abd751e2cadb8ec1e94603abf6e70eafc1380b4ca5e"
     },
     {
       "file": "kat_culc2048.json",
@@ -91,7 +91,7 @@
       "wire_magic_hex": "895150450500",
       "ct_bytes": 3161,
       "sig_bytes": 4934,
-      "sha3_512": "57d814c494dfba34cc5a9c2a620e962fc9a68be7605ef1db9fb99fc061fa823564d2722691c64646f07d5154929356424fbdf6aec80210de1fb0b6f073b73125"
+      "sha3_512": "d7d3a89b50a99526f37365b01d72ec6657e7a1c2ef76588109346aaee7819500172c6a41ec936ec8675516ec31323d673ad3852d48d18ce15927e8782dfd4b85"
     },
     {
       "file": "kat_csp_omega.json",
@@ -101,7 +101,7 @@
       "wire_magic_hex": "895150450500",
       "ct_bytes": 3434,
       "sig_bytes": 5633,
-      "sha3_512": "67ab2d0b7ebf4698e20200c1325466838820a8dc8770062a020d0e428f87799f2b2a28817804494a9dba9242d8d1417fa4b3df3a01ec59be6ac616a5c66e8a47"
+      "sha3_512": "b338880f7d82dd776ca1fe2dd73dd7fc97c73f324444035f34d143d7c66e3c0a88c75f8ae428e040846c9710cf9d296f33fafc59afe0ecf54cdd4880f925a46b"
     }
   ]
 }

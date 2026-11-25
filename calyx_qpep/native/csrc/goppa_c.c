@@ -1,6 +1,6 @@
 /*
  * OpenQPEP Native C99 / SIMD Binary Goppa GF(2^10) & Syndrome Accelerator (CGM-8192 / CULC-2048 / CSP-Omega)
- * Official Release 1.2.4 (v1.2.4) — Calyx Labs Inc. (CPOSLS-1.0)
+ * Official Release 1.2.5 (v1.2.5) — Calyx Labs Inc. (CPOSLS-1.0)
  *
  * Implements Family 2 of Calyx Sovereign-Pentad (CSP-Omega) & Calyx Goppa-Monolith (CGM-8192):
  *   - 100% branchless, table-free, cache-timing-immune GF(2^10) field arithmetic mod x^10 + x^3 + 1 (0x409):

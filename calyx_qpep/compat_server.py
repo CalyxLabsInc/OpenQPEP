@@ -1,12 +1,12 @@
 """
-OpenQPEP Official Release 1.2.4 — Shared Server Compatibility & Security Adapter (`calyx_qpep.compat_server`).
+OpenQPEP Official Release 1.2.5 — Shared Server Compatibility & Security Adapter (`calyx_qpep.compat_server`).
 
 Provides a single canonical implementation of common server-side security primitives used across
 Directory_Server, Messenger_Server, CalyxMail_Backend, and Website_Server:
   1. Thread-safe sliding-window per-IP / per-key rate limiting (`SlidingWindowRateLimiter`).
   2. Strict Wire Format v5 (\\x89QPE\\x05\\x00) frame MAC & whitening verification.
   3. Canonical pre-release version-token rejection (`-rc`, `-pc`, `-beta`, `0.x`) while preserving
-     100% compatibility across all Official Stable Public Releases (`1.0.0`, `1.0.2`, `1.1.0`, `1.2.4`, ...).
+     100% compatibility across all Official Stable Public Releases (`1.0.0`, `1.0.2`, `1.1.0`, `1.2.5`, ...).
   4. Canonical CMT-4 Key-Committing CC-512 AEAD and `.qpkrf` directory verification helpers.
 """
 import threading
@@ -92,7 +92,7 @@ class SlidingWindowRateLimiter:
 def is_legacy_prerelease_version(version_str: str) -> bool:
     """
     Returns True if `version_str` identifies a retired pre-release (`-rc`, `-pc`, `-beta`, `0.x`).
-    Official stable public releases (`1.0.0`, `1.0.1`, `1.0.2`, `1.1.0`, `1.2.4`, ...) return False.
+    Official stable public releases (`1.0.0`, `1.0.1`, `1.0.2`, `1.1.0`, `1.2.5`, ...) return False.
     """
     if not isinstance(version_str, str):
         return False

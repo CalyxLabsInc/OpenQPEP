@@ -1,4 +1,4 @@
-/* OpenQPEP Official Release 1.2.4 (v1.2.4) — Android NDK JNI Bridge (arm64-v8a NEON + x86_64 AVX2) */
+/* OpenQPEP Official Release 1.2.5 (v1.2.5) — Android NDK JNI Bridge (arm64-v8a NEON + x86_64 AVX2) */
 #include "openqpep.h"
 
 #ifdef __ANDROID__

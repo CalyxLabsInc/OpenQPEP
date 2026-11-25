@@ -1,12 +1,12 @@
 """
-Calyx QPEP Hardcoded Cryptographic Passphrase Gate (QPKD-Argon2id — Official Release 1.2.4).
+Calyx QPEP Hardcoded Cryptographic Passphrase Gate (QPKD-Argon2id — Official Release 1.2.5).
 
 In OpenQPEP, passphrases are NOT merely an optional UI check: the structural character-class
 witness of the passphrase (length >= 12, digits >= 2, specials >= 4, uppercase >= 2, lowercase >= 4)
 is mathematically absorbed into the QPKD-Argon2id key-derivation sponge. Without a compliant passphrase,
 the mathematical witness vector cannot be constructed and no key material can be derived or unlocked.
 
-v1.2.4 Hardening:
+v1.2.5 Hardening:
   - Enforces strict upper length ceiling (MAX_LENGTH = 1024 chars / MAX_PASSPHRASE_UTF8_BYTES = 4096)
     to prevent memory/CPU DoS in witness & Argon2id H_0 construction.
   - Rejects NUL bytes, ASCII C0/C1 control characters, and Unicode Bidi-override/format spoofing

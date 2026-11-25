@@ -1,7 +1,7 @@
 """
-OpenQPEP Memory-Hard QPKD-Argon2id + qSponge-512 Cascade Key Derivation (Official Release 1.2.4 / kdf_version: 4).
+OpenQPEP Memory-Hard QPKD-Argon2id + qSponge-512 Cascade Key Derivation (Official Release 1.2.5 / kdf_version: 4).
 
-Clean-Slate Official Release 1.2.4 Policy (Zero Legacy Backwards Compatibility):
+Clean-Slate Official Release 1.2.5 Policy (Zero Legacy Backwards Compatibility):
   - Mandatory `kdf_version: 4` across all `.qpkrf` private key rings and subkey envelopes.
   - All legacy pre-release key rings (`kdf_version: 1` Beta, `kdf_version: 2` Production Candidate,
     `kdf_version: 3` Release Candidate) are hard-rejected with `QPEPLegacyProtocolError`.
@@ -635,7 +635,7 @@ def derive_qpkrf_keys_v4(
     max_memory_kib: Optional[int] = None,
 ) -> Tuple[bytes, bytes, bytes, Dict[str, Any]]:
     """
-    OpenQPEP Official Release 1.2.4 Mandatory Memory-Hard Key Derivation (kdf_version: 4):
+    OpenQPEP Official Release 1.2.5 Mandatory Memory-Hard Key Derivation (kdf_version: 4):
       1. Enforces mandatory passphrase policy and extracts the 64-byte structural witness.
       2. Mixes optional FIDO2-PRF hardware passkey secret (when hardware-bound).
       3. Strictly validates KDF memory/time/lane bounds against OOM & CPU-bomb ceilings.

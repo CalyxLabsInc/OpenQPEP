@@ -1,6 +1,6 @@
 """
 Genuine Rank-Metric Syndrome Decoding (CRT-RSD512) LRPC KEM Engine over GF(2^127)[X]/(X^47 + X^5 + 1)
-(Official Release 1.2.4 / v1.2.4).
+(Official Release 1.2.5 / v1.2.5).
 
 Cryptographic Construction (ROLLO-I / LRPC Rank-Metric Code):
   - Base field: GF(2^127) modulo irreducible trinomial x^127 + x^63 + 1 (prime degree 127 — zero subfields).
@@ -19,6 +19,12 @@ import os
 from typing import List, Optional, Tuple
 
 from ..exceptions import QPEPSuiteError
+from ..native.loader import (
+    native_gf2_127_inv,
+    native_gf2_127_mul,
+    native_lrpc_ring_inv,
+    native_lrpc_ring_mul,
+)
 from ..primitives.consttime import ct_cmov, ct_eq
 from ..primitives.qsponge import qsponge_512, qsponge_var
 from ..primitives.zeroize import SecretBuffer
@@ -34,6 +40,9 @@ LRPC_POLY_BYTES = LRPC_N * 16  # 752 bytes
 
 def gf2_127_mul(a: int, b: int) -> int:
     """Carryless multiplication in GF(2^127) modulo x^127 + x^63 + 1."""
+    native_res = native_gf2_127_mul(a, b)
+    if native_res is not None:
+        return native_res
     res = 0
     while b:
         if b & 1:
@@ -48,6 +57,9 @@ def gf2_127_mul(a: int, b: int) -> int:
 def _gf2_127_inv(a: int) -> int:
     if a == 0:
         raise ZeroDivisionError("0 has no inverse in GF(2^127).")
+    native_res = native_gf2_127_inv(a)
+    if native_res is not None:
+        return native_res
     res = 1
     base = a & _MASK_127
     exp = (1 << 127) - 2
@@ -61,6 +73,9 @@ def _gf2_127_inv(a: int) -> int:
 
 def _ring_mul(a: List[int], b: List[int]) -> List[int]:
     """Polynomial multiplication in GF(2^127)[X] / (X^47 + X^5 + 1)."""
+    native_bytes = native_lrpc_ring_mul(_pack_poly(a), _pack_poly(b))
+    if native_bytes is not None:
+        return _unpack_poly(native_bytes)
     tmp = [0] * (2 * LRPC_N - 1)
     for i in range(LRPC_N):
         ai = a[i]
@@ -80,6 +95,10 @@ def _ring_mul(a: List[int], b: List[int]) -> List[int]:
 
 def _ring_inv(a: List[int]) -> Optional[List[int]]:
     """Multiplicative inverse in GF(2^127)[X] / (X^47 + X^5 + 1) via Extended GCD."""
+    native_res = native_lrpc_ring_inv(_pack_poly(a))
+    if native_res is not None:
+        ok, inv_bytes = native_res
+        return _unpack_poly(inv_bytes) if ok else None
     mod = [0] * (LRPC_N + 1)
     mod[0] = 1
     mod[5] = 1

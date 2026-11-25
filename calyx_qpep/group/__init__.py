@@ -1,4 +1,4 @@
-"""OpenQPEP Official Release 1.2.4 — Post-Quantum Group Messaging Protocol (QPEP-MLS TreeKEM)."""
+"""OpenQPEP Official Release 1.2.5 — Post-Quantum Group Messaging Protocol (QPEP-MLS TreeKEM)."""
 from .mls_epoch import QPEPGroupMember, QPEPGroupSession
 
 __all__ = ["QPEPGroupMember", "QPEPGroupSession"]

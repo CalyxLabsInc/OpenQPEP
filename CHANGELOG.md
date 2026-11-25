@@ -1,4 +1,16 @@
-# OpenQPEP Core Protocol Changelog — Official Release `v1.2.4`
+# OpenQPEP Core Protocol Changelog — Official Release `v1.2.5`
+
+## Official Release `v1.2.5` (2026-11-25) — Native C99 Rank-Metric $\mathrm{GF}(2^{127})$ & UOV $\mathrm{GF}(256)$ Accelerators (`CRT-RSD512` + `QMQ-512`)
+
+- **Native C99 Rank-Metric $\mathrm{GF}(2^{127})$ & LRPC Ring Engine (`calyx_qpep/native/csrc/rank_uov_c.c`, `rank_rsd512.py`):**
+  - Implemented branchless, table-free $\mathrm{GF}(2^{127})$ carry-less multiplication (`openqpep_gf2_127_mul`), $O(1)$ bit-interleaved squaring with 2-line trinomial reduction mod $x^{127} + x^{63} + 1$ (`openqpep_gf2_127_sq`), and 9-mul/126-sq Itoh-Tsujii Fermat inversion (`openqpep_gf2_127_inv`).
+  - Added branchless polynomial convolution & Extended GCD inversion over $\mathrm{GF}(2^{127})[X]/(X^{47} + X^5 + 1)$ (`openqpep_lrpc_ring_mul`, `openqpep_lrpc_ring_inv`) with `openqpep_explicit_bzero` secret scrubbing.
+- **Vectorized C99 $\mathrm{GF}(256)$ UOV Engine & Constant-Time Gaussian Elimination (`rank_uov_c.c`, `qmq_512.py`):**
+  - Added table-free Fermat $\mathrm{GF}(256)$ inversion (`openqpep_gf256_inv`), constant-time pivot-masked Gauss-Jordan linear elimination (`openqpep_uov_solve_gf256_linear`, zero secret pivot branches), and streaming Keccak-backed UOV hidden `P_3` keygen, quadratic public-map evaluation, and signing core (`openqpep_uov_compute_p3`, `openqpep_uov_eval_public_map`, `openqpep_uov_sign_core`).
+  - Exported all 10 new `OPENQPEP_API` symbols in `include/openqpep.h` (`OPENQPEP_ABI_VERSION = 0x00010205U`, `85` total exported symbols across Makefile & CMake) and wired into `loader.py`, `rank_rsd512.py`, and `qmq_512.py` with 100% bit-exact Pure-Python fallback under `OPENQPEP_DISABLE_NATIVE=1`.
+- **Verification:** Added 6-test suite `tests/test_v125_c99_rank_uov.py` verifying all 10 new dynamic exports, $\mathrm{GF}(2^{127})$ / LRPC ring parity, exhaustive $\mathrm{GF}(256)$ inversion & cyclic zero-diagonal / singular constant-time linear solver parity, cross-backend `CRT-RSD512`, `QMQ-512`, and `CSP-Omega` round-trips, verified speedups, standalone `-Wpedantic` C99 static/shared consumers, 10/10 Native C99 + 10/10 Pure-Python Golden KATs, and 199/199 unit & AST tests.
+
+---
 
 ## Official Release `v1.2.4` (2026-11-25) — Native C99 Binary Goppa $\mathrm{GF}(2^{10})$ & Syndrome Accelerator (`CGM-8192`)
 

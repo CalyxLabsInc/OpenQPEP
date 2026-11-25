@@ -1,5 +1,5 @@
 /*
- * OpenQPEP Official Release 1.2.4 (v1.2.4) — Public C99/SIMD SDK ABI Header
+ * OpenQPEP Official Release 1.2.5 (v1.2.5) — Public C99/SIMD SDK ABI Header
  * Project: OpenQPEP by Calyx Labs Inc. (Creator: Tristen Martinez)
  * Repository: https://github.com/CalyxLabsInc/OpenQPEP
  * License: Calyx Public Open Source Specifications v1.0 License (CPOSLS-1.0)
@@ -23,8 +23,8 @@ extern "C" {
 /* ------------------------------------------------------------------------- */
 #define OPENQPEP_VERSION_MAJOR 1
 #define OPENQPEP_VERSION_MINOR 2
-#define OPENQPEP_VERSION_PATCH 4
-#define OPENQPEP_VERSION_STRING "1.2.4"
+#define OPENQPEP_VERSION_PATCH 5
+#define OPENQPEP_VERSION_STRING "1.2.5"
 
 #define OPENQPEP_ABI_CURRENT  1
 #define OPENQPEP_ABI_REVISION 2
@@ -75,6 +75,10 @@ extern "C" {
 #define OPENQPEP_GOPPA_K            704U
 #define OPENQPEP_GOPPA_T_BYTES      28160U /* 320 rows * 88 bytes/row */
 #define OPENQPEP_GOPPA_GF_MOD       0x409U /* x^10 + x^3 + 1 */
+#define OPENQPEP_LRPC_N             47U
+#define OPENQPEP_LRPC_POLY_BYTES    752U   /* 47 * 16 bytes */
+#define OPENQPEP_UOV_MAX_V          128U
+#define OPENQPEP_UOV_MAX_M          64U
 #define OPENQPEP_WIRE_V5_MAGIC_LEN  6
 
 /* Keccak-f[1600] / NIST FIPS 202 Sponge Constants */
@@ -435,6 +439,70 @@ OPENQPEP_API int openqpep_goppa_patterson_decode(
     const uint8_t syn40[40],
     uint8_t err128[128],
     uint32_t *weight_out
+);
+
+/* ------------------------------------------------------------------------- */
+/* Rank-Metric GF(2^127) (CRT-RSD512) & UOV GF(256) (QMQ-512) Accelerators   */
+/* ------------------------------------------------------------------------- */
+
+/** Branchless table-free GF(2^127) carry-less multiplication mod x^127 + x^63 + 1 (16-byte LE). */
+OPENQPEP_API int openqpep_gf2_127_mul(const uint8_t a16[16], const uint8_t b16[16], uint8_t out16[16]);
+
+/** O(1) bit-interleaved GF(2^127) squaring mod x^127 + x^63 + 1 (16-byte LE). */
+OPENQPEP_API int openqpep_gf2_127_sq(const uint8_t a16[16], uint8_t out16[16]);
+
+/** Constant-time Itoh-Tsujii GF(2^127) inversion a^(2^127 - 2) (16-byte LE; 0 -> 0). */
+OPENQPEP_API int openqpep_gf2_127_inv(const uint8_t a16[16], uint8_t out16[16]);
+
+/** Branchless polynomial multiplication in GF(2^127)[X] / (X^47 + X^5 + 1) (752-byte LE polys). */
+OPENQPEP_API int openqpep_lrpc_ring_mul(const uint8_t a752[752], const uint8_t b752[752], uint8_t out752[752]);
+
+/** Extended GCD multiplicative inverse in GF(2^127)[X] / (X^47 + X^5 + 1) (OPENQPEP_ERR_SINGULAR if non-unit). */
+OPENQPEP_API int openqpep_lrpc_ring_inv(const uint8_t a752[752], uint8_t out752[752]);
+
+/** Constant-time table-free GF(256) Fermat inversion a^254 mod 0x11B (returns 0 for a == 0). */
+OPENQPEP_API uint8_t openqpep_gf256_inv(uint8_t a);
+
+/** Constant-time pivot-masked Gauss-Jordan solver over GF(256) for m x m linear system. */
+OPENQPEP_API int openqpep_uov_solve_gf256_linear(
+    const uint8_t *mat,
+    const uint8_t *rhs,
+    uint32_t m,
+    uint8_t *sol_out
+);
+
+/** Streaming C99 UOV hidden public quadratic block P_3 = Upper(O^T P_1 O + O^T P_2). */
+OPENQPEP_API int openqpep_uov_compute_p3(
+    const uint8_t seed_pk[32],
+    const uint8_t seed_sk[32],
+    uint32_t v,
+    uint32_t m,
+    uint8_t *p3_out,
+    size_t p3_len
+);
+
+/** Streaming C99 UOV public quadratic map evaluation P(sv, so) in GF(256)^m. */
+OPENQPEP_API int openqpep_uov_eval_public_map(
+    const uint8_t seed_pk[32],
+    const uint8_t *p3_bytes,
+    size_t p3_len,
+    uint32_t v,
+    uint32_t m,
+    const uint8_t *sv,
+    const uint8_t *so,
+    uint8_t *out_m
+);
+
+/** Constant-time C99 UOV signing core (vinegar search + linear solver + secret oil masking). */
+OPENQPEP_API int openqpep_uov_sign_core(
+    const uint8_t seed_pk[32],
+    const uint8_t seed_sk[32],
+    const uint8_t salt[16],
+    const uint8_t *target,
+    uint32_t v,
+    uint32_t m,
+    uint8_t *sig_sv_out,
+    uint8_t *sig_so_out
 );
 
 /* ------------------------------------------------------------------------- */

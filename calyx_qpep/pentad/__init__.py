@@ -1,4 +1,4 @@
-# OpenQPEP Official Release 1.2.4 (v1.2.4)
+# OpenQPEP Official Release 1.2.5 (v1.2.5)
 """Calyx Sovereign-Pentad (CSP-Omega — Five-Family Beyond-LWE Cryptographic Citadel)."""
 from .sovereign_pentad import (
     PENTAD_SUITE_NAME,

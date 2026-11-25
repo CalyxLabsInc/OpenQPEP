@@ -1,5 +1,5 @@
 """
-OpenQPEP Native C99 / SIMD Vectorized Acceleration Loader (libopenqpep) — Official Release 1.2.4.
+OpenQPEP Native C99 / SIMD Vectorized Acceleration Loader (libopenqpep) — Official Release 1.2.5.
 Loads libopenqpep.so / .dylib / .dll via ctypes with zero-copy array.array buffer marshaling.
 Seamlessly falls back to the bit-exact pure-Python reference engine when absent or disabled.
 """
@@ -277,6 +277,44 @@ def _configure_signatures(lib: ctypes.CDLL) -> None:
             _c_void_p, _c_void_p, ctypes.c_char_p, _c_void_p, _c_void_p
         ]
         lib.openqpep_goppa_patterson_decode.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_gf2_127_mul"):
+        lib.openqpep_gf2_127_mul.argtypes = [ctypes.c_char_p, ctypes.c_char_p, _c_void_p]
+        lib.openqpep_gf2_127_mul.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_gf2_127_sq"):
+        lib.openqpep_gf2_127_sq.argtypes = [ctypes.c_char_p, _c_void_p]
+        lib.openqpep_gf2_127_sq.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_gf2_127_inv"):
+        lib.openqpep_gf2_127_inv.argtypes = [ctypes.c_char_p, _c_void_p]
+        lib.openqpep_gf2_127_inv.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_lrpc_ring_mul"):
+        lib.openqpep_lrpc_ring_mul.argtypes = [ctypes.c_char_p, ctypes.c_char_p, _c_void_p]
+        lib.openqpep_lrpc_ring_mul.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_lrpc_ring_inv"):
+        lib.openqpep_lrpc_ring_inv.argtypes = [ctypes.c_char_p, _c_void_p]
+        lib.openqpep_lrpc_ring_inv.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_gf256_inv"):
+        lib.openqpep_gf256_inv.argtypes = [ctypes.c_uint8]
+        lib.openqpep_gf256_inv.restype = ctypes.c_uint8
+    if hasattr(lib, "openqpep_uov_solve_gf256_linear"):
+        lib.openqpep_uov_solve_gf256_linear.argtypes = [ctypes.c_char_p, ctypes.c_char_p, ctypes.c_uint32, _c_void_p]
+        lib.openqpep_uov_solve_gf256_linear.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_uov_compute_p3"):
+        lib.openqpep_uov_compute_p3.argtypes = [
+            ctypes.c_char_p, ctypes.c_char_p, ctypes.c_uint32, ctypes.c_uint32, _c_void_p, ctypes.c_size_t
+        ]
+        lib.openqpep_uov_compute_p3.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_uov_eval_public_map"):
+        lib.openqpep_uov_eval_public_map.argtypes = [
+            ctypes.c_char_p, ctypes.c_char_p, ctypes.c_size_t, ctypes.c_uint32, ctypes.c_uint32,
+            ctypes.c_char_p, ctypes.c_char_p, _c_void_p,
+        ]
+        lib.openqpep_uov_eval_public_map.restype = ctypes.c_int
+    if hasattr(lib, "openqpep_uov_sign_core"):
+        lib.openqpep_uov_sign_core.argtypes = [
+            ctypes.c_char_p, ctypes.c_char_p, ctypes.c_char_p, ctypes.c_char_p,
+            ctypes.c_uint32, ctypes.c_uint32, _c_void_p, _c_void_p,
+        ]
+        lib.openqpep_uov_sign_core.restype = ctypes.c_int
 
 
 _try_load_library()
@@ -1339,3 +1377,177 @@ def native_goppa_patterson_decode(
         _wipe_i32_array(g_arr)
         _wipe_i32_array(sup_arr)
         _wipe_ctypes_buf(err_buf)
+
+
+def native_gf2_127_mul(a: int, b: int) -> Optional[int]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_gf2_127_mul")):
+        return None
+    a_b = (a & ((1 << 127) - 1)).to_bytes(16, "little")
+    b_b = (b & ((1 << 127) - 1)).to_bytes(16, "little")
+    out = ctypes.create_string_buffer(16)
+    rc = int(_LIB.openqpep_gf2_127_mul(a_b, b_b, out))
+    if rc != 0:
+        raise ValueError(f"openqpep_gf2_127_mul failed with status {rc}.")
+    return int.from_bytes(out.raw, "little")
+
+
+def native_gf2_127_sq(a: int) -> Optional[int]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_gf2_127_sq")):
+        return None
+    a_b = (a & ((1 << 127) - 1)).to_bytes(16, "little")
+    out = ctypes.create_string_buffer(16)
+    rc = int(_LIB.openqpep_gf2_127_sq(a_b, out))
+    if rc != 0:
+        raise ValueError(f"openqpep_gf2_127_sq failed with status {rc}.")
+    return int.from_bytes(out.raw, "little")
+
+
+def native_gf2_127_inv(a: int) -> Optional[int]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_gf2_127_inv")):
+        return None
+    a_b = (a & ((1 << 127) - 1)).to_bytes(16, "little")
+    out = ctypes.create_string_buffer(16)
+    rc = int(_LIB.openqpep_gf2_127_inv(a_b, out))
+    if rc != 0:
+        raise ValueError(f"openqpep_gf2_127_inv failed with status {rc}.")
+    return int.from_bytes(out.raw, "little")
+
+
+def native_lrpc_ring_mul(a_bytes: bytes, b_bytes: bytes) -> Optional[bytes]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_lrpc_ring_mul")):
+        return None
+    ab = a_bytes if isinstance(a_bytes, bytes) else bytes(a_bytes)
+    bb = b_bytes if isinstance(b_bytes, bytes) else bytes(b_bytes)
+    if len(ab) != 752 or len(bb) != 752:
+        raise ValueError(f"openqpep_lrpc_ring_mul requires 752-byte polys, got {len(ab)}, {len(bb)}.")
+    out = ctypes.create_string_buffer(752)
+    try:
+        rc = int(_LIB.openqpep_lrpc_ring_mul(ab, bb, out))
+        if rc != 0:
+            raise ValueError(f"openqpep_lrpc_ring_mul failed with status {rc}.")
+        return out.raw
+    finally:
+        _wipe_ctypes_buf(out)
+
+
+def native_lrpc_ring_inv(a_bytes: bytes) -> Optional[Tuple[bool, bytes]]:
+    """
+    Returns None when native is unavailable; otherwise (True, inv752) on success
+    or (False, b"") when `a_bytes` is non-invertible in GF(2^127)[X]/(X^47+X^5+1).
+    """
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_lrpc_ring_inv")):
+        return None
+    ab = a_bytes if isinstance(a_bytes, bytes) else bytes(a_bytes)
+    if len(ab) != 752:
+        raise ValueError(f"openqpep_lrpc_ring_inv requires 752-byte poly, got {len(ab)}.")
+    out = ctypes.create_string_buffer(752)
+    try:
+        rc = int(_LIB.openqpep_lrpc_ring_inv(ab, out))
+        if rc == 0:
+            return True, out.raw
+        if rc == -6:  # OPENQPEP_ERR_SINGULAR
+            return False, b""
+        raise ValueError(f"openqpep_lrpc_ring_inv failed with status {rc}.")
+    finally:
+        _wipe_ctypes_buf(out)
+
+
+def native_gf256_inv(a: int) -> Optional[int]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_gf256_inv")):
+        return None
+    return int(_LIB.openqpep_gf256_inv(a & 0xFF))
+
+
+def native_uov_solve_gf256_linear(mat_flat: bytes, rhs: bytes, m: int) -> Optional[Tuple[bool, bytes]]:
+    """
+    Returns None when native is unavailable; otherwise (True, sol_bytes) on success
+    or (False, b"") when the m x m linear system over GF(256) is singular.
+    """
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_uov_solve_gf256_linear")):
+        return None
+    mb = mat_flat if isinstance(mat_flat, bytes) else bytes(mat_flat)
+    rb = rhs if isinstance(rhs, bytes) else bytes(rhs)
+    if m <= 0 or len(mb) != m * m or len(rb) != m:
+        raise ValueError(f"Invalid linear system dimensions for m={m}.")
+    sol = ctypes.create_string_buffer(m)
+    try:
+        rc = int(_LIB.openqpep_uov_solve_gf256_linear(mb, rb, m, sol))
+        if rc == 0:
+            return True, sol.raw
+        if rc == -6:  # OPENQPEP_ERR_SINGULAR
+            return False, b""
+        raise ValueError(f"openqpep_uov_solve_gf256_linear failed with status {rc}.")
+    finally:
+        _wipe_ctypes_buf(sol)
+
+
+def native_uov_compute_p3(seed_pk: bytes, seed_sk: bytes, v: int, m: int) -> Optional[bytes]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_uov_compute_p3")):
+        return None
+    spk = seed_pk if isinstance(seed_pk, bytes) else bytes(seed_pk)
+    ssk = seed_sk if isinstance(seed_sk, bytes) else bytes(seed_sk)
+    if len(spk) != 32 or len(ssk) != 32 or v <= 0 or m <= 0:
+        return None
+    p3_len = m * ((m * (m + 1)) // 2)
+    p3_buf = ctypes.create_string_buffer(p3_len)
+    rc = int(_LIB.openqpep_uov_compute_p3(spk, ssk, v, m, p3_buf, p3_len))
+    if rc != 0:
+        raise ValueError(f"openqpep_uov_compute_p3 failed with status {rc}.")
+    return p3_buf.raw
+
+
+def native_uov_eval_public_map(
+    seed_pk: bytes,
+    p3_bytes: bytes,
+    v: int,
+    m: int,
+    sv: bytes,
+    so: bytes,
+) -> Optional[bytes]:
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_uov_eval_public_map")):
+        return None
+    spk = seed_pk if isinstance(seed_pk, bytes) else bytes(seed_pk)
+    p3b = p3_bytes if isinstance(p3_bytes, bytes) else bytes(p3_bytes)
+    svb = sv if isinstance(sv, bytes) else bytes(sv)
+    sob = so if isinstance(so, bytes) else bytes(so)
+    if len(spk) != 32 or len(svb) != v or len(sob) != m:
+        return None
+    out = ctypes.create_string_buffer(m)
+    rc = int(_LIB.openqpep_uov_eval_public_map(spk, p3b, len(p3b), v, m, svb, sob, out))
+    if rc != 0:
+        raise ValueError(f"openqpep_uov_eval_public_map failed with status {rc}.")
+    return out.raw
+
+
+def native_uov_sign_core(
+    seed_pk: bytes,
+    seed_sk: bytes,
+    salt: bytes,
+    target: bytes,
+    v: int,
+    m: int,
+) -> Optional[Tuple[bool, bytes, bytes]]:
+    """
+    Returns None when native is unavailable; otherwise (True, sv_bytes, so_bytes) on success
+    or (False, b"", b"") if no invertible oil system was found within 64 vinegar attempts.
+    """
+    if not (_NATIVE_ENABLED and _LIB is not None and hasattr(_LIB, "openqpep_uov_sign_core")):
+        return None
+    spk = seed_pk if isinstance(seed_pk, bytes) else bytes(seed_pk)
+    ssk = seed_sk if isinstance(seed_sk, bytes) else bytes(seed_sk)
+    sb = salt if isinstance(salt, bytes) else bytes(salt)
+    tb = target if isinstance(target, bytes) else bytes(target)
+    if len(spk) != 32 or len(ssk) != 32 or len(sb) != 16 or len(tb) != m:
+        return None
+    sv_buf = ctypes.create_string_buffer(v)
+    so_buf = ctypes.create_string_buffer(m)
+    try:
+        rc = int(_LIB.openqpep_uov_sign_core(spk, ssk, sb, tb, v, m, sv_buf, so_buf))
+        if rc == 0:
+            return True, sv_buf.raw, so_buf.raw
+        if rc == -6:  # OPENQPEP_ERR_SINGULAR
+            return False, b"", b""
+        raise ValueError(f"openqpep_uov_sign_core failed with status {rc}.")
+    finally:
+        _wipe_ctypes_buf(sv_buf)
+        _wipe_ctypes_buf(so_buf)
