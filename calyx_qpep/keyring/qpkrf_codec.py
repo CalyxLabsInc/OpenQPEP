@@ -1,4 +1,4 @@
-# OpenQPEP Official Release 1.2.8 (v1.2.8)
+# OpenQPEP Official Release 1.2.9 (v1.2.9)
 """Canonical .qpkrf export/import codec facade under calyx_qpep.keyring."""
 from ..protocol import OpenQPEPProtocol, QPEPKeyRing
 

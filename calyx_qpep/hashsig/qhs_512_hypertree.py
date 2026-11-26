@@ -1,10 +1,10 @@
-# OpenQPEP Official Release 1.2.8 (v1.2.8)
+# OpenQPEP Official Release 1.2.9 (v1.2.9)
 """
 Family 5 of Calyx Sovereign-Pentad (CSP-Omega): Stateless Hash-Based Signature Hypertree
 (QHS-512: WOTS+ Winternitz Chains + XMSS Merkle Authentication Path over 24-round qSponge-512).
 Zero algebraic structure, zero trapdoors—unforgeability reduces strictly to Keccak-f[1600] one-wayness.
 
-v1.2.8 Native C99 / SIMD Acceleration:
+v1.2.9 Native C99 / SIMD Acceleration:
   - Transparently dispatches WOTS+ chaining, 4-way SIMD Keccak-f[1600] leaf generation, O(h)-stack
     TreeHash, and signing/verification to `libopenqpep` (`qhs_c.c`) while preserving 100% bit-exact
     Pure-Python fallback under `OPENQPEP_DISABLE_NATIVE=1`.

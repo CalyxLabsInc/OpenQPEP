@@ -1,112 +1,372 @@
 [
   {
-    "release": "v1.2.8",
-    "suite": "Calyx Signature: QLX-4096 + QVS-256 (Recommended Default \u2014 All Devices)",
+    "release": "v1.2.9",
+    "suite_id": "QLX-4096",
+    "suite": "Calyx Lattice-Apex: QLX-4096 + QVS-256 (4,096-Dim Module-LWE \u2014 All Devices)",
     "hardware_tier": "All Devices",
-    "keygen_ms": 80.96,
-    "encaps_ms": 36.56,
-    "decaps_ms": 45.65,
-    "sign_ms": 25.92,
-    "verify_ms": 9.39,
-    "peak_rss_mib": 35.38
+    "backend": "native_c99",
+    "keygen_ms": 7.97,
+    "encaps_ms": 5.7,
+    "decaps_ms": 8.13,
+    "sign_ms": 12.55,
+    "verify_ms": 2.87,
+    "total_ms": 37.22,
+    "peak_rss_mib": 37.24,
+    "native_abi_version": "0x00010209",
+    "native_simd_flags": [
+      "C99",
+      "AVX2"
+    ],
+    "cpu_arch": "x86_64",
+    "pure_python": {
+      "keygen_ms": 1949.59,
+      "encaps_ms": 101.77,
+      "decaps_ms": 118.68,
+      "sign_ms": 85.28,
+      "verify_ms": 31.26,
+      "total_ms": 2286.58,
+      "peak_rss_mib": 39.92
+    },
+    "speedup_vs_pure_python": {
+      "keygen_x": 244.62,
+      "encaps_x": 17.85,
+      "decaps_x": 14.6,
+      "sign_x": 6.8,
+      "verify_x": 10.89,
+      "total_x": 61.43
+    }
   },
   {
-    "release": "v1.2.8",
+    "release": "v1.2.9",
+    "suite_id": "QLX-768",
     "suite": "Calyx Velocity: QLX-768 + QVS-65 (High-Speed Mobile \u2014 All Devices)",
     "hardware_tier": "All Devices",
-    "keygen_ms": 15.3,
-    "encaps_ms": 2.24,
-    "decaps_ms": 3.62,
-    "sign_ms": 4.17,
-    "verify_ms": 2.04,
-    "peak_rss_mib": 35.38
+    "backend": "native_c99",
+    "keygen_ms": 1.97,
+    "encaps_ms": 1.11,
+    "decaps_ms": 1.67,
+    "sign_ms": 3.88,
+    "verify_ms": 1.02,
+    "total_ms": 9.65,
+    "peak_rss_mib": 37.24,
+    "native_abi_version": "0x00010209",
+    "native_simd_flags": [
+      "C99",
+      "AVX2"
+    ],
+    "cpu_arch": "x86_64",
+    "pure_python": {
+      "keygen_ms": 689.49,
+      "encaps_ms": 9.21,
+      "decaps_ms": 13.24,
+      "sign_ms": 27.17,
+      "verify_ms": 9.62,
+      "total_ms": 748.73,
+      "peak_rss_mib": 39.92
+    },
+    "speedup_vs_pure_python": {
+      "keygen_x": 349.99,
+      "encaps_x": 8.3,
+      "decaps_x": 7.93,
+      "sign_x": 7.0,
+      "verify_x": 9.43,
+      "total_x": 77.59
+    }
   },
   {
-    "release": "v1.2.8",
+    "release": "v1.2.9",
+    "suite_id": "QLX-1024",
     "suite": "Calyx Sovereign-Hybrid: QLX-1024 + QVS-87 (Balanced Post-Quantum \u2014 All Devices)",
     "hardware_tier": "All Devices",
-    "keygen_ms": 21.39,
-    "encaps_ms": 3.29,
-    "decaps_ms": 4.49,
-    "sign_ms": 6.63,
-    "verify_ms": 2.64,
-    "peak_rss_mib": 35.38
+    "backend": "native_c99",
+    "keygen_ms": 2.55,
+    "encaps_ms": 1.36,
+    "decaps_ms": 2.14,
+    "sign_ms": 3.98,
+    "verify_ms": 1.27,
+    "total_ms": 11.3,
+    "peak_rss_mib": 37.24,
+    "native_abi_version": "0x00010209",
+    "native_simd_flags": [
+      "C99",
+      "AVX2"
+    ],
+    "cpu_arch": "x86_64",
+    "pure_python": {
+      "keygen_ms": 855.73,
+      "encaps_ms": 13.23,
+      "decaps_ms": 19.06,
+      "sign_ms": 37.42,
+      "verify_ms": 13.59,
+      "total_ms": 939.03,
+      "peak_rss_mib": 39.92
+    },
+    "speedup_vs_pure_python": {
+      "keygen_x": 335.58,
+      "encaps_x": 9.73,
+      "decaps_x": 8.91,
+      "sign_x": 9.4,
+      "verify_x": 10.7,
+      "total_x": 83.1
+    }
   },
   {
-    "release": "v1.2.8",
+    "release": "v1.2.9",
+    "suite_id": "QLX-2048",
     "suite": "Calyx Ultra-Grid: QLX-2048 + QVS-128 (2,048-Dim Lattice \u2014 All Devices)",
     "hardware_tier": "All Devices",
-    "keygen_ms": 44.96,
-    "encaps_ms": 18.63,
-    "decaps_ms": 26.21,
-    "sign_ms": 27.81,
-    "verify_ms": 12.5,
-    "peak_rss_mib": 35.38
+    "backend": "native_c99",
+    "keygen_ms": 4.4,
+    "encaps_ms": 2.63,
+    "decaps_ms": 3.68,
+    "sign_ms": 9.51,
+    "verify_ms": 2.26,
+    "total_ms": 22.48,
+    "peak_rss_mib": 37.24,
+    "native_abi_version": "0x00010209",
+    "native_simd_flags": [
+      "C99",
+      "AVX2"
+    ],
+    "cpu_arch": "x86_64",
+    "pure_python": {
+      "keygen_ms": 1787.43,
+      "encaps_ms": 34.58,
+      "decaps_ms": 44.81,
+      "sign_ms": 102.78,
+      "verify_ms": 22.07,
+      "total_ms": 1991.67,
+      "peak_rss_mib": 39.92
+    },
+    "speedup_vs_pure_python": {
+      "keygen_x": 406.23,
+      "encaps_x": 13.15,
+      "decaps_x": 12.18,
+      "sign_x": 10.81,
+      "verify_x": 9.77,
+      "total_x": 88.6
+    }
   },
   {
-    "release": "v1.2.8",
+    "release": "v1.2.9",
+    "suite_id": "QLX-16384",
     "suite": "Calyx Hyper-Tesseract: QLX-16384 + QVS-1024 (16,384-Dim 4-Manifold \u2014 HIGH-TIER HARDWARE ONLY)",
     "hardware_tier": "HIGH-TIER HARDWARE ONLY (>= 12 GB RAM)",
-    "keygen_ms": 361.78,
-    "encaps_ms": 152.78,
-    "decaps_ms": 165.74,
-    "sign_ms": 287.26,
-    "verify_ms": 32.06,
-    "peak_rss_mib": 40.27
+    "backend": "native_c99",
+    "keygen_ms": 24.07,
+    "encaps_ms": 21.95,
+    "decaps_ms": 24.38,
+    "sign_ms": 71.16,
+    "verify_ms": 6.06,
+    "total_ms": 147.62,
+    "peak_rss_mib": 39.36,
+    "native_abi_version": "0x00010209",
+    "native_simd_flags": [
+      "C99",
+      "AVX2"
+    ],
+    "cpu_arch": "x86_64",
+    "pure_python": {
+      "keygen_ms": 4619.85,
+      "encaps_ms": 416.56,
+      "decaps_ms": 450.14,
+      "sign_ms": 1662.21,
+      "verify_ms": 76.72,
+      "total_ms": 7225.48,
+      "peak_rss_mib": 44.11
+    },
+    "speedup_vs_pure_python": {
+      "keygen_x": 191.93,
+      "encaps_x": 18.98,
+      "decaps_x": 18.46,
+      "sign_x": 23.36,
+      "verify_x": 12.66,
+      "total_x": 48.95
+    }
   },
   {
-    "release": "v1.2.8",
+    "release": "v1.2.9",
+    "suite_id": "CIF-SQI-512",
     "suite": "Calyx Isogeny-Forge: CIF-SQI-512 + QHS-512 (2D Supersingular Isogeny \u2014 All Devices)",
     "hardware_tier": "All Devices",
-    "keygen_ms": 318.25,
-    "encaps_ms": 482.08,
-    "decaps_ms": 229.49,
-    "sign_ms": 33.73,
-    "verify_ms": 1.29,
-    "peak_rss_mib": 40.27
+    "backend": "native_c99",
+    "keygen_ms": 342.12,
+    "encaps_ms": 637.99,
+    "decaps_ms": 217.97,
+    "sign_ms": 6.88,
+    "verify_ms": 0.61,
+    "total_ms": 1205.57,
+    "peak_rss_mib": 39.54,
+    "native_abi_version": "0x00010209",
+    "native_simd_flags": [
+      "C99",
+      "AVX2"
+    ],
+    "cpu_arch": "x86_64",
+    "pure_python": {
+      "keygen_ms": 306.82,
+      "encaps_ms": 432.93,
+      "decaps_ms": 214.15,
+      "sign_ms": 35.53,
+      "verify_ms": 1.44,
+      "total_ms": 990.87,
+      "peak_rss_mib": 44.11
+    },
+    "speedup_vs_pure_python": {
+      "keygen_x": 0.9,
+      "encaps_x": 0.68,
+      "decaps_x": 0.98,
+      "sign_x": 5.16,
+      "verify_x": 2.36,
+      "total_x": 0.82
+    }
   },
   {
-    "release": "v1.2.8",
-    "suite": "Calyx Rank-Metric Tensor: CRT-RSD512 + QMQ-512 (Rank-Syndrome Code-Based \u2014 All Devices)",
+    "release": "v1.2.9",
+    "suite_id": "CRT-RSD512",
+    "suite": "Calyx Rank-Metric Tensor: CRT-RSD512 + QMQ-512 (All-Devices Signature Default \u2014 All Devices)",
     "hardware_tier": "All Devices",
-    "keygen_ms": 587.43,
-    "encaps_ms": 62.26,
-    "decaps_ms": 157.41,
-    "sign_ms": 8.36,
-    "verify_ms": 3.32,
-    "peak_rss_mib": 40.27
+    "backend": "native_c99",
+    "keygen_ms": 2.65,
+    "encaps_ms": 1.14,
+    "decaps_ms": 2.43,
+    "sign_ms": 0.6,
+    "verify_ms": 0.14,
+    "total_ms": 6.96,
+    "peak_rss_mib": 39.54,
+    "native_abi_version": "0x00010209",
+    "native_simd_flags": [
+      "C99",
+      "AVX2"
+    ],
+    "cpu_arch": "x86_64",
+    "pure_python": {
+      "keygen_ms": 589.43,
+      "encaps_ms": 62.32,
+      "decaps_ms": 160.12,
+      "sign_ms": 8.02,
+      "verify_ms": 3.26,
+      "total_ms": 823.15,
+      "peak_rss_mib": 44.11
+    },
+    "speedup_vs_pure_python": {
+      "keygen_x": 222.43,
+      "encaps_x": 54.67,
+      "decaps_x": 65.89,
+      "sign_x": 13.37,
+      "verify_x": 23.29,
+      "total_x": 118.27
+    }
   },
   {
-    "release": "v1.2.8",
+    "release": "v1.2.9",
+    "suite_id": "CGM-8192",
     "suite": "Calyx Goppa-Monolith: CGM-8192 + QHS-512 (Binary Goppa Code-Based \u2014 HIGH-TIER HARDWARE ONLY)",
     "hardware_tier": "HIGH-TIER HARDWARE ONLY (>= 12 GB RAM)",
-    "keygen_ms": 869.39,
-    "encaps_ms": 2.19,
-    "decaps_ms": 35.53,
-    "sign_ms": 108.42,
-    "verify_ms": 1.81,
-    "peak_rss_mib": 40.27
+    "backend": "native_c99",
+    "keygen_ms": 24.17,
+    "encaps_ms": 0.61,
+    "decaps_ms": 1.47,
+    "sign_ms": 6.5,
+    "verify_ms": 0.39,
+    "total_ms": 33.14,
+    "peak_rss_mib": 39.54,
+    "native_abi_version": "0x00010209",
+    "native_simd_flags": [
+      "C99",
+      "AVX2"
+    ],
+    "cpu_arch": "x86_64",
+    "pure_python": {
+      "keygen_ms": 811.32,
+      "encaps_ms": 0.76,
+      "decaps_ms": 10.49,
+      "sign_ms": 35.17,
+      "verify_ms": 0.96,
+      "total_ms": 858.7,
+      "peak_rss_mib": 44.11
+    },
+    "speedup_vs_pure_python": {
+      "keygen_x": 33.57,
+      "encaps_x": 1.25,
+      "decaps_x": 7.14,
+      "sign_x": 5.41,
+      "verify_x": 2.46,
+      "total_x": 25.91
+    }
   },
   {
-    "release": "v1.2.8",
+    "release": "v1.2.9",
+    "suite_id": "CULC-2048",
     "suite": "Calyx Unstructured-Citadel: CULC-2048 + CGM-8192 (Zero-Ring Plain-LWE + Goppa \u2014 HIGH-TIER HARDWARE ONLY)",
     "hardware_tier": "HIGH-TIER HARDWARE ONLY (>= 12 GB RAM)",
-    "keygen_ms": 538.52,
-    "encaps_ms": 14.71,
-    "decaps_ms": 26.74,
-    "sign_ms": 32.6,
-    "verify_ms": 1.39,
-    "peak_rss_mib": 40.27
+    "backend": "native_c99",
+    "keygen_ms": 29.47,
+    "encaps_ms": 1.66,
+    "decaps_ms": 2.64,
+    "sign_ms": 7.52,
+    "verify_ms": 0.74,
+    "total_ms": 42.03,
+    "peak_rss_mib": 40.04,
+    "native_abi_version": "0x00010209",
+    "native_simd_flags": [
+      "C99",
+      "AVX2"
+    ],
+    "cpu_arch": "x86_64",
+    "pure_python": {
+      "keygen_ms": 332.25,
+      "encaps_ms": 7.14,
+      "decaps_ms": 17.14,
+      "sign_ms": 35.77,
+      "verify_ms": 1.44,
+      "total_ms": 393.74,
+      "peak_rss_mib": 44.11
+    },
+    "speedup_vs_pure_python": {
+      "keygen_x": 11.27,
+      "encaps_x": 4.3,
+      "decaps_x": 6.49,
+      "sign_x": 4.76,
+      "verify_x": 1.95,
+      "total_x": 9.37
+    }
   },
   {
-    "release": "v1.2.8",
-    "suite": "Calyx Sovereign-Pentad: CSP-Omega + QHS-512 (5-Family Beyond-LWE Citadel \u2014 HIGH-TIER HARDWARE ONLY)",
+    "release": "v1.2.9",
+    "suite_id": "CSP-Omega",
+    "suite": "Calyx Sovereign-Pentad: CSP-Omega + QHS-512 (High-Tier Signature Default \u2014 HIGH-TIER HARDWARE ONLY)",
     "hardware_tier": "HIGH-TIER HARDWARE ONLY (>= 12 GB RAM)",
-    "keygen_ms": 633.56,
-    "encaps_ms": 570.31,
-    "decaps_ms": 362.24,
-    "sign_ms": 4964.93,
-    "verify_ms": 2258.24,
-    "peak_rss_mib": 40.27
+    "backend": "native_c99",
+    "keygen_ms": 429.23,
+    "encaps_ms": 515.34,
+    "decaps_ms": 249.8,
+    "sign_ms": 5877.24,
+    "verify_ms": 2040.02,
+    "total_ms": 9111.63,
+    "peak_rss_mib": 40.72,
+    "native_abi_version": "0x00010209",
+    "native_simd_flags": [
+      "C99",
+      "AVX2"
+    ],
+    "cpu_arch": "x86_64",
+    "pure_python": {
+      "keygen_ms": 706.01,
+      "encaps_ms": 439.27,
+      "decaps_ms": 234.85,
+      "sign_ms": 10884.41,
+      "verify_ms": 2211.84,
+      "total_ms": 14476.38,
+      "peak_rss_mib": 44.11
+    },
+    "speedup_vs_pure_python": {
+      "keygen_x": 1.64,
+      "encaps_x": 0.85,
+      "decaps_x": 0.94,
+      "sign_x": 1.85,
+      "verify_x": 1.08,
+      "total_x": 1.59
+    }
   }
 ]

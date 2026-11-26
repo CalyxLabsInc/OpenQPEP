@@ -1,5 +1,5 @@
 /*
- * OpenQPEP Official Release 1.2.8 (v1.2.8) — Public C99/SIMD SDK ABI Header
+ * OpenQPEP Official Release 1.2.9 (v1.2.9) — Public C99/SIMD SDK ABI Header
  * Project: OpenQPEP by Calyx Labs Inc. (Creator: Tristen Martinez)
  * Repository: https://github.com/CalyxLabsInc/OpenQPEP
  * License: Calyx Public Open Source Specifications v1.0 License (CPOSLS-1.0)
@@ -23,8 +23,8 @@ extern "C" {
 /* ------------------------------------------------------------------------- */
 #define OPENQPEP_VERSION_MAJOR 1
 #define OPENQPEP_VERSION_MINOR 2
-#define OPENQPEP_VERSION_PATCH 8
-#define OPENQPEP_VERSION_STRING "1.2.8"
+#define OPENQPEP_VERSION_PATCH 9
+#define OPENQPEP_VERSION_STRING "1.2.9"
 
 #define OPENQPEP_ABI_CURRENT  1
 #define OPENQPEP_ABI_REVISION 2

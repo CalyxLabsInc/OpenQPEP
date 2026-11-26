@@ -1,6 +1,6 @@
 /*
  * OpenQPEP Native C99 / SIMD Polynomial Ring Codecs, Samplers & Matrix-Vector Engine (QLX + QVS)
- * Official Release 1.2.8 (v1.2.8) — Calyx Labs Inc. (CPOSLS-1.0)
+ * Official Release 1.2.9 (v1.2.9) — Calyx Labs Inc. (CPOSLS-1.0)
  *
  * Implements:
  *   - KyberSlash-immune division-free QLX compression/decompression & 12-bit byte encoding/decoding

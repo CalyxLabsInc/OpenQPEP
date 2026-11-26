@@ -1,5 +1,5 @@
 /*
- * OpenQPEP Official Release 1.2.8 (v1.2.8) — Native C99 WOTS+ & XMSS Merkle Hypertree
+ * OpenQPEP Official Release 1.2.9 (v1.2.9) — Native C99 WOTS+ & XMSS Merkle Hypertree
  * Accelerator (QHS-512 over 24-round qSponge-512 / Keccak-f[1600]).
  *
  * Performance & Security Architecture:

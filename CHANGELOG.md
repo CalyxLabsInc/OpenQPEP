@@ -1,4 +1,16 @@
-# OpenQPEP Core Protocol Changelog — Official Release `v1.2.8`
+# OpenQPEP Core Protocol Changelog — Official Release `v1.2.9`
+
+## Official Release `v1.2.9` (2026-11-26) — Phase 2 Consolidation: Performance Benchmark Refresh & Native/Pure-Python Parity Gate
+
+- **Refreshed 10-Suite Comparative Benchmark Harness (`benchmarks/bench_suites.py`, `benchmarks/benchmark_results.json`):**
+  - Upgraded `bench_suites.py` with process-isolated Native C99/SIMD (`libopenqpep`) vs Pure-Python (`OPENQPEP_DISABLE_NATIVE=1`) comparative benchmarking (`--compare --isolate`), independent Peak RSS telemetry (`37.24–40.72 MiB` across all 10 suites), per-operation speedup ratios, and comparative Markdown export while preserving 100% backwards compatibility with existing `run_benchmarks()` / `format_markdown_table()` callers.
+  - Refreshed `benchmarks/benchmark_results.json` across all 10 canonical suites on x86_64 GCC 15.2 AVX2: **`CRT-RSD512 + QMQ-512` `118.27x`** (`2.65 ms` keygen, `222.4x`), **`QLX-2048` `88.60x`** (`406.2x` keygen), **`QLX-1024` `83.10x`**, **`QLX-768` `77.59x`**, **`QLX-4096` default `61.43x`** (`7.97 ms` keygen, `244.6x`), **`QLX-16384` `48.95x`** (`24.07 ms` keygen, `191.9x`), **`CGM-8192` `25.91x`** (`33.6x` keygen), **`CULC-2048` `9.37x`** (`11.3x` keygen), **`CIF-SQI-512` `5.16x` QHS-512 sign** (CSIDH-512 big-int KEM remains Pure Python until Phase 3), and **`CSP-Omega` `1.59x`** total (`1.85x` sign).
+- **Phase 2 Native↔Pure-Python Parity Gate & CI Enforcement (`tests/test_v129_c99_parity.py`, `include/openqpep.h`, `.github/workflows/ci.yml`):**
+  - Bumped `OPENQPEP_ABI_VERSION` to `0x00010209U` (`"1.2.9"`, `108/108` exported `OPENQPEP_API` symbols, zero internal symbol leaks) and added `tests/test_v129_c99_parity.py` to `.github/workflows/ci.yml`.
+  - Locked 8 permanent Phase 2 consolidation checks: SDK artifact & symbol hygiene, 10/10 Golden KAT bit-exact parity across Native C99 & Pure Python with zero `mlock` leaks, full bidirectional Native↔Pure-Python encrypt/decrypt & sign/verify across all 10 canonical suites, deterministic byte-exact parity under `deterministic_urandom` across all 9 accelerated primitive families, benchmark schema & speedup gates, live comparative benchmark run, 5-language interop + C99 self-test harness (`12/12` suites, `108/108` APIs), and CI pipeline verification.
+- **Verification:** `make -C calyx_qpep/native/csrc clean all test test-san test-san-portable` (`8,033` checks, zero warnings/ASan/LSan/UBSan errors), 10/10 Native C99 + 10/10 Pure-Python Golden KATs, `openqpep audit` (`83/83`), and `225/225` unit & AST tests.
+
+---
 
 ## Official Release `v1.2.8` (2026-11-25) — Standalone C99 Self-Test Harness & Sanitizer CI (`ASan` + `UBSan`)
 

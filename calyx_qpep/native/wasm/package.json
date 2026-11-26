@@ -1,7 +1,7 @@
 {
   "name": "@calyxlabs/openqpep-wasm",
-  "version": "1.2.8",
-  "description": "OpenQPEP Official Release 1.2.8 (v1.2.8) WebAssembly SIMD128 & Web Worker Post-Quantum Cryptographic Engine",
+  "version": "1.2.9",
+  "description": "OpenQPEP Official Release 1.2.9 (v1.2.9) WebAssembly SIMD128 & Web Worker Post-Quantum Cryptographic Engine",
   "type": "module",
   "main": "wasm_bridge.mjs",
   "files": [

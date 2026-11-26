@@ -1,8 +1,8 @@
-# OpenQPEP Official Release 1.2.8 (v1.2.8) — Native C99 / SIMD SDK Makefile
+# OpenQPEP Official Release 1.2.9 (v1.2.9) — Native C99 / SIMD SDK Makefile
 # Builds shared libopenqpep (.so/.dylib/.dll), static libopenqpep.a, and pkg-config openqpep.pc
 # with strict ISO C99 conformance (-Wall -Wextra -Werror -Wpedantic -fvisibility=hidden).
 
-VERSION := 1.2.8
+VERSION := 1.2.9
 ABI_MAJOR := 1
 
 CC ?= cc

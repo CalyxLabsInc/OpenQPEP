@@ -1,4 +1,4 @@
-# OpenQPEP Official Release 1.2.8 (v1.2.8)
+# OpenQPEP Official Release 1.2.9 (v1.2.9)
 """OpenQPEP Stateless Hash-Based Signature Hypertree Plugin (QHS-512 over qSponge-512)."""
 from .qhs_512_hypertree import QHS512HypertreeEngine
 

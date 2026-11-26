@@ -1,5 +1,5 @@
 /*
- * OpenQPEP Official Release 1.2.8 (v1.2.8) — Standalone Pure-C99 Self-Test & Differential
+ * OpenQPEP Official Release 1.2.9 (v1.2.9) — Standalone Pure-C99 Self-Test & Differential
  * Verification Harness (`test_openqpep_c.c`).
  *
  * Coverage: Exercises ALL 108/108 exported OPENQPEP_API functions across all 12 cryptographic

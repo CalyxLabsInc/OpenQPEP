@@ -1,6 +1,6 @@
-# OpenQPEP Official Release 1.2.8 (v1.2.8)
+# OpenQPEP Official Release 1.2.9 (v1.2.9)
 """
-OpenQPEP Official Release 1.2.8 (v1.2.8) Verification Tests:
+OpenQPEP Official Release 1.2.9 (v1.2.9) Verification Tests:
   - Calyx Isogeny-Forge (CIF-SQI-512 + QHS-512) encrypt/decrypt & sign/verify
   - Calyx Unstructured-Citadel (CULC-2048 + CGM-8192) encrypt/decrypt, sign/verify & >=12GB RAM guardrail
   - Canonical 10-Suite Registry naming format & per-tier hardware classification
@@ -17,8 +17,8 @@ from calyx_qpep.lattice.citadel_suite import CalyxUnstructuredCitadelSuite
 
 class TestOpenQPEPPC110All10Tiers(unittest.TestCase):
     def test_01_version_and_canonical_10_tier_naming(self):
-        self.assertEqual(UNIVERSAL_VERSION, "1.2.8")
-        self.assertEqual(PROTOCOL_VERSION, "OpenQPEP/1.2.8")
+        self.assertEqual(UNIVERSAL_VERSION, "1.2.9")
+        self.assertEqual(PROTOCOL_VERSION, "OpenQPEP/1.2.9")
         self.assertEqual(len(ALL_TEN_SUITES), 10)
         pattern = re.compile(r"^Calyx [A-Za-z -]+: [A-Za-z0-9-]+ \+ [A-Za-z0-9-]+ \(.+\)$")
         for suite_id, meta in ALL_TEN_SUITES.items():
@@ -28,7 +28,7 @@ class TestOpenQPEPPC110All10Tiers(unittest.TestCase):
 
     def test_02_tier7_calyx_isogeny_forge_roundtrip_and_signature(self):
         pub, priv = CalyxIsogenyForgeSuite.keygen()
-        msg = b"Calyx Isogeny-Forge CIF-SQI-512 + QHS-512 v1.2.8 payload"
+        msg = b"Calyx Isogeny-Forge CIF-SQI-512 + QHS-512 v1.2.9 payload"
         ct = CalyxIsogenyForgeSuite.encrypt(msg, pub)
         self.assertEqual(CalyxIsogenyForgeSuite.decrypt(ct, priv), msg)
         sig = CalyxIsogenyForgeSuite.sign(msg, priv)
@@ -41,7 +41,7 @@ class TestOpenQPEPPC110All10Tiers(unittest.TestCase):
             with self.assertRaises(QPEPSuiteError):
                 CalyxUnstructuredCitadelSuite.keygen()
         pub, priv = CalyxUnstructuredCitadelSuite.keygen(allow_low_ram_override=True)
-        msg = b"Calyx Unstructured-Citadel CULC-2048 + CGM-8192 v1.2.8 payload"
+        msg = b"Calyx Unstructured-Citadel CULC-2048 + CGM-8192 v1.2.9 payload"
         ct = CalyxUnstructuredCitadelSuite.encrypt(msg, pub)
         self.assertEqual(CalyxUnstructuredCitadelSuite.decrypt(ct, priv), msg)
         sig = CalyxUnstructuredCitadelSuite.sign(msg, priv)

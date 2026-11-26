@@ -1,4 +1,4 @@
-# OpenQPEP Official Release 1.2.8 (v1.2.8)
+# OpenQPEP Official Release 1.2.9 (v1.2.9)
 """
 Sequential non-parallelizable qSponge-512 hash-chain time-lock puzzle for embargoed disclosures
 and dead-man's-switch capsules resistant to parallel quantum speedup.
